@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  # ── Backend API ──
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=sqlite+aiosqlite:///./velyrion.db
+      - VELYRION_API_KEY=${VELYRION_API_KEY:-}
+      - CORS_ORIGINS=http://localhost:3000,http://localhost
+      - RATE_LIMIT_RPM=300
+    volumes:
+      - backend-data:/app/velyrion.db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ── Frontend Dashboard ──
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  backend-data:
