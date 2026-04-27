@@ -63,7 +63,7 @@ def _uuid() -> str:
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.utcnow()
 
 
 # ── Users & Auth ───────────────────────────────────────────────────────────────

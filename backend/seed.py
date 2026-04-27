@@ -19,7 +19,7 @@ def _id():
 
 
 def _ts(hours_ago: int = 0):
-    return datetime.now(timezone.utc) - timedelta(hours=hours_ago)
+    return datetime.utcnow() - timedelta(hours=hours_ago)
 
 
 AGENTS = [
