@@ -1,0 +1,44 @@
+# VELYRION — Finance Agent Guardrails
+# Enforced in real-time on every agent action.
+
+policy:
+  name: "Finance Agent Guardrails"
+  version: "1.0"
+  agents: ["agent-002", "agent-008"]
+
+  rules:
+    - name: "Block unauthorized tools"
+      condition: "tool_used NOT IN agent.allowed_tools"
+      action: BLOCK
+      severity: HIGH
+      message: "Agent attempted to use a tool outside its permission set"
+
+    - name: "Require approval for financial transactions"
+      condition: "task contains 'transaction' OR task contains 'wire transfer' OR task contains 'payment'"
+      action: REQUIRE_APPROVAL
+      severity: MEDIUM
+      message: "Financial transactions require human approval"
+
+    - name: "Token budget enforcement"
+      condition: "token_cost > max_token_budget"
+      action: BLOCK
+      severity: MEDIUM
+      message: "Agent exceeded its allocated token budget"
+
+    - name: "Kill switch — very low confidence"
+      condition: "confidence_score < 0.3"
+      action: KILL
+      severity: CRITICAL
+      message: "Agent confidence critically low — terminated for safety"
+
+    - name: "Rate limit — max 100 actions per hour"
+      condition: "actions_last_hour > 100"
+      action: THROTTLE
+      severity: LOW
+      message: "Agent action rate exceeds hourly limit"
+
+    - name: "Block unauthorized data access"
+      condition: "tool_used NOT IN agent.allowed_tools AND task contains 'salary'"
+      action: KILL
+      severity: CRITICAL
+      message: "Unauthorized access to sensitive compensation data"

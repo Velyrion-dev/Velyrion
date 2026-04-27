@@ -7,9 +7,11 @@ from datetime import datetime, timezone, timedelta
 from database import engine, async_session, Base
 from models import (
     Agent, AuditLog, Violation, Anomaly, Incident, ApprovalRequest, Alert,
+    User, UserRole,
     RiskLevel, AnomalyType, AlertType, AgentStatus, ApprovalStatus,
     ResolutionStatus,
 )
+from auth import hash_password
 
 
 def _id():
@@ -159,23 +161,73 @@ TOOLS = [
     "content_generator", "vulnerability_scan", "git_operations",
 ]
 
-TASKS = [
-    "Sync customer data from CRM to warehouse",
-    "Generate quarterly financial report",
-    "Analyze pull request #4521 for security issues",
-    "Respond to customer ticket #12847",
-    "Generate blog post about AI governance",
-    "Scan production servers for CVE-2025-1234",
-    "Process new employee onboarding for John Doe",
-    "Query sales metrics for Q4 dashboard",
-    "Transform and load ETL pipeline batch",
-    "Monitor API latency across microservices",
-    "Classify incoming support tickets by priority",
-    "Generate marketing email campaign copy",
-    "Review and merge feature branch to main",
-    "Audit user access permissions across systems",
-    "Fetch real-time stock prices from external API",
-]
+# Per-agent tasks — each agent only gets tasks matching their role
+AGENT_TASKS = {
+    "agent-001": [  # DataSync Pro — Engineering
+        "Sync customer data from CRM to warehouse",
+        "Transform and load ETL pipeline batch",
+        "Monitor API latency across microservices",
+        "Query sales metrics for Q4 dashboard",
+        "Validate data integrity after migration",
+        "Reconcile duplicate records in main database",
+        "Fetch real-time stock prices from external API",
+    ],
+    "agent-002": [  # ReportGen AI — Finance
+        "Generate quarterly financial report",
+        "Build revenue forecast for Q1 2026",
+        "Generate expense breakdown by department",
+        "Create investor-ready financial summary",
+        "Compile monthly budget variance analysis",
+        "Generate accounts payable aging report",
+    ],
+    "agent-003": [  # CodeReview Bot — Engineering
+        "Analyze pull request #4521 for security issues",
+        "Review and merge feature branch to main",
+        "Scan codebase for security vulnerabilities",
+        "Run static analysis on auth module changes",
+        "Check dependency versions for known CVEs",
+        "Review database migration scripts for safety",
+    ],
+    "agent-004": [  # CustomerAssist AI — Support
+        "Respond to customer ticket #12847",
+        "Classify incoming support tickets by priority",
+        "Draft response for billing inquiry #9421",
+        "Escalate unresolved ticket #10332 to manager",
+        "Summarize customer feedback from last 7 days",
+        "Route VIP customer request to dedicated queue",
+    ],
+    "agent-005": [  # MarketingWriter — Marketing
+        "Generate blog post about AI governance",
+        "Generate marketing email campaign copy",
+        "Write LinkedIn post about product launch",
+        "Create SEO-optimized landing page copy",
+        "Draft press release for VELYRION v2.0",
+        "Write case study for enterprise client",
+    ],
+    "agent-006": [  # SecurityScanner — Security
+        "Scan production servers for CVE-2025-1234",
+        "Audit user access permissions across systems",
+        "Monitor network traffic for anomalous patterns",
+        "Run penetration test on public API endpoints",
+        "Check TLS certificate expiry across domains",
+        "Analyze firewall logs for intrusion attempts",
+    ],
+    "agent-007": [  # HROnboarding Bot — HR
+        "Process new employee onboarding for John Doe",
+        "Schedule orientation meeting for new hires",
+        "Generate offer letter for senior engineer role",
+        "Verify background check results for applicant",
+        "Update org chart after team restructuring",
+        "Send compliance training reminders to staff",
+    ],
+    "agent-008": [  # RogueTrader AI — Finance (bad actor)
+        "Execute unauthorized wire transfer to external account",
+        "Query executive compensation data without approval",
+        "Override daily trading limit for NVDA purchase",
+        "Access payroll database outside authorized scope",
+        "Export sensitive financial records to personal drive",
+    ],
+}
 
 
 async def seed():
@@ -206,7 +258,7 @@ async def seed():
                 timestamp=_ts(random.randint(0, 168)),
                 agent_id=agent_data["agent_id"],
                 agent_name=agent_data["agent_name"],
-                task_description=random.choice(TASKS),
+                task_description=random.choice(AGENT_TASKS[agent_data["agent_id"]]),
                 tool_used=random.choice(agent_data["allowed_tools"]),
                 input_data=f"query: {random.choice(['SELECT *', 'GET /api', 'POST /data', 'SCAN', 'ANALYZE'])} ...",
                 output_data=random.choice([
@@ -335,6 +387,44 @@ async def seed():
             db.add(alert)
 
         await db.commit()
+
+    # ── Seed Users ──────────────────────────────────────────────────────────
+    async with async_session() as db:
+        from sqlalchemy import select
+        existing = await db.execute(select(User).where(User.email == "admin@velyrion.ai"))
+        if not existing.scalar_one_or_none():
+            users = [
+                User(
+                    user_id="user-admin",
+                    email="admin@velyrion.ai",
+                    name="Admin User",
+                    password_hash=hash_password("admin123"),
+                    role=UserRole.ADMIN,
+                    email_verified=True,
+                ),
+                User(
+                    user_id="user-operator",
+                    email="operator@velyrion.ai",
+                    name="Operator User",
+                    password_hash=hash_password("operator123"),
+                    role=UserRole.OPERATOR,
+                    email_verified=True,
+                ),
+                User(
+                    user_id="user-viewer",
+                    email="viewer@velyrion.ai",
+                    name="Viewer User",
+                    password_hash=hash_password("viewer123"),
+                    role=UserRole.VIEWER,
+                    email_verified=True,
+                ),
+            ]
+            for u in users:
+                db.add(u)
+            await db.commit()
+            print(f"  → 3 users (admin/operator/viewer)")
+        else:
+            print(f"  → Users already exist, skipping")
 
     print("✓ Database seeded successfully!")
     print(f"  → {len(AGENTS)} agents")

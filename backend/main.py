@@ -14,7 +14,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from database import init_db
 
-from routers import agents, events, violations, anomalies, incidents, approvals, alerts, dashboard, reports
+from routers import agents, events, violations, anomalies, incidents, approvals, alerts, dashboard, reports, policies, controls, replay, webhooks
+from routers import auth as auth_router
 
 # ── Structured Logging ──────────────────────────────────────────────────────────
 
@@ -117,6 +118,9 @@ async def request_middleware(request: Request, call_next):
     # Add response headers
     response.headers["X-Request-ID"] = request_id
     response.headers["X-Response-Time"] = f"{duration_ms}ms"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     return response
 
 
@@ -156,6 +160,11 @@ app.include_router(approvals.router)
 app.include_router(alerts.router)
 app.include_router(dashboard.router)
 app.include_router(reports.router)
+app.include_router(policies.router)
+app.include_router(controls.router)
+app.include_router(replay.router)
+app.include_router(webhooks.router)
+app.include_router(auth_router.router)
 
 
 # ── System Endpoints ───────────────────────────────────────────────────────────

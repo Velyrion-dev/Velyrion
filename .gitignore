@@ -33,3 +33,7 @@ Thumbs.db
 # Logs
 *.log
 npm-debug.log*
+
+# Dev-only scripts
+generate_docs.py
+test_v2.py

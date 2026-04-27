@@ -32,6 +32,7 @@ class AlertType(str, enum.Enum):
     ANOMALY = "ANOMALY"
     HITL_REQUIRED = "HITL_REQUIRED"
     INCIDENT = "INCIDENT"
+    RESOLUTION = "RESOLUTION"
 
 
 class ApprovalStatus(str, enum.Enum):
@@ -51,12 +52,46 @@ class ResolutionStatus(str, enum.Enum):
     RESOLVED = "RESOLVED"
 
 
+class UserRole(str, enum.Enum):
+    ADMIN = "ADMIN"
+    OPERATOR = "OPERATOR"
+    VIEWER = "VIEWER"
+
+
 def _uuid() -> str:
     return str(uuid.uuid4())
 
 
 def _now() -> datetime:
     return datetime.now(timezone.utc)
+
+
+# ── Users & Auth ───────────────────────────────────────────────────────────────
+
+class User(Base):
+    __tablename__ = "users"
+
+    user_id: Mapped[str] = mapped_column(String(64), primary_key=True, default=_uuid)
+    email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    password_hash: Mapped[str] = mapped_column(String(255), nullable=True)  # null for Google-only users
+    avatar_url: Mapped[str] = mapped_column(String(512), default="")
+    role: Mapped[str] = mapped_column(SAEnum(UserRole), default=UserRole.VIEWER)
+    google_id: Mapped[str] = mapped_column(String(255), nullable=True, unique=True)
+    email_verified: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+    last_login: Mapped[datetime] = mapped_column(DateTime, nullable=True)
+
+
+class RefreshToken(Base):
+    __tablename__ = "refresh_tokens"
+
+    token_id: Mapped[str] = mapped_column(String(64), primary_key=True, default=_uuid)
+    user_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    token: Mapped[str] = mapped_column(String(512), unique=True, nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    revoked: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
 
 
 # ── Agent Registry ─────────────────────────────────────────────────────────────

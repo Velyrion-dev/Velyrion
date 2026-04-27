@@ -1,0 +1,50 @@
+# VELYRION — SOC2 Compliance Policy
+# Maps to SOC2 Trust Service Criteria (CC6, CC7, CC8)
+
+policy:
+  name: "SOC2 Compliance Guardrails"
+  version: "1.0"
+  agents: ["*"]  # Applies to ALL agents
+
+  rules:
+    # CC6.1 — Logical Access Controls
+    - name: "CC6.1 — Tool permission enforcement"
+      condition: "tool_used NOT IN agent.allowed_tools"
+      action: BLOCK
+      severity: HIGH
+      message: "SOC2 CC6.1 violation: Agent used unauthorized tool"
+
+    # CC6.3 — Data Access Boundaries
+    - name: "CC6.3 — Data source boundary enforcement"
+      condition: "tool_used NOT IN agent.allowed_tools AND task contains 'database'"
+      action: BLOCK
+      severity: HIGH
+      message: "SOC2 CC6.3 violation: Unauthorized data source access"
+
+    # CC7.2 — Monitoring Activities
+    - name: "CC7.2 — Anomalous duration detection"
+      condition: "duration_ms > 300000"
+      action: WARN
+      severity: MEDIUM
+      message: "SOC2 CC7.2: Task duration exceeds 5-minute threshold"
+
+    # CC7.2 — Cost Monitoring
+    - name: "CC7.2 — Cost anomaly detection"
+      condition: "cost_usd > 1.0"
+      action: REQUIRE_APPROVAL
+      severity: MEDIUM
+      message: "SOC2 CC7.2: Single action cost exceeds $1.00 threshold"
+
+    # CC8.1 — Change Management
+    - name: "CC8.1 — Low confidence actions require review"
+      condition: "confidence_score < 0.5"
+      action: REQUIRE_APPROVAL
+      severity: MEDIUM
+      message: "SOC2 CC8.1: Low-confidence action requires human review"
+
+    # Critical Safety
+    - name: "Emergency kill — unresponsive agent"
+      condition: "confidence_score < 0.2 AND duration_ms > 600000"
+      action: KILL
+      severity: CRITICAL
+      message: "Agent appears unresponsive with critically low confidence — terminated"
