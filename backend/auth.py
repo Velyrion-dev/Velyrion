@@ -38,7 +38,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 def create_access_token(user_id: str, email: str, role: str, name: str = "") -> str:
     """Create a short-lived access token (15 min default)."""
-    expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     payload = {
         "sub": user_id,
         "email": email,
@@ -52,7 +52,7 @@ def create_access_token(user_id: str, email: str, role: str, name: str = "") -> 
 
 def create_refresh_token(user_id: str) -> tuple[str, datetime]:
     """Create a long-lived refresh token (7 day default). Returns (token, expires_at)."""
-    expire = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    expire = datetime.utcnow() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
     payload = {
         "sub": user_id,
         "type": "refresh",

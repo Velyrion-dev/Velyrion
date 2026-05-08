@@ -29,7 +29,7 @@ async def get_dashboard_stats(db: AsyncSession = Depends(get_db)):
     total_events = events_count.scalar() or 0
 
     # Events in last 24h
-    cutoff = datetime.now(timezone.utc) - timedelta(hours=24)
+    cutoff = datetime.utcnow() - timedelta(hours=24)
     recent_count = await db.execute(
         select(func.count()).select_from(AuditLog).where(AuditLog.timestamp >= cutoff)
     )

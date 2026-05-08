@@ -40,7 +40,7 @@ async def approve_request(
         raise HTTPException(status_code=400, detail=f"Request already {req.status}")
     req.status = ApprovalStatus.APPROVED
     req.reviewed_by = decision.reviewed_by
-    req.reviewed_at = datetime.now(timezone.utc)
+    req.reviewed_at = datetime.utcnow()
     await db.commit()
     return {"status": "approved", "request_id": request_id}
 
@@ -58,6 +58,6 @@ async def reject_request(
         raise HTTPException(status_code=400, detail=f"Request already {req.status}")
     req.status = ApprovalStatus.REJECTED
     req.reviewed_by = decision.reviewed_by
-    req.reviewed_at = datetime.now(timezone.utc)
+    req.reviewed_at = datetime.utcnow()
     await db.commit()
     return {"status": "rejected", "request_id": request_id}
