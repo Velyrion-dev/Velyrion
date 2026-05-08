@@ -37,7 +37,14 @@ RATE_LIMIT_RPM = int(os.getenv("RATE_LIMIT_RPM", "300"))
 async def lifespan(app: FastAPI):
     logger.info("VELYRION starting up — initializing database")
     await init_db()
-    logger.info("Database initialized — system operational")
+    logger.info("Database initialized — running seed")
+    try:
+        from seed import seed
+        await seed()
+        logger.info("Database seeded — system operational")
+    except Exception as e:
+        logger.warning(f"Seed skipped (data may already exist): {e}")
+        logger.info("System operational")
     yield
     logger.info("VELYRION shutting down")
 
