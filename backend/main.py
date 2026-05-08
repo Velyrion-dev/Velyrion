@@ -14,6 +14,18 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from database import init_db
 
+# ── Sentry Error Tracking ───────────────────────────────────────────────────────
+SENTRY_DSN = os.getenv("SENTRY_DSN", "")
+if SENTRY_DSN:
+    import sentry_sdk
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        traces_sample_rate=0.2,  # 20% of requests traced for performance
+        profiles_sample_rate=0.1,
+        environment=os.getenv("RAILWAY_ENVIRONMENT", "production"),
+        release=f"velyrion@1.0.0",
+    )
+
 from routers import agents, events, violations, anomalies, incidents, approvals, alerts, dashboard, reports, policies, controls, replay, webhooks
 from routers import auth as auth_router
 
