@@ -149,7 +149,7 @@ async def login(req: LoginRequest, db: AsyncSession = Depends(get_db)):
         raise HTTPException(401, "Invalid email or password")
 
     # Update last login
-    user.last_login = datetime.now(timezone.utc)
+    user.last_login = datetime.utcnow()
 
     # Create tokens
     access, refresh, expires = _create_tokens(user)
@@ -206,7 +206,7 @@ async def google_auth(req: GoogleAuthRequest, db: AsyncSession = Depends(get_db)
         if picture:
             user.avatar_url = picture
         user.email_verified = True
-        user.last_login = datetime.now(timezone.utc)
+        user.last_login = datetime.utcnow()
     else:
         # Create new user
         user = User(
