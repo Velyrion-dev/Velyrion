@@ -389,42 +389,28 @@ async def seed():
         await db.commit()
 
     # ── Seed Users ──────────────────────────────────────────────────────────
+    DEMO_USERS = [
+        ("user-admin", "admin@velyrion.ai", "Admin User", "Vely!Admin#2026", UserRole.ADMIN),
+        ("user-operator", "operator@velyrion.ai", "Operator User", "Vely!Ops#2026", UserRole.OPERATOR),
+        ("user-viewer", "viewer@velyrion.ai", "Viewer User", "Vely!View#2026", UserRole.VIEWER),
+    ]
     async with async_session() as db:
         from sqlalchemy import select
-        existing = await db.execute(select(User).where(User.email == "admin@velyrion.ai"))
-        if not existing.scalar_one_or_none():
-            users = [
-                User(
-                    user_id="user-admin",
-                    email="admin@velyrion.ai",
-                    name="Admin User",
-                    password_hash=hash_password("Vely!Admin#2026"),
-                    role=UserRole.ADMIN,
-                    email_verified=True,
-                ),
-                User(
-                    user_id="user-operator",
-                    email="operator@velyrion.ai",
-                    name="Operator User",
-                    password_hash=hash_password("Vely!Ops#2026"),
-                    role=UserRole.OPERATOR,
-                    email_verified=True,
-                ),
-                User(
-                    user_id="user-viewer",
-                    email="viewer@velyrion.ai",
-                    name="Viewer User",
-                    password_hash=hash_password("Vely!View#2026"),
-                    role=UserRole.VIEWER,
-                    email_verified=True,
-                ),
-            ]
-            for u in users:
-                db.add(u)
-            await db.commit()
-            print(f"  → 3 users (admin/operator/viewer)")
-        else:
-            print(f"  → Users already exist, skipping")
+        for uid, email, name, pwd, role in DEMO_USERS:
+            existing = await db.execute(select(User).where(User.email == email))
+            user = existing.scalar_one_or_none()
+            if user:
+                # Update password to latest
+                user.password_hash = hash_password(pwd)
+                print(f"  → Updated password for {email}")
+            else:
+                db.add(User(
+                    user_id=uid, email=email, name=name,
+                    password_hash=hash_password(pwd),
+                    role=role, email_verified=True,
+                ))
+                print(f"  → Created {email}")
+        await db.commit()
 
     print("✓ Database seeded successfully!")
     print(f"  → {len(AGENTS)} agents")
