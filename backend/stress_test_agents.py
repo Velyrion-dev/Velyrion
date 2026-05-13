@@ -309,7 +309,7 @@ async def run_stress_test():
         print("🔐 Authenticating as admin...")
         r = await client.post("/api/auth/login", json={
             "email": "admin@velyrion.ai",
-            "password": "Vely!Admin#2026"
+            "password": "V3lyr!0n@Adm1n"
         })
         if r.status_code != 200:
             print(f"  ❌ Login failed: {r.status_code} {r.text}")

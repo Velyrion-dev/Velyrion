@@ -113,15 +113,15 @@ export default function LoginPage() {
           {/* Demo credentials */}
           <div className="auth-demo">
             <div className="auth-demo-title">Demo Accounts</div>
-            <div className="auth-demo-row" onClick={() => { setEmail("admin@velyrion.ai"); setPassword("Vely!Admin#2026"); }}>
+            <div className="auth-demo-row" onClick={() => { setEmail("admin@velyrion.ai"); setPassword("V3lyr!0n@Adm1n"); }}>
               <span className="auth-demo-badge admin">ADMIN</span>
               <span>admin@velyrion.ai</span>
             </div>
-            <div className="auth-demo-row" onClick={() => { setEmail("operator@velyrion.ai"); setPassword("Vely!Ops#2026"); }}>
+            <div className="auth-demo-row" onClick={() => { setEmail("operator@velyrion.ai"); setPassword("V3lyr!0n@0ps24"); }}>
               <span className="auth-demo-badge operator">OPERATOR</span>
               <span>operator@velyrion.ai</span>
             </div>
-            <div className="auth-demo-row" onClick={() => { setEmail("viewer@velyrion.ai"); setPassword("Vely!View#2026"); }}>
+            <div className="auth-demo-row" onClick={() => { setEmail("viewer@velyrion.ai"); setPassword("V3lyr!0n@V1ew9"); }}>
               <span className="auth-demo-badge viewer">VIEWER</span>
               <span>viewer@velyrion.ai</span>
             </div>

@@ -137,7 +137,7 @@ async def run_live_simulation():
         print("🔐 Authenticating...")
         r = await client.post("/api/auth/login", json={
             "email": "admin@velyrion.ai",
-            "password": "Vely!Admin#2026"
+            "password": "V3lyr!0n@Adm1n"
         })
         if r.status_code != 200:
             r = await client.post("/api/auth/login", json={
