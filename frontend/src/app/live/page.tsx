@@ -1,27 +1,14 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
-import { api, WS_URL } from "@/lib/api";
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://web-production-eede6.up.railway.app";
+const WS_URL = API_BASE.replace("https://", "wss://").replace("http://", "ws://") + "/ws/events";
 
 interface LiveEvent {
   type: string;
-  sequence: number;
+  sequence?: number;
   timestamp: string;
-  data: {
-    event_id?: string;
-    agent_id: string;
-    agent_name?: string;
-    task_description?: string;
-    tool_used?: string;
-    risk_level?: string;
-    token_cost?: number;
-    event_hash?: string;
-    violation_type?: string;
-    description?: string;
-    severity?: string;
-    action_taken?: string;
-    anomaly_type?: string;
-    reason?: string;
-  };
+  data: Record<string, string | number | boolean | undefined>;
 }
 
 interface ChainEntry {
@@ -60,8 +47,25 @@ const EVENT_ICONS: Record<string, string> = {
   ANOMALY: "⚠️",
   AGENT_LOCKED: "🔒",
   CONNECTED: "🟢",
-  PONG: "💓",
 };
+
+function getToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("velyrion_access_token");
+}
+
+async function fetchData<T>(path: string): Promise<T | null> {
+  try {
+    const token = getToken();
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+    const res = await fetch(`${API_BASE}${path}`, { headers });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (_e) {
+    return null;
+  }
+}
 
 export default function LiveFeedPage() {
   const [events, setEvents] = useState<LiveEvent[]>([]);
@@ -70,15 +74,15 @@ export default function LiveFeedPage() {
   const [predictions, setPredictions] = useState<Prediction[]>([]);
   const [chainStatus, setChainStatus] = useState<{ chain_integrity: string; total_events: number; verified_events: number; merkle_root: string | null } | null>(null);
   const [autoScroll, setAutoScroll] = useState(true);
-  const [soundEnabled, setSoundEnabled] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const feedRef = useRef<HTMLDivElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
 
   // Load predictions & chain on mount
   useEffect(() => {
-    api.getPredictions().then(setPredictions).catch((_e) => { /* silent */ });
-    api.getAuditChain(15).then(setChain).catch((_e) => { /* silent */ });
-    api.verifyAuditChain().then(setChainStatus).catch((_e) => { /* silent */ });
+    fetchData<Prediction[]>("/api/predictions").then((d) => { if (d) setPredictions(d); });
+    fetchData<ChainEntry[]>("/api/audit/chain?limit=15").then((d) => { if (d) setChain(d); });
+    fetchData<typeof chainStatus>("/api/audit/verify").then((d) => { if (d) setChainStatus(d); });
   }, []);
 
   // WebSocket connection
@@ -93,7 +97,7 @@ export default function LiveFeedPage() {
       try {
         ws = new WebSocket(WS_URL);
         wsRef.current = ws;
-        ws.onopen = () => setConnected(true);
+        ws.onopen = () => { setConnected(true); setError(null); };
         ws.onclose = () => {
           setConnected(false);
           if (alive) reconnectTimer = setTimeout(connect, 3000);
@@ -101,10 +105,10 @@ export default function LiveFeedPage() {
         ws.onerror = () => { try { ws?.close(); } catch (_e) { /* */ } };
         ws.onmessage = (msg) => {
           try {
-            const event: LiveEvent = JSON.parse(msg.data);
+            const event = JSON.parse(msg.data) as LiveEvent;
             if (event.type === "PONG") return;
             setEvents((prev) => [...prev.slice(-200), event]);
-          } catch (_e) { /* ignore parse errors */ }
+          } catch (_e) { /* ignore */ }
         };
       } catch (_e) {
         setConnected(false);
@@ -113,7 +117,7 @@ export default function LiveFeedPage() {
     }
     connect();
     const pingInterval = setInterval(() => {
-      if (ws?.readyState === WebSocket.OPEN) ws.send("ping");
+      try { if (ws?.readyState === WebSocket.OPEN) ws.send("ping"); } catch (_e) { /* */ }
     }, 30000);
     return () => {
       alive = false;
@@ -131,6 +135,14 @@ export default function LiveFeedPage() {
   }, [events, autoScroll]);
 
   const riskColor = (level: string) => SEVERITY_COLORS[level] || "#8b95a5";
+
+  if (error) {
+    return (
+      <div>
+        <div className="page-header"><h1>🔴 Live Feed</h1><p>Error: {error}</p></div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -157,13 +169,6 @@ export default function LiveFeedPage() {
         >
           {autoScroll ? "⬇ Auto-Scroll ON" : "⬇ Auto-Scroll OFF"}
         </button>
-        <button
-          className={`btn ${soundEnabled ? "btn-primary" : "btn-ghost"} btn-sm`}
-          onClick={() => setSoundEnabled(!soundEnabled)}
-          style={{ alignSelf: "center" }}
-        >
-          {soundEnabled ? "🔊 Sound ON" : "🔇 Sound OFF"}
-        </button>
       </div>
 
       <div className="grid-2">
@@ -187,42 +192,45 @@ export default function LiveFeedPage() {
                 <div style={{ fontSize: 11, marginTop: 6 }}>Run the live agent simulator to see real-time events</div>
               </div>
             ) : (
-              events.map((e, i) => (
-                <div
-                  key={i}
-                  style={{
-                    padding: "6px 10px",
-                    borderLeft: `3px solid ${riskColor(e.data.risk_level || e.data.severity || "LOW")}`,
-                    marginBottom: 4,
-                    background: e.type === "VIOLATION" || e.type === "AGENT_LOCKED"
-                      ? "rgba(255,59,92,0.06)"
-                      : "var(--bg-secondary)",
-                    borderRadius: "0 6px 6px 0",
-                    animation: "fadeIn 0.3s ease",
-                  }}
-                >
-                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                    <span>{EVENT_ICONS[e.type] || "📋"}</span>
-                    <span style={{ color: "var(--text-muted)", fontSize: 10 }}>
-                      {new Date(e.timestamp).toLocaleTimeString()}
-                    </span>
-                    <span className={`badge badge-${(e.data.risk_level || e.data.severity || "low").toLowerCase()}`} style={{ fontSize: 9, padding: "1px 6px" }}>
-                      {e.type}
-                    </span>
-                    <span style={{ fontWeight: 600, color: "var(--accent-cyan)" }}>
-                      {e.data.agent_name || e.data.agent_id}
-                    </span>
-                  </div>
-                  <div style={{ color: "var(--text-secondary)", marginLeft: 26, fontSize: 11 }}>
-                    {e.data.task_description || e.data.description || e.data.violation_type || ""}
-                    {e.data.event_hash && (
-                      <span style={{ color: "var(--text-muted)", marginLeft: 8 }}>
-                        🔗 {e.data.event_hash}
+              events.map((e, i) => {
+                const rl = String(e.data?.risk_level || e.data?.severity || "LOW");
+                return (
+                  <div
+                    key={i}
+                    style={{
+                      padding: "6px 10px",
+                      borderLeft: `3px solid ${riskColor(rl)}`,
+                      marginBottom: 4,
+                      background: e.type === "VIOLATION" || e.type === "AGENT_LOCKED"
+                        ? "rgba(255,59,92,0.06)"
+                        : "var(--bg-secondary)",
+                      borderRadius: "0 6px 6px 0",
+                      animation: "fadeIn 0.3s ease",
+                    }}
+                  >
+                    <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                      <span>{EVENT_ICONS[e.type] || "📋"}</span>
+                      <span style={{ color: "var(--text-muted)", fontSize: 10 }}>
+                        {new Date(e.timestamp).toLocaleTimeString()}
                       </span>
-                    )}
+                      <span className={`badge badge-${rl.toLowerCase()}`} style={{ fontSize: 9, padding: "1px 6px" }}>
+                        {e.type}
+                      </span>
+                      <span style={{ fontWeight: 600, color: "var(--accent-cyan)" }}>
+                        {String(e.data?.agent_name || e.data?.agent_id || "")}
+                      </span>
+                    </div>
+                    <div style={{ color: "var(--text-secondary)", marginLeft: 26, fontSize: 11 }}>
+                      {String(e.data?.task_description || e.data?.description || e.data?.violation_type || "")}
+                      {e.data?.event_hash && (
+                        <span style={{ color: "var(--text-muted)", marginLeft: 8 }}>
+                          🔗 {String(e.data.event_hash)}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
@@ -233,7 +241,7 @@ export default function LiveFeedPage() {
           <div className="card">
             <h3 className="section-title">🧠 AI Risk Predictions</h3>
             {predictions.length === 0 ? (
-              <div style={{ color: "var(--text-muted)", fontSize: 13, padding: 20, textAlign: "center" }}>Loading...</div>
+              <div style={{ color: "var(--text-muted)", fontSize: 13, padding: 20, textAlign: "center" }}>Loading predictions...</div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {predictions.slice(0, 6).map((p) => (
@@ -271,10 +279,10 @@ export default function LiveFeedPage() {
               </div>
             )}
             <div style={{ fontSize: 11, fontFamily: "'JetBrains Mono', monospace" }}>
-              {chain.slice(0, 8).map((c, i) => (
+              {chain.slice(0, 8).map((c) => (
                 <div key={c.event_id} style={{ display: "flex", gap: 8, padding: "4px 0", borderBottom: "1px solid var(--border-subtle)", alignItems: "center" }}>
                   <span style={{ color: c.hash_linked ? "var(--accent-green)" : "var(--text-muted)" }}>
-                    {c.hash_linked ? "🔗" : "⛓️‍💥"}
+                    {c.hash_linked ? "🔗" : "⛓️"}
                   </span>
                   <span style={{ color: "var(--accent-purple)", minWidth: 110 }}>{c.event_hash}</span>
                   <span style={{ color: "var(--text-muted)" }}>←</span>
