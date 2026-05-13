@@ -76,37 +76,52 @@ export default function LiveFeedPage() {
 
   // Load predictions & chain on mount
   useEffect(() => {
-    api.getPredictions().then(setPredictions).catch(() => {});
-    api.getAuditChain(15).then(setChain).catch(() => {});
-    api.verifyAuditChain().then(setChainStatus).catch(() => {});
+    api.getPredictions().then(setPredictions).catch((_e) => { /* silent */ });
+    api.getAuditChain(15).then(setChain).catch((_e) => { /* silent */ });
+    api.verifyAuditChain().then(setChainStatus).catch((_e) => { /* silent */ });
   }, []);
 
   // WebSocket connection
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    let ws: WebSocket | null = null;
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    let alive = true;
+
     function connect() {
-      const ws = new WebSocket(WS_URL);
-      wsRef.current = ws;
-      ws.onopen = () => setConnected(true);
-      ws.onclose = () => { setConnected(false); setTimeout(connect, 3000); };
-      ws.onerror = () => ws.close();
-      ws.onmessage = (msg) => {
-        try {
-          const event: LiveEvent = JSON.parse(msg.data);
-          if (event.type === "PONG") return;
-          setEvents((prev) => [...prev.slice(-200), event]);
-          if (soundEnabled && (event.type === "VIOLATION" || event.type === "AGENT_LOCKED")) {
-            try { new Audio("data:audio/wav;base64,UklGRl9vT19teleW...").play(); } catch {}
-          }
-        } catch {}
-      };
+      if (!alive) return;
+      try {
+        ws = new WebSocket(WS_URL);
+        wsRef.current = ws;
+        ws.onopen = () => setConnected(true);
+        ws.onclose = () => {
+          setConnected(false);
+          if (alive) reconnectTimer = setTimeout(connect, 3000);
+        };
+        ws.onerror = () => { try { ws?.close(); } catch (_e) { /* */ } };
+        ws.onmessage = (msg) => {
+          try {
+            const event: LiveEvent = JSON.parse(msg.data);
+            if (event.type === "PONG") return;
+            setEvents((prev) => [...prev.slice(-200), event]);
+          } catch (_e) { /* ignore parse errors */ }
+        };
+      } catch (_e) {
+        setConnected(false);
+        if (alive) reconnectTimer = setTimeout(connect, 5000);
+      }
     }
     connect();
-    // Ping to keep alive
-    const interval = setInterval(() => {
-      if (wsRef.current?.readyState === WebSocket.OPEN) wsRef.current.send("ping");
+    const pingInterval = setInterval(() => {
+      if (ws?.readyState === WebSocket.OPEN) ws.send("ping");
     }, 30000);
-    return () => { wsRef.current?.close(); clearInterval(interval); };
-  }, [soundEnabled]);
+    return () => {
+      alive = false;
+      clearInterval(pingInterval);
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      try { ws?.close(); } catch (_e) { /* */ }
+    };
+  }, []);
 
   // Auto-scroll
   useEffect(() => {

@@ -78,7 +78,7 @@ export default function GraphPage() {
     try {
       const data = await api.getBlastRadius(agentId);
       setBlastRadius(data);
-    } catch { setBlastRadius(null); }
+    } catch (_e) { setBlastRadius(null); }
     setBlastLoading(false);
   };
 
