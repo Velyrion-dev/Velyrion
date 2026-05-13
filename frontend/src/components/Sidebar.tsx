@@ -6,9 +6,11 @@ import UserMenu from "./UserMenu";
 const NAV_ITEMS = [
   { section: "Overview" },
   { href: "/dashboard", label: "Dashboard", icon: "📊" },
+  { href: "/live", label: "Live Feed", icon: "🔴" },
   { href: "/events", label: "Activity Feed", icon: "⚡" },
   { section: "Governance" },
   { href: "/agents", label: "Agent Registry", icon: "🤖" },
+  { href: "/graph", label: "Behavior Graph", icon: "🕸️" },
   { href: "/policies", label: "Policies", icon: "📜" },
   { href: "/violations", label: "Violations", icon: "🛡️" },
   { href: "/anomalies", label: "Anomalies", icon: "⚠️" },
@@ -58,7 +60,7 @@ export default function Sidebar({ className = "" }: { className?: string }) {
           </Link>
           <div style={{ fontSize: 10, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 6, justifyContent: "center" }}>
             <span className="pulse-dot pulse-green" />
-            System Operational · v2.0
+            System Operational · v3.0
           </div>
         </div>
       </div>

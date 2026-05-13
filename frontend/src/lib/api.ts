@@ -261,4 +261,25 @@ export const api = {
     fetchAPI<{ success: boolean; status_code: number | null; message: string }>(`/api/webhooks/${id}/test`, { method: "POST" }),
   getWebhookDeliveries: (limit = 50) =>
     fetchAPI<{ alert_id: string; type: string; agent_id: string; description: string; severity: string; channel: string; delivered: boolean; timestamp: string }[]>(`/api/webhooks/deliveries?limit=${limit}`),
+
+  // ── v3.0: Predictions ──
+  getPredictions: () =>
+    fetchAPI<{ agent_id: string; agent_name: string; department: string; risk_score: number; risk_level: string; prediction: string; recommended_action: string; factors: { factor: string; severity: string; detail: string; score_impact: number }[]; analyzed_at: string }[]>("/api/predictions"),
+
+  // ── v3.0: Graph Intelligence ──
+  getGraphNodes: () =>
+    fetchAPI<{ id: string; label: string; type: string; department?: string; status?: string; risk_score?: number; total_actions?: number; total_violations?: number; total_cost?: number; size: number }[]>("/api/graph/nodes"),
+  getGraphEdges: () =>
+    fetchAPI<{ source: string; target: string; type: string; weight: number }[]>("/api/graph/edges"),
+  getBlastRadius: (agentId: string) =>
+    fetchAPI<{ agent_id: string; agent_name: string; department: string; status: string; blast_radius: { risk_rating: string; direct_tools: string[]; direct_data_sources: string[]; connected_agents: { agent_id: string; agent_name: string; department: string; shared_tools: string[]; shared_data_sources: string[]; risk: string }[]; total_connected_agents: number; total_exposure_points: number }; violations: { type: string; description: string; severity: string }[] }>(`/api/graph/blast-radius/${agentId}`),
+
+  // ── v3.0: Audit Chain ──
+  verifyAuditChain: () =>
+    fetchAPI<{ chain_integrity: string; total_events: number; verified_events: number; merkle_root: string | null; broken_at: string | null; error: string | null }>("/api/audit/verify"),
+  getAuditChain: (limit = 20) =>
+    fetchAPI<{ event_id: string; timestamp: string; agent_id: string; agent_name: string; task: string; risk_level: string; event_hash: string; previous_hash: string; hash_linked: boolean }[]>(`/api/audit/chain?limit=${limit}`),
 };
+
+// ── WebSocket URL ──
+export const WS_URL = API_BASE.replace("https://", "wss://").replace("http://", "ws://") + "/ws/events";
