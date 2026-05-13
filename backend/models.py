@@ -141,6 +141,9 @@ class AuditLog(Base):
     risk_level: Mapped[str] = mapped_column(
         SAEnum(RiskLevel), default=RiskLevel.LOW
     )
+    # Cryptographic audit chain — tamper-proof logging
+    event_hash: Mapped[str] = mapped_column(String(64), default="", index=True)
+    previous_hash: Mapped[str] = mapped_column(String(64), default="")
 
 
 # ── Violations ─────────────────────────────────────────────────────────────────

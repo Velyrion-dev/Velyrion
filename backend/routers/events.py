@@ -13,6 +13,8 @@ from engines.permission_engine import check_permissions, has_critical_violation,
 from engines.anomaly_engine import detect_anomalies
 from engines.incident_engine import create_incident
 from engines.alert_engine import dispatch_alert
+from engines.crypto_chain import compute_event_hash, GENESIS_HASH
+from ws_manager import ws_manager
 
 router = APIRouter(prefix="/api", tags=["events"])
 
@@ -154,7 +156,7 @@ async def ingest_event(event: EventCreate, db: AsyncSession = Depends(get_db)):
         elif event.confidence_score < 0.3:
             risk_level = RiskLevel.HIGH
 
-    # 5. Create audit log entry (immutable)
+    # 5. Create audit log entry (immutable) with cryptographic hash chain
     audit = AuditLog(
         agent_id=agent.agent_id,
         agent_name=agent.agent_name,
@@ -170,6 +172,29 @@ async def ingest_event(event: EventCreate, db: AsyncSession = Depends(get_db)):
         risk_level=risk_level,
     )
     db.add(audit)
+    await db.flush()
+
+    # Compute cryptographic hash chain
+    last_event = await db.execute(
+        select(AuditLog)
+        .where(AuditLog.event_id != audit.event_id)
+        .order_by(AuditLog.timestamp.desc())
+        .limit(1)
+    )
+    prev = last_event.scalar_one_or_none()
+    prev_hash = prev.event_hash if prev and prev.event_hash else GENESIS_HASH
+
+    audit.previous_hash = prev_hash
+    audit.event_hash = compute_event_hash(
+        event_id=audit.event_id,
+        timestamp=audit.timestamp.isoformat(),
+        agent_id=audit.agent_id,
+        task_description=audit.task_description,
+        tool_used=audit.tool_used,
+        token_cost=audit.token_cost,
+        risk_level=audit.risk_level.value if hasattr(audit.risk_level, 'value') else str(audit.risk_level),
+        previous_hash=prev_hash,
+    )
     await db.flush()
 
     # 6. Anomaly detection
@@ -190,6 +215,17 @@ async def ingest_event(event: EventCreate, db: AsyncSession = Depends(get_db)):
 
     await db.commit()
     await db.refresh(audit)
+
+    # 8. Broadcast to WebSocket clients (real-time dashboard)
+    try:
+        await ws_manager.broadcast_event(audit)
+        for v in violations:
+            await ws_manager.broadcast_violation(v)
+        for a in anomalies:
+            await ws_manager.broadcast_anomaly(a)
+    except Exception:
+        pass  # WebSocket errors should never break event processing
+
     return audit
 
 

@@ -9,7 +9,7 @@ import time
 import uuid
 import logging
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Request, Response, HTTPException
+from fastapi import FastAPI, Request, Response, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from database import init_db
@@ -26,8 +26,9 @@ if SENTRY_DSN:
         release=f"velyrion@1.0.0",
     )
 
-from routers import agents, events, violations, anomalies, incidents, approvals, alerts, dashboard, reports, policies, controls, replay, webhooks
+from routers import agents, events, violations, anomalies, incidents, approvals, alerts, dashboard, reports, policies, controls, replay, webhooks, audit_proof, graph, predictions
 from routers import auth as auth_router
+from ws_manager import ws_manager
 
 # ── Structured Logging ──────────────────────────────────────────────────────────
 
@@ -184,6 +185,9 @@ app.include_router(controls.router)
 app.include_router(replay.router)
 app.include_router(webhooks.router)
 app.include_router(auth_router.router)
+app.include_router(audit_proof.router)
+app.include_router(graph.router)
+app.include_router(predictions.router)
 
 
 # ── System Endpoints ───────────────────────────────────────────────────────────
@@ -203,6 +207,25 @@ async def root():
 async def health_check():
     return {
         "status": "healthy",
-        "version": "1.0.0",
+        "version": "3.0.0",
         "uptime": "operational",
+        "websocket_clients": ws_manager.client_count,
     }
+
+
+# ── WebSocket — Real-Time Event Stream ──────────────────────────────────────────
+
+@app.websocket("/ws/events")
+async def websocket_events(websocket: WebSocket):
+    """Real-time event stream — broadcasts audit events, violations, anomalies."""
+    await ws_manager.connect(websocket)
+    try:
+        while True:
+            # Keep connection alive, listen for client messages (ping/filter)
+            data = await websocket.receive_text()
+            if data == "ping":
+                await websocket.send_json({"type": "PONG", "clients": ws_manager.client_count})
+    except WebSocketDisconnect:
+        ws_manager.disconnect(websocket)
+    except Exception:
+        ws_manager.disconnect(websocket)
