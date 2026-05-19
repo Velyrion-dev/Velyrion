@@ -51,9 +51,9 @@ Auto-refresh runs every 12 minutes via `AuthProvider`.
 
 | Role | Email | Password |
 |------|-------|----------|
-| Admin | `admin@velyrion.ai` | `admin123` |
-| Operator | `operator@velyrion.ai` | `operator123` |
-| Viewer | `viewer@velyrion.ai` | `viewer123` |
+| Admin | `admin@velyrion.com` | `admin123` |
+| Operator | `operator@velyrion.com` | `operator123` |
+| Viewer | `viewer@velyrion.com` | `viewer123` |
 
 ---
 

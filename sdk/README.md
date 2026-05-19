@@ -113,7 +113,7 @@ Set `VELYRION_API_KEY` on the backend to enable.
 
 ```python
 v = Velyrion(api_url="https://api.yourdomain.com")
-v.authenticate(email="operator@velyrion.ai", password="password")
+v.authenticate(email="operator@velyrion.com", password="password")
 ```
 
 ---
@@ -360,7 +360,7 @@ from velyrion import Velyrion
 async def main():
     # Initialize
     v = Velyrion(
-        api_url="https://api.velyrion.ai",
+        api_url="https://api.velyrion.com",
         api_key="vly_prod_xxxx",
         block_on_violation=True,
     )

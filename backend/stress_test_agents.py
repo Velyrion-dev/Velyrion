@@ -308,14 +308,14 @@ async def run_stress_test():
     async with httpx.AsyncClient(base_url=API_URL, timeout=30) as client:
         print("🔐 Authenticating as admin...")
         r = await client.post("/api/auth/login", json={
-            "email": "admin@velyrion.ai",
+            "email": "admin@velyrion.com",
             "password": "V3lyr!0n@Adm1n"
         })
         if r.status_code != 200:
             print(f"  ❌ Login failed: {r.status_code} {r.text}")
             # Try old password
             r = await client.post("/api/auth/login", json={
-                "email": "admin@velyrion.ai",
+                "email": "admin@velyrion.com",
                 "password": "admin123"
             })
             if r.status_code != 200:

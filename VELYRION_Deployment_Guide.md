@@ -387,7 +387,7 @@ curl https://api.yourdomain.com/health
 # Login
 curl -X POST https://api.yourdomain.com/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@velyrion.ai","password":"admin123"}'
+  -d '{"email":"admin@velyrion.com","password":"admin123"}'
 # → {"access_token": "eyJ...", "refresh_token": "eyJ...", "user": {...}}
 
 # Access protected endpoint
@@ -399,7 +399,7 @@ curl https://api.yourdomain.com/api/agents \
 ### Frontend
 
 1. Visit `https://app.yourdomain.com` → should redirect to `/login`
-2. Login with `admin@velyrion.ai` / `admin123`
+2. Login with `admin@velyrion.com` / `admin123`
 3. Verify dashboard loads with data
 4. Check sidebar user menu shows "Admin User / ADMIN"
 5. Verify Kill/Pause buttons visible (admin) or hidden (viewer)

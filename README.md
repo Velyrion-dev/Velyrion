@@ -40,9 +40,9 @@ npm run dev -- -p 3000
 
 | Role | Email | Password |
 |------|-------|----------|
-| **Admin** | `admin@velyrion.ai` | `admin123` |
-| **Operator** | `operator@velyrion.ai` | `operator123` |
-| **Viewer** | `viewer@velyrion.ai` | `viewer123` |
+| **Admin** | `admin@velyrion.com` | `admin123` |
+| **Operator** | `operator@velyrion.com` | `operator123` |
+| **Viewer** | `viewer@velyrion.com` | `viewer123` |
 
 **URLs:**
 - **Dashboard**: http://localhost:3000 → redirects to `/login`

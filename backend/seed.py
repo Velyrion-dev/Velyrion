@@ -562,9 +562,9 @@ async def seed():
 
     # ── Seed Users ──────────────────────────────────────────────────────────
     DEMO_USERS = [
-        ("user-admin", "admin@velyrion.ai", "Admin User", "V3lyr!0n@Adm1n", UserRole.ADMIN),
-        ("user-operator", "operator@velyrion.ai", "Operator User", "V3lyr!0n@0ps24", UserRole.OPERATOR),
-        ("user-viewer", "viewer@velyrion.ai", "Viewer User", "V3lyr!0n@V1ew9", UserRole.VIEWER),
+        ("user-admin", "admin@velyrion.com", "Admin User", "V3lyr!0n@Adm1n", UserRole.ADMIN),
+        ("user-operator", "operator@velyrion.com", "Operator User", "V3lyr!0n@0ps24", UserRole.OPERATOR),
+        ("user-viewer", "viewer@velyrion.com", "Viewer User", "V3lyr!0n@V1ew9", UserRole.VIEWER),
     ]
     async with async_session() as db:
         from sqlalchemy import select

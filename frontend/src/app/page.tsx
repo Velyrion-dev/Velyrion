@@ -243,7 +243,7 @@ export default function LandingPage() {
         <p>Start with a free trial. Deploy in minutes. Full audit coverage from day one.</p>
         <div className="hero-cta-group">
           <Link href="/dashboard" className="btn btn-primary btn-lg">Open Dashboard →</Link>
-          <a href="mailto:sales@velyrion.ai" className="btn btn-ghost btn-lg">Contact Sales</a>
+          <a href="mailto:sales@velyrion.com" className="btn btn-ghost btn-lg">Contact Sales</a>
         </div>
       </section>
 
@@ -271,7 +271,7 @@ export default function LandingPage() {
             </div>
             <div>
               <h4>Company</h4>
-              <a href="mailto:sales@velyrion.ai">Contact</a>
+              <a href="mailto:sales@velyrion.com">Contact</a>
               <a href="#">Blog</a>
               <a href="#">Docs</a>
             </div>

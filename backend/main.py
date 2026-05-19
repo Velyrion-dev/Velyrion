@@ -64,7 +64,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="VELYRION",
-    description="Agent Governance & Audit Intelligence System — https://velyrion.ai",
+    description="Agent Governance & Audit Intelligence System — https://velyrion.com",
     version="1.0.0",
     lifespan=lifespan,
     docs_url="/docs",

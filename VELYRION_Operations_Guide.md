@@ -92,9 +92,9 @@ Login → Access Token (15 min) + Refresh Token (7 days)
 
 | Role | Email | Password | Change On First Login |
 |------|-------|----------|:---------------------:|
-| Admin | admin@velyrion.ai | admin123 | **YES** |
-| Operator | operator@velyrion.ai | operator123 | **YES** |
-| Viewer | viewer@velyrion.ai | viewer123 | **YES** |
+| Admin | admin@velyrion.com | admin123 | **YES** |
+| Operator | operator@velyrion.com | operator123 | **YES** |
+| Viewer | viewer@velyrion.com | viewer123 | **YES** |
 
 ### Create New Users
 
