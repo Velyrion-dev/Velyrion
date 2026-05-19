@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://web-production-eede6.up.railway.app";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://api.velyrion.com";
 const WS_URL = API_BASE.replace("https://", "wss://").replace("http://", "ws://") + "/ws/events";
 
 interface LiveEvent {
