@@ -216,6 +216,15 @@ class VelyrionClient:
         if hasattr(agent, "chat") and hasattr(agent.chat, "completions"):
             return self._wrap_openai(agent, agent_id)
 
+        # CrewAI agent
+        module = type(agent).__module__ or ""
+        if "crewai" in module and hasattr(agent, "execute_task"):
+            return self._wrap_crewai(agent, agent_id)
+
+        # AutoGen agent
+        if "autogen" in module and hasattr(agent, "generate_reply"):
+            return self._wrap_autogen(agent, agent_id)
+
         # Generic: wrap .run(), .invoke(), or .execute()
         for method_name in ["run", "invoke", "execute", "call", "__call__"]:
             if hasattr(agent, method_name) and callable(getattr(agent, method_name)):
@@ -391,6 +400,101 @@ class VelyrionClient:
         client_obj.chat.completions.create = governed_create
         logger.info(f"Wrapped OpenAI client for {agent_id}")
         return client_obj
+
+    # ── CrewAI Integration ────────────────────────────────────────────────
+
+    def _wrap_crewai(self, agent: Any, agent_id: str) -> Any:
+        """Wrap a CrewAI agent to report all task executions."""
+        client = self
+        original_execute = agent.execute_task
+
+        @wraps(original_execute)
+        def governed_execute(task, *args, **kwargs):
+            start = time.time()
+            task_desc = str(task)[:300]
+
+            try:
+                result = original_execute(task, *args, **kwargs)
+                duration = int((time.time() - start) * 1000)
+
+                output = str(result)[:500] if result else ""
+
+                client.report(
+                    agent_id=agent_id,
+                    task=task_desc,
+                    tool="crewai_agent",
+                    output_data=output,
+                    confidence=0.85,
+                    duration_ms=duration,
+                )
+                return result
+
+            except (AgentKilledException, ActionBlockedException):
+                raise
+            except Exception as e:
+                duration = int((time.time() - start) * 1000)
+                client.report(
+                    agent_id=agent_id,
+                    task=task_desc,
+                    tool="crewai_agent",
+                    output_data=f"ERROR: {e}",
+                    confidence=0.1,
+                    duration_ms=duration,
+                )
+                raise
+
+        agent.execute_task = governed_execute
+        logger.info(f"Wrapped CrewAI agent for {agent_id}")
+        return agent
+
+    # ── AutoGen Integration ──────────────────────────────────────────────
+
+    def _wrap_autogen(self, agent: Any, agent_id: str) -> Any:
+        """Wrap an AutoGen agent to report all reply generations."""
+        client = self
+        original_generate = agent.generate_reply
+
+        @wraps(original_generate)
+        def governed_generate(messages=None, *args, **kwargs):
+            start = time.time()
+            task_desc = ""
+            if messages:
+                last_msg = messages[-1] if isinstance(messages, list) else messages
+                task_desc = str(last_msg.get("content", ""))[:300] if isinstance(last_msg, dict) else str(last_msg)[:300]
+
+            try:
+                result = original_generate(messages, *args, **kwargs)
+                duration = int((time.time() - start) * 1000)
+
+                output = str(result)[:500] if result else ""
+
+                client.report(
+                    agent_id=agent_id,
+                    task=task_desc,
+                    tool="autogen_agent",
+                    output_data=output,
+                    confidence=0.85,
+                    duration_ms=duration,
+                )
+                return result
+
+            except (AgentKilledException, ActionBlockedException):
+                raise
+            except Exception as e:
+                duration = int((time.time() - start) * 1000)
+                client.report(
+                    agent_id=agent_id,
+                    task=task_desc,
+                    tool="autogen_agent",
+                    output_data=f"ERROR: {e}",
+                    confidence=0.1,
+                    duration_ms=duration,
+                )
+                raise
+
+        agent.generate_reply = governed_generate
+        logger.info(f"Wrapped AutoGen agent for {agent_id}")
+        return agent
 
     # ── Track: Decorator for Individual Functions ────────────────────────
 

@@ -28,9 +28,11 @@ dependencies = [
 [project.optional-dependencies]
 langchain = ["langchain>=0.1.0"]
 openai = ["openai>=1.0.0"]
-all = ["langchain>=0.1.0", "openai>=1.0.0"]
+crewai = ["crewai>=0.28.0"]
+autogen = ["pyautogen>=0.2.0"]
+all = ["langchain>=0.1.0", "openai>=1.0.0", "crewai>=0.28.0", "pyautogen>=0.2.0"]
 
 [project.urls]
 Homepage = "https://velyrion.com"
 Documentation = "https://velyrion.com/docs"
-Repository = "https://github.com/velyrion/velyrion-sdk"
+Repository = "https://github.com/Velyrion-dev/Velyrion"

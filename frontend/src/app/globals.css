@@ -26,6 +26,20 @@
   --shadow-glow-red: 0 0 20px rgba(239, 68, 68, 0.15);
 }
 
+[data-theme="light"] {
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f1f5f9;
+  --border-subtle: #e2e8f0;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --shadow-glow-blue: 0 0 20px rgba(59, 130, 246, 0.08);
+  --shadow-glow-purple: 0 0 20px rgba(139, 92, 246, 0.08);
+  --shadow-glow-red: 0 0 20px rgba(239, 68, 68, 0.08);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -651,6 +665,44 @@ body {
   .step-connector { transform: rotate(90deg); }
   .footer-inner { flex-direction: column; gap: 32px; }
   .footer-links { flex-direction: column; gap: 24px; }
+}
+
+@media (max-width: 768px) {
+  .hero-title { font-size: 36px; letter-spacing: -0.5px; }
+  .hero-subtitle { font-size: 15px; }
+  .hero-stats-row { gap: 12px; }
+  .hero-stat-number { font-size: 28px; }
+  .hero-stat-label { font-size: 10px; }
+  .stats-grid { grid-template-columns: 1fr; }
+  .page-header h1 { font-size: 22px; }
+  .page-header p { font-size: 13px; }
+  .section-title { font-size: 14px; }
+  .card { padding: 16px; }
+  .stat-card { padding: 14px; }
+  .auth-card { padding: 28px 20px; }
+  .auth-logo-text { font-size: 28px; }
+  .landing-hero { padding: 80px 16px 48px; }
+  .landing-section { padding: 48px 16px; }
+  .logo-bar { gap: 12px; flex-wrap: wrap; }
+  .logo-chip { font-size: 11px; padding: 5px 10px; }
+  .compliance-badges { gap: 10px; flex-wrap: wrap; }
+  .badge-card { padding: 12px; font-size: 11px; }
+}
+
+@media (max-width: 480px) {
+  .hero-title { font-size: 28px; }
+  .hero-subtitle { font-size: 14px; }
+  .hero-cta-group { flex-direction: column; gap: 10px; }
+  .hero-cta-group .btn { width: 100%; text-align: center; }
+  .stats-grid { gap: 8px; }
+  .page-header { margin-bottom: 16px; }
+  .main-content { padding: 12px 10px; padding-top: 56px; }
+  .auth-card { margin: 8px; padding: 24px 16px; }
+  .auth-demo-row { font-size: 12px; }
+  .landing-nav { padding: 10px 12px; }
+  .pricing-card { padding: 24px 16px; }
+  .pricing-price { font-size: 36px; }
+  .feature-card { padding: 20px; }
 }
 
 /* ===========================================================================
@@ -1707,4 +1759,25 @@ body {
 
 .user-menu-logout:hover {
   color: var(--accent-red);
+}
+
+/* ── Theme Toggle ── */
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s;
+  width: 100%;
+  justify-content: center;
+}
+.theme-toggle:hover {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
 }

@@ -23,7 +23,7 @@ if SENTRY_DSN:
         traces_sample_rate=0.2,  # 20% of requests traced for performance
         profiles_sample_rate=0.1,
         environment=os.getenv("RAILWAY_ENVIRONMENT", "production"),
-        release=f"velyrion@1.0.0",
+        release=f"velyrion@3.0.0",
     )
 
 from routers import agents, events, violations, anomalies, incidents, approvals, alerts, dashboard, reports, policies, controls, replay, webhooks, audit_proof, graph, predictions
@@ -65,7 +65,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="VELYRION",
     description="Agent Governance & Audit Intelligence System — https://velyrion.com",
-    version="1.0.0",
+    version="3.0.0",
     lifespan=lifespan,
     docs_url="/docs",
     redoc_url="/redoc",
@@ -196,7 +196,7 @@ app.include_router(predictions.router)
 async def root():
     return {
         "system": "VELYRION",
-        "version": "1.0.0",
+        "version": "3.0.0",
         "description": "Agent Governance & Audit Intelligence System",
         "status": "operational",
         "docs": "/docs",

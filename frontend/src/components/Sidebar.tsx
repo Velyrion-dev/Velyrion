@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import UserMenu from "./UserMenu";
+import ThemeToggle from "./ThemeToggle";
 
 const NAV_ITEMS = [
   { section: "Overview" },
@@ -54,8 +55,9 @@ export default function Sidebar({ className = "" }: { className?: string }) {
       </nav>
       <div style={{ borderTop: "1px solid var(--border-subtle)", padding: "8px 0 0" }}>
         <UserMenu />
-        <div style={{ padding: "8px 16px" }}>
-          <Link href="/" className="btn btn-ghost btn-sm" style={{ width: "100%", justifyContent: "center", marginBottom: 6, fontSize: 11 }}>
+        <div style={{ padding: "8px 16px", display: "flex", flexDirection: "column", gap: 6 }}>
+          <ThemeToggle />
+          <Link href="/" className="btn btn-ghost btn-sm" style={{ width: "100%", justifyContent: "center", fontSize: 11 }}>
             ← Marketing Site
           </Link>
           <div style={{ fontSize: 10, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 6, justifyContent: "center" }}>
