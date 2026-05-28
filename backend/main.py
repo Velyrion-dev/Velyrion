@@ -42,7 +42,7 @@ logger = logging.getLogger("velyrion")
 # ── Configuration ───────────────────────────────────────────────────────────────
 
 API_KEY = os.getenv("VELYRION_API_KEY", "")  # Optional — empty means no auth
-ALLOWED_ORIGINS = os.getenv("CORS_ORIGINS", "*").split(",")
+ALLOWED_ORIGINS = [o.strip() for o in os.getenv("CORS_ORIGINS", "*").split(",") if o.strip()]
 RATE_LIMIT_RPM = int(os.getenv("RATE_LIMIT_RPM", "300"))
 
 
