@@ -1,379 +1,280 @@
 # VELYRION SDK
 
-**AI Agent Governance in 2 Lines of Code.**
+> **AI Agent Governance in One Line of Code**
 
-VELYRION is the firewall for AI agents. It sits in the execution path of every agent action — monitoring, evaluating, and enforcing governance policies in real-time.
+[![PyPI](https://img.shields.io/badge/pypi-v0.2.0-blue)](https://pypi.org/project/velyrion/)
+[![Python](https://img.shields.io/badge/python-3.9%2B-green)](https://python.org)
+[![License](https://img.shields.io/badge/license-MIT-purple)](LICENSE)
 
 ---
 
-## Install
+## 🚀 Quick Start
 
 ```bash
 pip install velyrion
-# or from source:
-pip install ./sdk
-# or from Git:
-pip install git+https://github.com/YOUR_USERNAME/velyrion.git#subdirectory=sdk
 ```
-
----
-
-## Quick Start
-
-### Option 1: Wrap Any Agent (2 Lines)
 
 ```python
 from velyrion import Velyrion
 
-v = Velyrion(api_url="http://localhost:8000")
-agent = v.wrap(your_agent, agent_id="agent-001")  # That's it.
-agent.run("Analyze customer data")  # Every action is now governed
+v = Velyrion(api_url="https://velyrion.onrender.com", api_key="your-key")
+
+# Wrap ANY agent — governance in 1 line
+v.wrap(agent, agent_id="agent-001")
 ```
 
-### Option 2: Decorate Functions
+That's it. Every action is now **logged, evaluated, and auditable**.
+
+---
+
+## 🔌 Supported Frameworks
+
+| Framework | Wrapper | What It Monitors |
+|-----------|---------|-----------------|
+| **LangChain** | `v.wrap(agent)` | `.invoke()` calls |
+| **OpenAI** | `v.wrap(client)` | `chat.completions.create()` |
+| **Anthropic** | `v.wrap(client)` | `messages.create()` |
+| **Google Gemini** | `v.wrap(model)` | `generate_content()` |
+| **Mistral** | `v.wrap(client)` | `chat.complete()` |
+| **CrewAI** | `v.wrap(agent)` | `execute_task()` |
+| **AutoGen** | `v.wrap(agent)` | `generate_reply()` |
+| **Any Python** | `@governed` | Any function |
+
+### LangChain
 
 ```python
-from velyrion import governed, track
+from langchain.agents import AgentExecutor
+from velyrion import Velyrion
 
-@governed(agent_id="agent-001", tool="database_query")
-def query_database(sql):
-    return db.execute(sql)
+agent = AgentExecutor(agent=my_agent, tools=tools)
+v = Velyrion(api_url="https://velyrion.onrender.com")
+v.wrap(agent, agent_id="langchain-agent-001")
 
-@track(agent_id="agent-001")
-def call_external_api(url):
-    return requests.get(url)
+# Every invoke() is now governed
+result = agent.invoke({"input": "Analyze customer data"})
 ```
 
-### Option 3: OpenAI Integration
+### OpenAI
 
 ```python
 from openai import OpenAI
 from velyrion import Velyrion
 
 client = OpenAI()
-v = Velyrion()
-client = v.wrap(client, agent_id="agent-001")
+v = Velyrion(api_url="https://velyrion.onrender.com")
+v.wrap(client, agent_id="openai-agent-001")
 
 # Every completion is now governed
 response = client.chat.completions.create(
     model="gpt-4",
-    messages=[{"role": "user", "content": "Find customer emails"}]
+    messages=[{"role": "user", "content": "Write a report"}]
 )
 ```
 
-### Option 4: LangChain Integration
+### Anthropic
 
 ```python
-from langchain.agents import AgentExecutor
+from anthropic import Anthropic
 from velyrion import Velyrion
 
-v = Velyrion()
-agent = AgentExecutor(agent=..., tools=...)
-agent = v.wrap(agent, agent_id="agent-001")
-agent.invoke({"input": "Analyze Q4 report"})
-```
+client = Anthropic()
+v = Velyrion(api_url="https://velyrion.onrender.com")
+v.wrap(client, agent_id="claude-agent-001")
 
----
-
-## Configuration
-
-```python
-v = Velyrion(
-    api_url="https://your-velyrion-api.com",  # Backend URL
-    api_key="your-api-key",                    # Optional: API key auth
-    block_on_violation=True,                   # Block or just log violations
-    heartbeat_interval=10,                     # Kill-switch check frequency (sec)
-    fail_open=True,                            # Allow action if API unreachable
+response = client.messages.create(
+    model="claude-3-sonnet-20240229",
+    messages=[{"role": "user", "content": "Summarize this document"}]
 )
 ```
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `api_url` | `http://localhost:8000` | VELYRION backend URL |
-| `api_key` | `None` | API key for machine-to-machine auth |
-| `block_on_violation` | `False` | If `True`, raises exception on violations |
-| `heartbeat_interval` | `10` | Seconds between kill-switch checks |
-| `fail_open` | `True` | Allow actions when API is unreachable |
-
----
-
-## Authentication
-
-The SDK supports two auth modes:
-
-### API Key (Recommended for SDK)
+### Google Gemini
 
 ```python
-v = Velyrion(api_url="https://api.yourdomain.com", api_key="your-key")
-```
-
-Set `VELYRION_API_KEY` on the backend to enable.
-
-### JWT Token (Advanced)
-
-```python
-v = Velyrion(api_url="https://api.yourdomain.com")
-v.authenticate(email="operator@velyrion.com", password="password")
-```
-
----
-
-## Policy-as-Code (YAML)
-
-Define governance rules in version-controlled YAML files:
-
-```yaml
-# policies/finance.yaml
-name: "Finance Agent Guardrails"
-version: "1.0"
-description: "Rules for agents handling financial data"
-
-rules:
-  - id: block-unauthorized-tools
-    description: "Block unauthorized tools"
-    condition: "tool_used NOT IN agent.allowed_tools"
-    action: BLOCK
-    severity: HIGH
-
-  - id: kill-low-confidence
-    description: "Kill agent on low confidence"
-    condition: "confidence_score < 0.3"
-    action: KILL
-    severity: CRITICAL
-
-  - id: flag-high-value
-    description: "Flag high-value operations"
-    condition: "event.amount > 5000"
-    action: FLAG
-    severity: MEDIUM
-```
-
-### Evaluate Policies
-
-```python
-from velyrion import Policy
-
-policy = Policy.from_file("policies/finance.yaml")
-
-# Evaluate against an event
-violations = policy.evaluate(
-    agent_id="agent-002",
-    tool="admin_console",
-    data={"amount": 15000}
-)
-
-for v in violations:
-    print(f"{v.rule_id}: {v.action} [{v.severity}]")
-# → block-unauthorized-tools: BLOCK [HIGH]
-# → flag-high-value: FLAG [MEDIUM]
-```
-
-### Remote Policy Evaluation
-
-```python
-# Evaluate using server-side policies
-result = v.evaluate_policy(
-    policy_name="finance-agents",
-    agent_id="agent-002",
-    tool="payment_processor",
-    data={"amount": 50000}
-)
-```
-
----
-
-## Event Reporting
-
-Report agent actions to the governance platform:
-
-```python
-v.report(
-    agent_id="agent-001",
-    task="Process customer refund",
-    tool="payment_api",
-    input_data={"customer_id": "C-1234", "amount": 500},
-    output_data={"status": "success", "transaction_id": "TX-789"},
-    tokens_used=1500,
-    confidence_score=0.92,
-    duration_seconds=2.3,
-)
-```
-
----
-
-## Kill Switch
-
-### How It Works
-
-1. Dashboard admin clicks **⛔ Kill** on an agent
-2. Backend sets agent status to `LOCKED`
-3. SDK heartbeat detects the kill signal (within `heartbeat_interval` seconds)
-4. Next `report()` or `wrap()` call raises `AgentKilledException`
-5. Agent is prevented from taking any further actions
-
-### Handling Kill Signals
-
-```python
+import google.generativeai as genai
 from velyrion import Velyrion
-from velyrion.client import AgentKilledException
 
-v = Velyrion()
+model = genai.GenerativeModel("gemini-pro")
+v = Velyrion(api_url="https://velyrion.onrender.com")
+v.wrap(model, agent_id="gemini-agent-001")
 
-try:
-    v.report(agent_id="agent-008", task="Process payment")
-except AgentKilledException as e:
-    print(f"Agent killed: {e}")
-    # Clean up, save state, exit gracefully
-    cleanup_resources()
-    sys.exit(1)
+response = model.generate_content("Explain quantum computing")
 ```
 
-### Manual Kill Check
+### Mistral
 
 ```python
-if v.is_killed("agent-008"):
-    print("Agent has been terminated — stopping execution")
-    sys.exit(1)
-```
-
-### Programmatic Kill (Admin)
-
-```python
-v.kill("agent-008", reason="Suspicious activity detected")
-```
-
----
-
-## Action Blocking
-
-When `block_on_violation=True`, the SDK blocks actions that violate policies:
-
-```python
+from mistralai.client import MistralClient
 from velyrion import Velyrion
-from velyrion.client import ActionBlockedException
 
-v = Velyrion(block_on_violation=True)
-
-try:
-    v.report(
-        agent_id="agent-008",
-        task="Wire $50K to offshore account",
-        tool="payment_processor"
-    )
-except ActionBlockedException as e:
-    print(f"Blocked: {e.reason}")
-    # → "Blocked: Agent used tool 'payment_processor' outside allowed tools"
-    print(f"Severity: {e.severity}")
-    # → "CRITICAL"
+client = MistralClient(api_key="your-key")
+v = Velyrion(api_url="https://velyrion.onrender.com")
+v.wrap(client, agent_id="mistral-agent-001")
 ```
 
 ---
 
-## Fail-Open Design
+## 🎯 Decorators
 
-By default, if the VELYRION API is unreachable, the SDK **allows actions to proceed** (`fail_open=True`). This prevents governance downtime from blocking your AI application.
+### `@governed` — Full governance with blocking
 
 ```python
-# Fail-open (default): action proceeds if API is down
-v = Velyrion(fail_open=True)
+from velyrion import governed
 
-# Fail-closed: action is blocked if API is down
-v = Velyrion(fail_open=False)
+@governed(agent_id="agent-001", api_url="https://velyrion.onrender.com")
+def analyze_financial_data(query):
+    """This function is now governed by VELYRION."""
+    return llm.generate(query)
+
+# If VELYRION detects a policy violation → ActionBlockedException
+result = analyze_financial_data("Show all credit card numbers")
 ```
 
----
-
-## Environment Variables
-
-| Variable | Description |
-|----------|-------------|
-| `VELYRION_API_URL` | Backend URL (overrides constructor) |
-| `VELYRION_API_KEY` | API key (overrides constructor) |
-| `VELYRION_AGENT_ID` | Default agent ID |
-| `VELYRION_FAIL_OPEN` | `true` / `false` |
-
----
-
-## Dashboard Integration
-
-All events reported via the SDK appear in real-time on the VELYRION dashboard:
-
-| SDK Action | Dashboard Page |
-|------------|---------------|
-| `v.report()` | Activity Feed (`/events`) |
-| Policy violation | Violations (`/violations`) |
-| Anomaly detected | Anomalies (`/anomalies`) |
-| `v.kill()` | Incidents (`/incidents`) |
-| HITL required | Approvals (`/approvals`) |
-| Webhook triggered | Webhooks (`/webhooks`) |
-
----
-
-## Forensic Replay
-
-Every action reported through the SDK is stored and can be replayed for forensic analysis:
-
-```
-Dashboard → Agent Replay → Select Agent → View Timeline
-```
-
-Each event shows:
-- Timestamp
-- Tool used
-- Input / Output data
-- Token usage
-- Confidence score
-- Duration
-- Any violations triggered
-
----
-
-## Requirements
-
-- Python 3.10+
-- `httpx` (HTTP client)
-- `pyyaml` (Policy parsing)
-
----
-
-## Project Structure
-
-```
-sdk/
-├── velyrion/
-│   ├── __init__.py       # Public API exports
-│   ├── client.py         # VelyrionClient — wrap(), report(), kill(), heartbeat
-│   ├── decorators.py     # @governed, @track decorators
-│   └── policy.py         # YAML policy loading + evaluation
-├── pyproject.toml        # Package config
-└── README.md             # This file
-```
-
----
-
-## Full Example
+### `@track` — Lightweight logging (fire-and-forget)
 
 ```python
-import asyncio
-from velyrion import Velyrion
+from velyrion import track
+
+@track(agent_id="agent-001", tool="database_query")
+def query_database(sql):
+    """Logged but never blocked."""
+    return db.execute(sql)
+```
+
+---
+
+## ⚡ Async Support
+
+```python
+from velyrion import AsyncVelyrion
 
 async def main():
-    # Initialize
-    v = Velyrion(
-        api_url="https://api.velyrion.com",
-        api_key="vly_prod_xxxx",
-        block_on_violation=True,
-    )
-
-    # Register + wrap your agent
-    agent = v.wrap(my_langchain_agent, agent_id="finance-bot-v2")
-
-    # Run with governance
-    try:
-        result = await agent.ainvoke({"input": "Process Q4 refunds"})
-        print(f"Result: {result}")
-    except Exception as e:
-        print(f"Governance blocked: {e}")
-
-asyncio.run(main())
+    async with AsyncVelyrion(api_url="https://velyrion.onrender.com") as v:
+        result = await v.report(
+            agent_id="agent-001",
+            task="Process customer data",
+            tool="data_pipeline",
+            tokens=1500,
+            cost_usd=0.003,
+        )
+        print(result)
 ```
+
+---
+
+## 📦 Batch Reporting
+
+```python
+v = Velyrion(api_url="https://velyrion.onrender.com")
+
+events = [
+    {"agent_id": "agent-001", "task": "Query DB", "tool": "sql"},
+    {"agent_id": "agent-001", "task": "Send email", "tool": "smtp"},
+    {"agent_id": "agent-002", "task": "Generate report", "tool": "pdf"},
+]
+
+results = v.batch_report(events)
+```
+
+---
+
+## 🛡️ Kill Switch & Controls
+
+```python
+v = Velyrion(api_url="https://velyrion.onrender.com")
+
+# Immediately stop a rogue agent
+v.kill("agent-001")      # Agent cannot take any more actions
+
+# Temporarily freeze
+v.pause("agent-002")     # Blocks until unpaused
+v.unpause("agent-002")   # Resume
+
+# Check status
+v.is_alive("agent-001")  # False — it's been killed
+```
+
+---
+
+## 🔧 CLI Tool
+
+```bash
+# Install
+pip install velyrion
+
+# Set your API
+export VELYRION_API_URL=https://velyrion.onrender.com
+
+# Commands
+velyrion health                # Check API status
+velyrion agents                # List all agents
+velyrion status agent-001      # Agent details
+velyrion version               # SDK version
+```
+
+---
+
+## 🔄 Retry & Resilience
+
+The SDK includes **automatic retry with exponential backoff**:
+- 3 retries on connection failures
+- 1s → 2s → 4s delay between retries
+- **Fail-open**: If VELYRION is unreachable, agent actions are allowed (not blocked)
+
+```python
+# Context manager for clean shutdown
+with Velyrion(api_url="https://velyrion.onrender.com") as v:
+    v.wrap(agent, agent_id="agent-001")
+    agent.invoke("Do something")
+# Automatically cleaned up
+```
+
+---
+
+## 📋 Installation Options
+
+```bash
+# Core SDK
+pip install velyrion
+
+# With specific framework support
+pip install velyrion[openai]
+pip install velyrion[anthropic]
+pip install velyrion[langchain]
+pip install velyrion[gemini]
+pip install velyrion[mistral]
+pip install velyrion[crewai]
+pip install velyrion[autogen]
+
+# Async support
+pip install velyrion[async]
+
+# Everything
+pip install velyrion[all]
+```
+
+---
+
+## 🏗️ Architecture
+
+```
+Your AI Agent
+     │
+     ▼
+┌─────────────┐     ┌──────────────────┐
+│ Velyrion SDK │────▶│ VELYRION API      │
+│ (1 line)     │     │ (velyrion.com)    │
+└─────────────┘     └────────┬─────────┘
+                             │
+                    ┌────────┴─────────┐
+                    │                  │
+               ┌────▼────┐     ┌──────▼──────┐
+               │ Policy   │     │ Dashboard   │
+               │ Engine   │     │ & Audit Log │
+               └─────────┘     └─────────────┘
+```
+
+---
+
+## 📄 License
+
+MIT License — [Velyrion](https://velyrion.com)
