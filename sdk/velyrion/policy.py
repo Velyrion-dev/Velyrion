@@ -5,7 +5,10 @@ Loads YAML policy files and evaluates them against agent actions locally,
 before sending to the VELYRION API for remote evaluation.
 """
 
-import yaml
+try:
+    import yaml
+except ImportError:
+    yaml = None  # type: ignore[assignment]
 import logging
 from typing import Any, Optional
 from pathlib import Path
@@ -43,6 +46,8 @@ class Policy:
     @classmethod
     def from_file(cls, path: str) -> "Policy":
         """Load a policy from a YAML file."""
+        if yaml is None:
+            raise ImportError("pyyaml is required for YAML policy files: pip install pyyaml")
         with open(path, "r") as f:
             data = yaml.safe_load(f)
 
@@ -237,4 +242,6 @@ class Policy:
 
     def to_yaml(self) -> str:
         """Serialize policy to YAML string."""
+        if yaml is None:
+            raise ImportError("pyyaml is required for YAML export: pip install pyyaml")
         return yaml.dump(self.to_dict(), default_flow_style=False)
