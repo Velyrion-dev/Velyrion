@@ -5,6 +5,8 @@ import UserMenu from "./UserMenu";
 import ThemeToggle from "./ThemeToggle";
 
 const NAV_ITEMS = [
+  { section: "Command" },
+  { href: "/mission-control", label: "Mission Control", icon: "🎯" },
   { section: "Overview" },
   { href: "/dashboard", label: "Dashboard", icon: "📊" },
   { href: "/live", label: "Live Feed", icon: "🔴" },
