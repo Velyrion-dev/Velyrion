@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState, useRef, useCallback } from "react";
-import api, { Agent, DashboardStats } from "@/lib/api";
+import { api, Agent, DashboardStats } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://velyrion.onrender.com";
 const WS_URL = API_BASE.replace("https://", "wss://").replace("http://", "ws://") + "/ws/events";
