@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { href: "/mission-control", label: "Mission Control", icon: "🎯" },
   { section: "Overview" },
   { href: "/dashboard", label: "Dashboard", icon: "📊" },
+  { href: "/analytics", label: "Analytics", icon: "📈" },
   { href: "/live", label: "Live Feed", icon: "🔴" },
   { href: "/events", label: "Activity Feed", icon: "⚡" },
   { section: "Governance" },
