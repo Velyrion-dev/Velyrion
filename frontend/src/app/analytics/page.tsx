@@ -9,6 +9,14 @@ const RISK_COLORS: Record<string, string> = {
   LOW: "#10b981", MEDIUM: "#f59e0b", HIGH: "#f97316", CRITICAL: "#ef4444",
 };
 
+// Format numbers with US locale (1,099,678 not 10,99,678)
+const fmt = (n: number) => n.toLocaleString("en-US");
+const fmtCompact = (n: number) => {
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + "M";
+  if (n >= 1_000) return (n / 1_000).toFixed(1) + "K";
+  return n.toString();
+};
+
 export default function AnalyticsPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [agents, setAgents] = useState<Agent[]>([]);
@@ -112,14 +120,14 @@ export default function AnalyticsPage() {
         <div className="an-kpi blue">
           <div className="an-kpi-icon">⚡</div>
           <div className="an-kpi-data">
-            <div className="an-kpi-value">{totalActions.toLocaleString()}</div>
+            <div className="an-kpi-value">{fmtCompact(totalActions)}</div>
             <div className="an-kpi-label">Total Actions</div>
           </div>
         </div>
         <div className="an-kpi green">
           <div className="an-kpi-icon">🪙</div>
           <div className="an-kpi-data">
-            <div className="an-kpi-value">{totalTokens.toLocaleString()}</div>
+            <div className="an-kpi-value">{fmtCompact(totalTokens)}</div>
             <div className="an-kpi-label">Tokens Used</div>
           </div>
         </div>
@@ -195,7 +203,7 @@ export default function AnalyticsPage() {
                 <div className="an-bar-track">
                   <div className="an-bar-fill green" style={{ width: `${((a.total_cost_usd || 0) / maxCost) * 100}%` }} />
                 </div>
-                <div className="an-bar-value">${(a.total_cost_usd || 0).toFixed(3)}</div>
+                <div className="an-bar-value">${(a.total_cost_usd || 0).toFixed(2)}</div>
               </div>
             ))}
             {topCostAgents.length === 0 && <div className="an-empty">No cost data yet</div>}
@@ -252,7 +260,7 @@ export default function AnalyticsPage() {
                   <tr key={dept}>
                     <td className="an-table-dept">{dept}</td>
                     <td>{data.agents}</td>
-                    <td>{data.actions.toLocaleString()}</td>
+                    <td>{fmt(data.actions)}</td>
                     <td>${data.cost.toFixed(2)}</td>
                     <td>
                       <span className={`badge ${data.violations > 5 ? "badge-critical" : data.violations > 0 ? "badge-medium" : "badge-low"}`}>
@@ -284,7 +292,7 @@ export default function AnalyticsPage() {
                     <div className="an-budget-fill" style={{ width: `${pct}%`, background: color }} />
                   </div>
                   <div className="an-budget-detail">
-                    {a.tokens_used.toLocaleString()} / {a.max_token_budget.toLocaleString()} tokens
+                    {fmt(a.tokens_used)} / {fmt(a.max_token_budget)} tokens
                   </div>
                 </div>
               );

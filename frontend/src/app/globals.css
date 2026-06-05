@@ -1934,7 +1934,7 @@ body {
 .an-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
 
 /* KPI Row */
-.an-kpi-row { display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px; }
+.an-kpi-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
 .an-kpi { display: flex; align-items: center; gap: 14px; padding: 18px 20px; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 14px; transition: all 0.3s; position: relative; overflow: hidden; }
 .an-kpi::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
 .an-kpi.blue::before { background: var(--gradient-blue-purple); }
