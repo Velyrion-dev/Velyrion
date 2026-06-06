@@ -22,6 +22,8 @@ const NAV_ITEMS = [
   { href: "/incidents", label: "Incidents", icon: "🚨" },
   { section: "Intelligence" },
   { href: "/replay", label: "Agent Replay", icon: "🔍" },
+  { href: "/leaderboard", label: "Leaderboard", icon: "🏆" },
+  { href: "/forensics", label: "Forensics", icon: "🔍" },
   { section: "Operations" },
   { href: "/approvals", label: "Approvals", icon: "✋" },
   { href: "/alerts", label: "Alerts", icon: "🔔" },
