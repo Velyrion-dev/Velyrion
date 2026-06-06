@@ -2188,3 +2188,65 @@ body {
 
 /* Forensics Responsive */
 @media (max-width: 768px) { .fr-main { grid-template-columns: 1fr; } .fr-sidebar { max-height: 300px; } .fr-state-grid { grid-template-columns: repeat(2, 1fr); } .fr-detail-grid { grid-template-columns: repeat(2, 1fr); } }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   API DOCUMENTATION
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+.dc-page { display: flex; flex-direction: column; gap: 20px; padding: 24px; min-height: 100vh; background: var(--bg-primary); }
+.dc-header { display: flex; align-items: center; justify-content: space-between; }
+.dc-base-url { display: flex; flex-direction: column; gap: 2px; text-align: right; }
+.dc-main { display: grid; grid-template-columns: 260px 1fr; gap: 20px; }
+.dc-sidebar { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; }
+.dc-endpoint-list { padding: 8px; overflow-y: auto; }
+.dc-ep-btn { display: flex; align-items: center; gap: 8px; width: 100%; padding: 10px 12px; border: 1px solid transparent; border-radius: 8px; background: transparent; cursor: pointer; transition: all 0.2s; text-align: left; color: inherit; margin-bottom: 4px; }
+.dc-ep-btn:hover { background: rgba(255,255,255,0.03); }
+.dc-ep-btn.active { border-color: var(--accent-blue); background: rgba(59,130,246,0.08); }
+.dc-ep-method { padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 800; letter-spacing: 0.3px; flex-shrink: 0; }
+.dc-ep-method-lg { padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 800; letter-spacing: 0.5px; }
+.dc-ep-title { font-size: 12px; font-weight: 600; color: var(--text-primary); }
+.dc-detail { display: flex; flex-direction: column; gap: 16px; }
+.dc-code-section { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 18px 24px; }
+.dc-try-section { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 18px 24px; }
+.dc-try-url { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: rgba(0,0,0,0.2); border-radius: 8px; margin-top: 12px; }
+.dc-try-url code { font-size: 12px; color: var(--accent-cyan); }
+@media (max-width: 768px) { .dc-main { grid-template-columns: 1fr; } .dc-sidebar { max-height: 300px; } }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   SYSTEM STATUS
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+.st-page { display: flex; flex-direction: column; gap: 24px; padding: 24px; min-height: 100vh; background: var(--bg-primary); }
+
+/* Banner */
+.st-banner { display: flex; align-items: center; gap: 16px; padding: 20px 24px; border: 1px solid; border-radius: 14px; }
+.st-banner-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; animation: mc-pulse 2s ease-in-out infinite; }
+.st-banner-info { flex: 1; }
+.st-banner-title { font-size: 20px; font-weight: 800; margin: 0; }
+.st-banner-sub { font-size: 12px; color: var(--text-muted); margin: 2px 0 0; }
+
+/* Service Grid */
+.st-services { }
+.st-service-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.st-service-card { padding: 18px; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 14px; }
+.st-service-top { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+.st-service-name { font-size: 14px; font-weight: 700; color: var(--text-primary); flex: 1; }
+.st-service-badge { padding: 3px 10px; border-radius: 6px; font-size: 10px; font-weight: 700; letter-spacing: 0.3px; }
+.st-service-metrics { display: flex; gap: 20px; }
+.st-metric { display: flex; flex-direction: column; }
+.st-metric-value { font-size: 16px; font-weight: 800; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.st-metric-label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* Latency */
+.st-latency-section { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 20px 24px; }
+
+/* Uptime */
+.st-uptime-section { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 20px 24px; }
+.st-uptime-grid { display: flex; flex-direction: column; gap: 10px; }
+.st-uptime-bar { display: flex; align-items: center; gap: 12px; }
+.st-uptime-label { font-size: 12px; font-weight: 600; color: var(--text-secondary); width: 120px; flex-shrink: 0; }
+.st-uptime-pct { font-size: 13px; font-weight: 800; width: 50px; text-align: right; font-variant-numeric: tabular-nums; }
+
+/* Status Responsive */
+@media (max-width: 768px) { .st-service-grid { grid-template-columns: repeat(2, 1fr); } .st-banner { flex-direction: column; text-align: center; } }
+@media (max-width: 480px) { .st-service-grid { grid-template-columns: 1fr; } }

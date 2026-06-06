@@ -23,12 +23,14 @@ const NAV_ITEMS = [
   { section: "Intelligence" },
   { href: "/replay", label: "Agent Replay", icon: "🔍" },
   { href: "/leaderboard", label: "Leaderboard", icon: "🏆" },
-  { href: "/forensics", label: "Forensics", icon: "🔍" },
+  { href: "/forensics", label: "Forensics", icon: "🔬" },
   { section: "Operations" },
   { href: "/approvals", label: "Approvals", icon: "✋" },
   { href: "/alerts", label: "Alerts", icon: "🔔" },
   { href: "/webhooks", label: "Webhooks", icon: "🔗" },
   { href: "/reports", label: "Reports", icon: "📋" },
+  { href: "/docs", label: "API Docs", icon: "📖" },
+  { href: "/status", label: "System Status", icon: "🟢" },
 ];
 
 export default function Sidebar({ className = "" }: { className?: string }) {
