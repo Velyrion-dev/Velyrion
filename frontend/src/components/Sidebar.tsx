@@ -24,6 +24,9 @@ const NAV_ITEMS = [
   { href: "/replay", label: "Agent Replay", icon: "🔍" },
   { href: "/leaderboard", label: "Leaderboard", icon: "🏆" },
   { href: "/forensics", label: "Forensics", icon: "🔬" },
+  { href: "/compare", label: "Compare", icon: "⚔️" },
+  { href: "/heatmap", label: "Activity Map", icon: "📅" },
+  { href: "/cost-optimizer", label: "Cost Optimizer", icon: "💰" },
   { section: "Operations" },
   { href: "/approvals", label: "Approvals", icon: "✋" },
   { href: "/alerts", label: "Alerts", icon: "🔔" },
@@ -31,6 +34,7 @@ const NAV_ITEMS = [
   { href: "/reports", label: "Reports", icon: "📋" },
   { href: "/docs", label: "API Docs", icon: "📖" },
   { href: "/status", label: "System Status", icon: "🟢" },
+  { href: "/settings", label: "Settings", icon: "⚙️" },
 ];
 
 export default function Sidebar({ className = "" }: { className?: string }) {
