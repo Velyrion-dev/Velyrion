@@ -7,6 +7,7 @@ import ThemeToggle from "./ThemeToggle";
 const NAV_ITEMS = [
   { section: "Command" },
   { href: "/mission-control", label: "Mission Control", icon: "🎯" },
+  { href: "/governance-score", label: "Governance Score", icon: "📜" },
   { href: "/connect", label: "Connect Agent", icon: "🔌" },
   { section: "Overview" },
   { href: "/dashboard", label: "Dashboard", icon: "📊" },

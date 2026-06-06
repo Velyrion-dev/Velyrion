@@ -2369,3 +2369,81 @@ body {
 
 /* Settings Responsive */
 @media (max-width: 768px) { .set-main { grid-template-columns: 1fr; } .set-tabs { flex-direction: row; overflow-x: auto; } }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   GOVERNANCE SCORE™
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+.gs-page { display: flex; flex-direction: column; gap: 24px; padding: 24px; min-height: 100vh; background: var(--bg-primary); }
+.gs-header { display: flex; align-items: center; justify-content: space-between; }
+
+/* Fleet Banner */
+.gs-fleet-banner { display: flex; align-items: center; gap: 32px; padding: 28px 32px; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 16px; }
+.gs-fleet-score-ring { position: relative; width: 120px; height: 120px; flex-shrink: 0; }
+.gs-fleet-score-inner { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.gs-fleet-score-num { font-size: 32px; font-weight: 900; font-variant-numeric: tabular-nums; }
+.gs-fleet-score-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.gs-fleet-info { flex: 1; }
+.gs-fleet-grade { font-size: 18px; font-weight: 800; margin-bottom: 12px; }
+.gs-fleet-stats { display: flex; gap: 24px; }
+.gs-fleet-stat { display: flex; flex-direction: column; }
+.gs-fleet-stat-val { font-size: 22px; font-weight: 800; color: var(--text-primary); }
+.gs-fleet-stat-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.3px; }
+
+/* Main Layout */
+.gs-main { display: grid; grid-template-columns: 300px 1fr; gap: 20px; }
+
+/* Agent Scores List */
+.gs-scores-list { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; max-height: 700px; }
+.gs-agent-list { overflow-y: auto; padding: 8px; flex: 1; }
+.gs-agent-card { display: flex; align-items: center; gap: 8px; width: 100%; padding: 10px 12px; border: 1px solid var(--border-subtle); border-radius: 10px; background: transparent; cursor: pointer; text-align: left; color: inherit; margin-bottom: 4px; transition: all 0.2s; }
+.gs-agent-card:hover { border-color: rgba(59,130,246,0.2); background: rgba(255,255,255,0.02); }
+.gs-agent-card.active { border-color: var(--accent-blue); background: rgba(59,130,246,0.08); }
+.gs-rank { font-size: 11px; font-weight: 800; color: var(--text-muted); width: 28px; flex-shrink: 0; }
+.gs-agent-info { flex: 1; min-width: 0; }
+.gs-agent-name { font-size: 12px; font-weight: 700; color: var(--text-primary); display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gs-agent-dept { font-size: 10px; color: var(--text-muted); }
+.gs-score-pill { padding: 3px 10px; border-radius: 6px; font-size: 11px; font-weight: 800; flex-shrink: 0; }
+.gs-cert-badge { width: 20px; height: 20px; border-radius: 50%; background: rgba(16,185,129,0.2); color: var(--accent-green); font-size: 11px; font-weight: 900; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+/* Detail Panel */
+.gs-detail { display: flex; flex-direction: column; gap: 20px; }
+.gs-detail-header { display: flex; align-items: center; gap: 28px; padding: 28px; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 16px; }
+.gs-detail-ring { position: relative; width: 140px; height: 140px; flex-shrink: 0; }
+.gs-detail-ring-inner { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.gs-detail-score { font-size: 40px; font-weight: 900; font-variant-numeric: tabular-nums; }
+.gs-detail-grade { font-size: 16px; font-weight: 800; }
+.gs-detail-info { flex: 1; }
+.gs-detail-name { font-size: 22px; font-weight: 800; color: var(--text-primary); margin: 0; }
+.gs-detail-dept { font-size: 13px; color: var(--text-muted); margin: 4px 0 14px; }
+
+/* Certification Badge */
+.gs-cert-full { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 10px; background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2); }
+.gs-cert-full.uncertified { background: rgba(239,68,68,0.08); border-color: rgba(239,68,68,0.2); }
+.gs-cert-icon { font-size: 18px; font-weight: 900; color: var(--accent-green); width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(16,185,129,0.15); }
+.gs-cert-full.uncertified .gs-cert-icon { color: var(--accent-red); background: rgba(239,68,68,0.15); }
+.gs-cert-title { font-size: 13px; font-weight: 800; color: var(--text-primary); }
+.gs-cert-sub { font-size: 10px; color: var(--text-muted); }
+
+/* Dimensions */
+.gs-dimensions { padding: 20px 24px; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 14px; }
+.gs-dim-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+.gs-dim-row:last-child { border-bottom: none; }
+.gs-dim-left { display: flex; align-items: center; gap: 10px; min-width: 200px; }
+.gs-dim-icon { font-size: 18px; }
+.gs-dim-name { font-size: 13px; font-weight: 700; color: var(--text-primary); }
+.gs-dim-desc { font-size: 10px; color: var(--text-muted); }
+.gs-dim-right { display: flex; align-items: center; gap: 10px; flex: 1; justify-content: flex-end; }
+.gs-dim-bar { width: 120px; height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; }
+.gs-dim-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
+.gs-dim-score { font-size: 14px; font-weight: 800; width: 30px; text-align: right; font-variant-numeric: tabular-nums; }
+.gs-dim-weight { font-size: 9px; color: var(--text-muted); width: 28px; text-align: right; }
+
+/* Quick Stats */
+.gs-quick-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.gs-qs-item { padding: 14px; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 10px; display: flex; flex-direction: column; align-items: center; }
+.gs-qs-val { font-size: 16px; font-weight: 800; color: var(--text-primary); }
+.gs-qs-label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.3px; margin-top: 2px; }
+
+/* GS Responsive */
+@media (max-width: 768px) { .gs-main { grid-template-columns: 1fr; } .gs-fleet-banner { flex-direction: column; text-align: center; } .gs-fleet-stats { justify-content: center; } .gs-detail-header { flex-direction: column; text-align: center; } .gs-quick-stats { grid-template-columns: repeat(2, 1fr); } }
