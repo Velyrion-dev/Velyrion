@@ -36,6 +36,10 @@ const NAV_ITEMS = [
   { href: "/docs", label: "API Docs", icon: "📖" },
   { href: "/status", label: "System Status", icon: "🟢" },
   { href: "/settings", label: "Settings", icon: "⚙️" },
+  { section: "Moat" },
+  { href: "/threat-intel", label: "Threat Intel", icon: "🧬" },
+  { href: "/behavioral-dna", label: "Behavioral DNA", icon: "🧠" },
+  { href: "/regulatory", label: "Regulatory", icon: "🏛️" },
 ];
 
 export default function Sidebar({ className = "" }: { className?: string }) {
