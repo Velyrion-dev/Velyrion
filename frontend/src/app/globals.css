@@ -2557,3 +2557,73 @@ body {
 
 /* RA Responsive */
 @media (max-width: 768px) { .ra-overview { flex-direction: column; } .ra-detail-header { flex-direction: column; } .ra-compliance-badge { margin-left: 0; } }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   AGENT TRUST REGISTRY
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+.tr-page { display: flex; flex-direction: column; gap: 24px; padding: 24px; min-height: 100vh; background: var(--bg-primary); }
+.tr-controls { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.tr-main { display: grid; grid-template-columns: 1fr 320px; gap: 20px; }
+.tr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; align-content: start; }
+.tr-card { padding: 16px; border: 1px solid var(--border-subtle); border-radius: 12px; background: var(--bg-card); cursor: pointer; transition: all 0.2s; }
+.tr-card:hover { border-color: rgba(59,130,246,0.25); transform: translateY(-2px); }
+.tr-card.active { border-color: var(--accent-blue); }
+.tr-card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.tr-card-tier { padding: 3px 10px; border-radius: 6px; font-size: 10px; font-weight: 700; text-transform: capitalize; }
+.tr-card-name { font-size: 14px; font-weight: 800; color: var(--text-primary); }
+.tr-card-dept { font-size: 11px; color: var(--text-muted); margin-bottom: 10px; }
+.tr-card-score { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.tr-card-tags { display: flex; gap: 4px; flex-wrap: wrap; }
+.tr-detail { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+.tr-detail-top { display: flex; align-items: center; gap: 14px; }
+@media (max-width: 768px) { .tr-main { grid-template-columns: 1fr; } }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   CROSS-COMPANY TRUST MESH
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+.tm-page { display: flex; flex-direction: column; gap: 24px; padding: 24px; min-height: 100vh; background: var(--bg-primary); }
+.tm-agreement-list { display: flex; flex-direction: column; gap: 10px; }
+.tm-agreement-card { padding: 14px 16px; border: 1px solid var(--border-subtle); border-radius: 10px; }
+.tm-ag-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.tm-ag-orgs { display: flex; align-items: center; gap: 8px; }
+.tm-ag-org { font-size: 13px; font-weight: 700; color: var(--text-primary); }
+.tm-ag-arrow { font-size: 14px; color: var(--accent-cyan); }
+.tm-ag-meta { display: flex; gap: 16px; font-size: 10px; color: var(--text-muted); }
+.tm-event-list { display: flex; flex-direction: column; gap: 6px; }
+.tm-event-card { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--border-subtle); border-radius: 8px; }
+.tm-event-info { flex: 1; }
+.tm-event-action { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+.tm-event-route { display: flex; align-items: center; gap: 6px; font-size: 10px; margin-top: 2px; }
+.tm-event-agent { color: var(--text-muted); }
+.tm-event-time { font-size: 10px; color: var(--text-muted); flex-shrink: 0; }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   AI RISK INSURANCE SCORING
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+.is-page { display: flex; flex-direction: column; gap: 24px; padding: 24px; min-height: 100vh; background: var(--bg-primary); }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   OPEN AGENT GOVERNANCE STANDARD (OAGS)
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+.oags-page { display: flex; flex-direction: column; gap: 24px; padding: 24px; min-height: 100vh; background: var(--bg-primary); }
+.oags-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.oags-version-badge { padding: 6px 16px; background: rgba(139,92,246,0.1); border: 1px solid rgba(139,92,246,0.3); border-radius: 8px; font-size: 12px; font-weight: 800; color: var(--accent-purple); }
+.oags-main { display: grid; grid-template-columns: 240px 1fr; gap: 20px; }
+.oags-toc { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; }
+.oags-toc-list { padding: 8px; }
+.oags-toc-item { display: flex; align-items: center; gap: 8px; width: 100%; padding: 10px 12px; border: 1px solid transparent; border-radius: 8px; background: transparent; cursor: pointer; font-size: 12px; font-weight: 600; color: var(--text-secondary); text-align: left; transition: all 0.2s; margin-bottom: 2px; }
+.oags-toc-item:hover { background: rgba(255,255,255,0.03); }
+.oags-toc-item.active { border-color: var(--accent-purple); background: rgba(139,92,246,0.08); color: var(--accent-purple); }
+.oags-toc-num { width: 20px; height: 20px; border-radius: 50%; background: rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 800; flex-shrink: 0; }
+.oags-toc-item.active .oags-toc-num { background: rgba(139,92,246,0.2); }
+.oags-content { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 28px 32px; }
+.oags-section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.oags-section-title { font-size: 22px; font-weight: 800; color: var(--text-primary); margin: 0; }
+.oags-section-body { margin-bottom: 20px; }
+.oags-paragraph { font-size: 13px; color: var(--text-secondary); line-height: 1.7; margin: 0 0 8px; white-space: pre-wrap; }
+.oags-fields { margin-top: 16px; }
+@media (max-width: 768px) { .oags-main { grid-template-columns: 1fr; } }

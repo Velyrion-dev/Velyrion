@@ -40,6 +40,10 @@ const NAV_ITEMS = [
   { href: "/threat-intel", label: "Threat Intel", icon: "🧬" },
   { href: "/behavioral-dna", label: "Behavioral DNA", icon: "🧠" },
   { href: "/regulatory", label: "Regulatory", icon: "🏛️" },
+  { href: "/trust-registry", label: "Trust Registry", icon: "🏪" },
+  { href: "/trust-mesh", label: "Trust Mesh", icon: "🤝" },
+  { href: "/insurance-scoring", label: "Insurance Score", icon: "🛡️" },
+  { href: "/oags", label: "OAGS Spec", icon: "📐" },
 ];
 
 export default function Sidebar({ className = "" }: { className?: string }) {
