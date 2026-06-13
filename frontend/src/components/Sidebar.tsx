@@ -44,6 +44,10 @@ const NAV_ITEMS = [
   { href: "/trust-mesh", label: "Trust Mesh", icon: "🤝" },
   { href: "/insurance-scoring", label: "Insurance Score", icon: "🛡️" },
   { href: "/oags", label: "OAGS Spec", icon: "📐" },
+  { href: "/copilot", label: "AI Copilot", icon: "🤖" },
+  { href: "/sandbox", label: "Sandbox", icon: "🧪" },
+  { href: "/war-room", label: "War Room", icon: "🎮" },
+  { href: "/multi-agent", label: "Multi-Agent", icon: "🔗" },
 ];
 
 export default function Sidebar({ className = "" }: { className?: string }) {

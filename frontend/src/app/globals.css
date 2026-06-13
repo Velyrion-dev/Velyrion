@@ -2627,3 +2627,85 @@ body {
 .oags-paragraph { font-size: 13px; color: var(--text-secondary); line-height: 1.7; margin: 0 0 8px; white-space: pre-wrap; }
 .oags-fields { margin-top: 16px; }
 @media (max-width: 768px) { .oags-main { grid-template-columns: 1fr; } }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   GOVERNANCE AI COPILOT
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+.cp-page { display: flex; flex-direction: column; gap: 20px; padding: 24px; min-height: 100vh; background: var(--bg-primary); }
+.cp-header { margin-bottom: 4px; }
+.cp-main { display: flex; flex-direction: column; gap: 12px; flex: 1; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 16px; padding: 20px; max-height: 70vh; }
+.cp-chat { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding-right: 8px; }
+.cp-msg { display: flex; gap: 10px; align-items: flex-start; }
+.cp-msg.user { flex-direction: row-reverse; }
+.cp-msg-avatar { width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+.cp-msg.user .cp-msg-avatar { background: rgba(59,130,246,0.15); }
+.cp-msg-bubble { max-width: 70%; padding: 12px 16px; border-radius: 14px; background: rgba(255,255,255,0.04); border: 1px solid var(--border-subtle); }
+.cp-msg.user .cp-msg-bubble { background: rgba(59,130,246,0.1); border-color: rgba(59,130,246,0.2); }
+.cp-msg-content { font-size: 13px; color: var(--text-primary); line-height: 1.6; }
+.cp-msg-content strong { color: var(--accent-cyan); font-weight: 800; }
+.cp-msg-time { font-size: 9px; color: var(--text-muted); margin-top: 6px; }
+.cp-thinking { display: flex; gap: 4px; padding: 4px 0; }
+.cp-thinking span { width: 6px; height: 6px; border-radius: 50%; background: var(--text-muted); animation: cp-dot 1.4s infinite ease-in-out; }
+.cp-thinking span:nth-child(2) { animation-delay: 0.2s; }
+.cp-thinking span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes cp-dot { 0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }
+.cp-suggestions { display: flex; gap: 8px; flex-wrap: wrap; }
+.cp-suggestion { padding: 6px 14px; border: 1px solid var(--border-subtle); border-radius: 20px; background: transparent; color: var(--text-secondary); font-size: 11px; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+.cp-suggestion:hover { border-color: var(--accent-blue); color: var(--accent-blue); background: rgba(59,130,246,0.05); }
+.cp-input-row { display: flex; gap: 8px; }
+.cp-input { flex: 1; padding: 10px 16px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-subtle); border-radius: 10px; color: var(--text-primary); font-size: 13px; }
+.cp-input:focus { outline: none; border-color: var(--accent-blue); }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   AGENT SIMULATION SANDBOX
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+.sb-page { display: flex; flex-direction: column; gap: 24px; padding: 24px; min-height: 100vh; background: var(--bg-primary); }
+.sb-main { display: grid; grid-template-columns: 280px 1fr; gap: 20px; }
+.sb-scenarios { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; }
+.sb-scenario-list { padding: 8px; overflow-y: auto; }
+.sb-scenario-card { display: flex; align-items: flex-start; gap: 10px; width: 100%; padding: 12px; border: 1px solid var(--border-subtle); border-radius: 10px; background: transparent; cursor: pointer; text-align: left; color: inherit; margin-bottom: 6px; transition: all 0.2s; }
+.sb-scenario-card:hover { border-color: rgba(59,130,246,0.2); background: rgba(255,255,255,0.02); }
+.sb-scenario-card.active { border-color: var(--accent-blue); background: rgba(59,130,246,0.06); }
+.sb-scenario-name { font-size: 12px; font-weight: 700; color: var(--text-primary); }
+.sb-scenario-desc { font-size: 10px; color: var(--text-muted); margin-top: 2px; line-height: 1.4; }
+.sb-panel { display: flex; flex-direction: column; gap: 16px; }
+.sb-config { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 20px; }
+.sb-params { display: flex; gap: 16px; flex-wrap: wrap; }
+.sb-param { display: flex; flex-direction: column; gap: 2px; }
+.sb-results { display: flex; flex-direction: column; gap: 16px; }
+.sb-result-header { display: flex; align-items: center; gap: 20px; padding: 20px; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 14px; }
+.sb-result-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; flex: 1; }
+.sb-violations { padding: 16px; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 14px; }
+.sb-vio-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; }
+.sb-recs { padding: 16px; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 14px; }
+@media (max-width: 768px) { .sb-main { grid-template-columns: 1fr; } }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   INCIDENT WAR ROOM
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+.wr-page { display: flex; flex-direction: column; gap: 24px; padding: 24px; min-height: 100vh; background: var(--bg-primary); }
+.wr-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.wr-active-badge { padding: 8px 16px; border-radius: 10px; font-size: 13px; font-weight: 800; background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); color: var(--accent-red); }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   MULTI-AGENT GOVERNANCE PROTOCOL
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+.ma-page { display: flex; flex-direction: column; gap: 24px; padding: 24px; min-height: 100vh; background: var(--bg-primary); }
+.ma-flow-list { display: flex; flex-direction: column; gap: 8px; }
+.ma-flow-card { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border: 1px solid var(--border-subtle); border-radius: 10px; cursor: pointer; transition: all 0.2s; }
+.ma-flow-card:hover { border-color: rgba(59,130,246,0.2); background: rgba(255,255,255,0.02); }
+.ma-flow-card.active { border-color: var(--accent-blue); background: rgba(59,130,246,0.06); }
+.ma-flow-info { flex: 1; }
+.ma-flow-route { display: flex; align-items: center; gap: 6px; }
+.ma-flow-agent { font-size: 12px; font-weight: 700; color: var(--text-primary); }
+.ma-flow-action { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+.ma-flow-detail { padding: 14px; background: rgba(0,0,0,0.15); border-radius: 10px; }
+.ma-policy-list { display: flex; flex-direction: column; gap: 8px; }
+.ma-policy-card { padding: 12px 14px; border: 1px solid var(--border-subtle); border-radius: 10px; }
+.ma-policy-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.ma-policy-name { font-size: 13px; font-weight: 700; color: var(--text-primary); }
+.ma-policy-rule { font-size: 11px; color: var(--text-muted); margin: 0; line-height: 1.5; }
