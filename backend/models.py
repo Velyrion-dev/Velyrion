@@ -228,3 +228,186 @@ class Alert(Base):
     human_action_required: Mapped[str] = mapped_column(Text, default="")
     channel: Mapped[str] = mapped_column(String(64), default="DASHBOARD")
     delivered: Mapped[bool] = mapped_column(Boolean, default=True)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  MOAT FEATURE MODELS
+# ══════════════════════════════════════════════════════════════════════════════
+
+# ── 1. Governance Score ────────────────────────────────────────────────────────
+
+class GovernanceScore(Base):
+    __tablename__ = "governance_scores"
+
+    score_id: Mapped[str] = mapped_column(String(64), primary_key=True, default=_uuid)
+    agent_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    overall_score: Mapped[int] = mapped_column(Integer, default=0)
+    grade: Mapped[str] = mapped_column(String(4), default="C")
+    certified: Mapped[bool] = mapped_column(Boolean, default=False)
+    compliance_score: Mapped[int] = mapped_column(Integer, default=0)
+    cost_efficiency_score: Mapped[int] = mapped_column(Integer, default=0)
+    budget_discipline_score: Mapped[int] = mapped_column(Integer, default=0)
+    reliability_score: Mapped[int] = mapped_column(Integer, default=0)
+    risk_profile_score: Mapped[int] = mapped_column(Integer, default=0)
+    track_record_score: Mapped[int] = mapped_column(Integer, default=0)
+    computed_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
+# ── 2. Threat Intelligence ────────────────────────────────────────────────────
+
+class ThreatPattern(Base):
+    __tablename__ = "threat_patterns"
+
+    pattern_id: Mapped[str] = mapped_column(String(64), primary_key=True, default=_uuid)
+    pattern_type: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    severity: Mapped[str] = mapped_column(SAEnum(RiskLevel), nullable=False)
+    description: Mapped[str] = mapped_column(Text, nullable=False)
+    occurrences: Mapped[int] = mapped_column(Integer, default=1)
+    affected_agents: Mapped[dict] = mapped_column(JSON, default=list)
+    mitigation: Mapped[str] = mapped_column(Text, default="")
+    first_seen: Mapped[datetime] = mapped_column(DateTime, default=_now)
+    last_seen: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
+# ── 3. Behavioral DNA ─────────────────────────────────────────────────────────
+
+class BehavioralProfile(Base):
+    __tablename__ = "behavioral_profiles"
+
+    profile_id: Mapped[str] = mapped_column(String(64), primary_key=True, default=_uuid)
+    agent_id: Mapped[str] = mapped_column(String(64), nullable=False, unique=True, index=True)
+    fingerprint: Mapped[str] = mapped_column(String(32), nullable=False)
+    drift_score: Mapped[float] = mapped_column(Float, default=0.0)
+    traits: Mapped[dict] = mapped_column(JSON, default=list)  # [{name, value, baseline, deviation, status}]
+    computed_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
+# ── 4. Regulatory Autopilot ───────────────────────────────────────────────────
+
+class RegulatoryAssessment(Base):
+    __tablename__ = "regulatory_assessments"
+
+    assessment_id: Mapped[str] = mapped_column(String(64), primary_key=True, default=_uuid)
+    regulation_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    regulation_name: Mapped[str] = mapped_column(String(128), nullable=False)
+    compliance_rate: Mapped[int] = mapped_column(Integer, default=0)
+    requirements: Mapped[dict] = mapped_column(JSON, default=list)  # [{name, status, detail}]
+    assessed_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
+# ── 5. Trust Registry ─────────────────────────────────────────────────────────
+
+class TrustRegistryEntry(Base):
+    __tablename__ = "trust_registry"
+
+    entry_id: Mapped[str] = mapped_column(String(64), primary_key=True, default=_uuid)
+    agent_id: Mapped[str] = mapped_column(String(64), nullable=False, unique=True, index=True)
+    trust_score: Mapped[int] = mapped_column(Integer, default=50)
+    tier: Mapped[str] = mapped_column(String(32), default="bronze")
+    verified: Mapped[bool] = mapped_column(Boolean, default=False)
+    tags: Mapped[dict] = mapped_column(JSON, default=list)
+    integrations: Mapped[int] = mapped_column(Integer, default=0)
+    last_audit: Mapped[datetime] = mapped_column(DateTime, default=_now)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
+# ── 6. Trust Mesh ─────────────────────────────────────────────────────────────
+
+class TrustAgreement(Base):
+    __tablename__ = "trust_agreements"
+
+    agreement_id: Mapped[str] = mapped_column(String(64), primary_key=True, default=_uuid)
+    org_a: Mapped[str] = mapped_column(String(128), nullable=False)
+    org_b: Mapped[str] = mapped_column(String(128), nullable=False)
+    status: Mapped[str] = mapped_column(String(32), default="pending")
+    agent_count: Mapped[int] = mapped_column(Integer, default=0)
+    shared_policies: Mapped[dict] = mapped_column(JSON, default=list)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+    expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
+
+
+class CrossOrgEvent(Base):
+    __tablename__ = "cross_org_events"
+
+    event_id: Mapped[str] = mapped_column(String(64), primary_key=True, default=_uuid)
+    timestamp: Mapped[datetime] = mapped_column(DateTime, default=_now)
+    from_org: Mapped[str] = mapped_column(String(128), nullable=False)
+    from_agent: Mapped[str] = mapped_column(String(128), nullable=False)
+    to_org: Mapped[str] = mapped_column(String(128), nullable=False)
+    to_agent: Mapped[str] = mapped_column(String(128), nullable=False)
+    action: Mapped[str] = mapped_column(String(255), nullable=False)
+    status: Mapped[str] = mapped_column(String(32), default="governed")  # governed, blocked, pending
+
+
+# ── 7. Insurance Scoring ──────────────────────────────────────────────────────
+
+class InsuranceProfile(Base):
+    __tablename__ = "insurance_profiles"
+
+    profile_id: Mapped[str] = mapped_column(String(64), primary_key=True, default=_uuid)
+    agent_id: Mapped[str] = mapped_column(String(64), nullable=False, unique=True, index=True)
+    risk_score: Mapped[int] = mapped_column(Integer, default=50)
+    tier: Mapped[str] = mapped_column(String(32), default="moderate")
+    premium_estimate: Mapped[float] = mapped_column(Float, default=1000.0)
+    annual_savings: Mapped[float] = mapped_column(Float, default=0.0)
+    factors: Mapped[dict] = mapped_column(JSON, default=list)  # [{name, impact, weight, detail}]
+    computed_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
+# ── 10. Simulation Sandbox ────────────────────────────────────────────────────
+
+class SimulationRun(Base):
+    __tablename__ = "simulation_runs"
+
+    run_id: Mapped[str] = mapped_column(String(64), primary_key=True, default=_uuid)
+    scenario_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    agent_id: Mapped[str] = mapped_column(String(64), nullable=True)
+    score: Mapped[int] = mapped_column(Integer, default=0)
+    grade: Mapped[str] = mapped_column(String(4), default="F")
+    violations_triggered: Mapped[dict] = mapped_column(JSON, default=list)
+    actions_simulated: Mapped[int] = mapped_column(Integer, default=0)
+    cost_simulated: Mapped[float] = mapped_column(Float, default=0.0)
+    risk_level: Mapped[str] = mapped_column(String(32), default="LOW")
+    recommendations: Mapped[dict] = mapped_column(JSON, default=list)
+    ran_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
+# ── 11. War Room ──────────────────────────────────────────────────────────────
+
+class WarRoomIncident(Base):
+    __tablename__ = "war_room_incidents"
+
+    incident_id: Mapped[str] = mapped_column(String(64), primary_key=True, default=_uuid)
+    violation_id: Mapped[str] = mapped_column(String(64), nullable=True)
+    agent_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    severity: Mapped[str] = mapped_column(SAEnum(RiskLevel), default=RiskLevel.MEDIUM)
+    status: Mapped[str] = mapped_column(String(32), default="investigating")
+    assignee: Mapped[str] = mapped_column(String(128), default="Unassigned")
+    timeline: Mapped[dict] = mapped_column(JSON, default=list)
+    notes: Mapped[dict] = mapped_column(JSON, default=list)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=_now, onupdate=_now)
+
+
+# ── 12. Multi-Agent Protocol ─────────────────────────────────────────────────
+
+class AgentFlow(Base):
+    __tablename__ = "agent_flows"
+
+    flow_id: Mapped[str] = mapped_column(String(64), primary_key=True, default=_uuid)
+    from_agent_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    to_agent_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    action: Mapped[str] = mapped_column(String(255), nullable=False)
+    status: Mapped[str] = mapped_column(String(32), default="governed")
+    timestamp: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
+class InterAgentPolicy(Base):
+    __tablename__ = "inter_agent_policies"
+
+    policy_id: Mapped[str] = mapped_column(String(64), primary_key=True, default=_uuid)
+    name: Mapped[str] = mapped_column(String(128), nullable=False)
+    rule: Mapped[str] = mapped_column(Text, nullable=False)
+    enforcement: Mapped[str] = mapped_column(String(32), default="enforced")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)

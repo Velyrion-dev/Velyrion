@@ -593,6 +593,86 @@ async def seed():
     print(f"  → {len(approvals_data)} approval requests")
     print(f"  → {len(alert_data)} alerts")
 
+    # ── Moat Feature Seed Data ─────────────────────────────────────────────────
+    print("\n⚡ Seeding moat features...")
+
+    from models import (
+        TrustAgreement, CrossOrgEvent, AgentFlow, InterAgentPolicy,
+    )
+
+    async with async_session() as db:
+        from sqlalchemy import select, func
+
+        # Trust Agreements
+        ta_count = (await db.execute(select(func.count()).select_from(TrustAgreement))).scalar() or 0
+        if ta_count == 0:
+            agreements = [
+                TrustAgreement(org_a="Velyrion Inc.", org_b="Acme Corp", status="active", agent_count=4,
+                    shared_policies=["Data Sharing", "Cost Limits", "Kill Switch"],
+                    expires_at=_ts(-8760)),  # 1 year from now
+                TrustAgreement(org_a="Velyrion Inc.", org_b="TechFlow AI", status="active", agent_count=3,
+                    shared_policies=["Audit Trail", "Rate Limits"],
+                    expires_at=_ts(-8760)),
+                TrustAgreement(org_a="Velyrion Inc.", org_b="DataSync Ltd", status="pending", agent_count=2,
+                    shared_policies=["Data Access", "Compliance"],
+                    expires_at=_ts(-4380)),
+                TrustAgreement(org_a="Velyrion Inc.", org_b="FinanceBot Co", status="expired", agent_count=1,
+                    shared_policies=["Cost Limits"]),
+            ]
+            for a in agreements:
+                db.add(a)
+            print(f"  → {len(agreements)} trust agreements")
+
+        # Cross-Org Events
+        coe_count = (await db.execute(select(func.count()).select_from(CrossOrgEvent))).scalar() or 0
+        if coe_count == 0:
+            cross_events = [
+                CrossOrgEvent(from_org="Velyrion", from_agent="DataSync Pro", to_org="Acme Corp", to_agent="Acme-Analyzer", action="Data query request", status="governed"),
+                CrossOrgEvent(from_org="TechFlow AI", from_agent="TF-Processor", to_org="Velyrion", to_agent="ReportGen AI", action="API call", status="governed"),
+                CrossOrgEvent(from_org="Unknown", from_agent="Rogue-Bot", to_org="Velyrion", to_agent="SecurityBot", action="Unauthorized access", status="blocked"),
+                CrossOrgEvent(from_org="DataSync Ltd", from_agent="DS-Crawler", to_org="Velyrion", to_agent="DataSync Pro", action="Bulk data request", status="pending"),
+                CrossOrgEvent(from_org="Velyrion", from_agent="ComplianceAI", to_org="Acme Corp", to_agent="Acme-Writer", action="Report generation", status="governed"),
+            ]
+            for e in cross_events:
+                db.add(e)
+            print(f"  → {len(cross_events)} cross-org events")
+
+        # Inter-Agent Flows
+        af_count = (await db.execute(select(func.count()).select_from(AgentFlow))).scalar() or 0
+        if af_count == 0:
+            agent_ids = [a["agent_id"] for a in AGENTS]
+            flows = [
+                AgentFlow(from_agent_id=agent_ids[0], to_agent_id=agent_ids[1], action="Data request", status="governed"),
+                AgentFlow(from_agent_id=agent_ids[1], to_agent_id=agent_ids[2], action="Task delegation", status="governed"),
+                AgentFlow(from_agent_id=agent_ids[2], to_agent_id=agent_ids[3], action="Result aggregation", status="governed"),
+                AgentFlow(from_agent_id=agent_ids[0], to_agent_id=agent_ids[3], action="Unauthorized tool share", status="blocked"),
+                AgentFlow(from_agent_id=agent_ids[1], to_agent_id=agent_ids[0], action="Budget transfer request", status="pending"),
+                AgentFlow(from_agent_id=agent_ids[3], to_agent_id=agent_ids[0], action="Status report", status="governed"),
+            ]
+            for f in flows:
+                db.add(f)
+            print(f"  → {len(flows)} agent flows")
+
+        # Inter-Agent Policies
+        iap_count = (await db.execute(select(func.count()).select_from(InterAgentPolicy))).scalar() or 0
+        if iap_count == 0:
+            policies = [
+                InterAgentPolicy(name="Tool Sharing", rule="Agents may NOT share tools across permission boundaries", enforcement="enforced"),
+                InterAgentPolicy(name="Data Relay", rule="Data passed between agents must match both agents' access levels", enforcement="enforced"),
+                InterAgentPolicy(name="Budget Transfer", rule="Token budget transfers require human approval", enforcement="enforced"),
+                InterAgentPolicy(name="Task Delegation", rule="Agents may delegate within same department only", enforcement="enforced"),
+                InterAgentPolicy(name="Result Aggregation", rule="Multi-agent results must be validated before output", enforcement="monitoring"),
+            ]
+            for p in policies:
+                db.add(p)
+            print(f"  → {len(policies)} inter-agent policies")
+
+        await db.commit()
+
+    print("✓ Moat features seeded!")
+    print("  Note: Governance scores, threat patterns, behavioral DNA, regulatory,")
+    print("  trust registry, and insurance profiles auto-compute on first API request.")
+
 
 if __name__ == "__main__":
     asyncio.run(seed())

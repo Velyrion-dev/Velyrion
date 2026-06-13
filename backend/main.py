@@ -27,6 +27,7 @@ if SENTRY_DSN:
     )
 
 from routers import agents, events, violations, anomalies, incidents, approvals, alerts, dashboard, reports, policies, controls, replay, webhooks, audit_proof, graph, predictions
+from routers import governance_score, threat_intel, behavioral_dna, regulatory, trust_registry, trust_mesh, insurance_scoring, sandbox, war_room, multi_agent, copilot
 from routers import auth as auth_router
 from ws_manager import ws_manager
 
@@ -188,6 +189,19 @@ app.include_router(auth_router.router)
 app.include_router(audit_proof.router)
 app.include_router(graph.router)
 app.include_router(predictions.router)
+
+# ── Moat Feature Routers ───────────────────────────────────────────────────────
+app.include_router(governance_score.router)
+app.include_router(threat_intel.router)
+app.include_router(behavioral_dna.router)
+app.include_router(regulatory.router)
+app.include_router(trust_registry.router)
+app.include_router(trust_mesh.router)
+app.include_router(insurance_scoring.router)
+app.include_router(sandbox.router)
+app.include_router(war_room.router)
+app.include_router(multi_agent.router)
+app.include_router(copilot.router)
 
 
 # ── System Endpoints ───────────────────────────────────────────────────────────

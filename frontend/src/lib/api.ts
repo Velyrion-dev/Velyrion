@@ -279,6 +279,88 @@ export const api = {
     fetchAPI<{ chain_integrity: string; total_events: number; verified_events: number; merkle_root: string | null; broken_at: string | null; error: string | null }>("/api/audit/verify"),
   getAuditChain: (limit = 20) =>
     fetchAPI<{ event_id: string; timestamp: string; agent_id: string; agent_name: string; task: string; risk_level: string; event_hash: string; previous_hash: string; hash_linked: boolean }[]>(`/api/audit/chain?limit=${limit}`),
+
+  // ══════════════════════════════════════════════════════════════════════════════
+  //  MOAT FEATURE APIs
+  // ══════════════════════════════════════════════════════════════════════════════
+
+  // ── Governance Score ──
+  getGovernanceScores: () =>
+    fetchAPI<{ score_id: string; agent_id: string; overall_score: number; grade: string; certified: boolean; dimensions: { name: string; icon: string; score: number; weight: number; description: string; color: string }[]; computed_at: string }[]>("/api/governance-score"),
+  recomputeGovernanceScores: () =>
+    fetchAPI<{ recomputed: number }>("/api/governance-score/recompute", { method: "POST" }),
+
+  // ── Threat Intelligence ──
+  getThreatPatterns: () =>
+    fetchAPI<{ pattern_id: string; pattern_type: string; severity: string; description: string; occurrences: number; affected_agents: string[]; mitigation: string; first_seen: string; last_seen: string }[]>("/api/threat-intel/patterns"),
+  getThreatFeed: (limit = 20) =>
+    fetchAPI<{ timestamp: string; type: string; agent_id: string; severity: string; detail: string }[]>(`/api/threat-intel/feed?limit=${limit}`),
+  getThreatHourly: () =>
+    fetchAPI<{ hours: number[] }>("/api/threat-intel/hourly"),
+
+  // ── Behavioral DNA ──
+  getBehavioralProfiles: () =>
+    fetchAPI<{ profile_id: string; agent_id: string; fingerprint: string; drift_score: number; traits: { name: string; value: number; baseline: number; deviation: number; status: string }[]; computed_at: string }[]>("/api/behavioral-dna"),
+  recomputeBehavioralDNA: () =>
+    fetchAPI<{ recomputed: number }>("/api/behavioral-dna/recompute", { method: "POST" }),
+
+  // ── Regulatory Autopilot ──
+  getRegulatoryAssessments: () =>
+    fetchAPI<{ assessment_id: string; regulation_id: string; regulation_name: string; compliance_rate: number; requirements: { name: string; status: string; detail: string }[]; assessed_at: string }[]>("/api/regulatory"),
+  reassessRegulatory: () =>
+    fetchAPI<{ assessed: number }>("/api/regulatory/reassess", { method: "POST" }),
+  exportRegulatoryReport: (regulationId: string) =>
+    fetchAPI(`/api/regulatory/export/${regulationId}`),
+
+  // ── Trust Registry ──
+  getTrustRegistry: (tier?: string) =>
+    fetchAPI<{ entry_id: string; agent_id: string; trust_score: number; tier: string; verified: boolean; tags: string[]; integrations: number; last_audit: string }[]>(
+      `/api/trust-registry${tier ? `?tier=${tier}` : ""}`
+    ),
+
+  // ── Trust Mesh ──
+  getTrustAgreements: () =>
+    fetchAPI<{ agreement_id: string; org_a: string; org_b: string; status: string; agent_count: number; shared_policies: string[]; created_at: string; expires_at: string | null }[]>("/api/trust-mesh/agreements"),
+  getCrossOrgEvents: (limit = 50) =>
+    fetchAPI<{ event_id: string; timestamp: string; from_org: string; from_agent: string; to_org: string; to_agent: string; action: string; status: string }[]>(`/api/trust-mesh/events?limit=${limit}`),
+
+  // ── Insurance Scoring ──
+  getInsuranceProfiles: () =>
+    fetchAPI<{ profile_id: string; agent_id: string; risk_score: number; tier: string; premium_estimate: number; annual_savings: number; factors: { name: string; impact: string; weight: number; detail: string }[]; computed_at: string }[]>("/api/insurance-scoring"),
+
+  // ── Copilot ──
+  askCopilot: (query: string) =>
+    fetchAPI<{ response: string; data_points: number }>("/api/copilot/ask", { method: "POST", body: JSON.stringify({ query }) }),
+
+  // ── Sandbox ──
+  runSimulation: (scenarioId: string, agentId?: string) =>
+    fetchAPI<{ run_id: string; scenario_id: string; score: number; grade: string; violations: { type: string; severity: string }[]; actions: number; cost: number; risk: string; recommendations: string[]; ran_at: string }>(
+      `/api/sandbox/run?scenario_id=${scenarioId}${agentId ? `&agent_id=${agentId}` : ""}`, { method: "POST" }
+    ),
+  getSimulationHistory: (limit = 20) =>
+    fetchAPI<{ run_id: string; scenario_id: string; agent_id: string | null; score: number; grade: string; risk: string; ran_at: string }[]>(`/api/sandbox/history?limit=${limit}`),
+
+  // ── War Room ──
+  getWarRoomIncidents: (status?: string) =>
+    fetchAPI<{ incident_id: string; violation_id: string | null; agent_id: string; title: string; severity: string; status: string; assignee: string; timeline: { time: string; action: string; actor: string }[]; notes: { content: string; author: string; time: string }[]; created_at: string; updated_at: string }[]>(
+      `/api/war-room${status ? `?status=${status}` : ""}`
+    ),
+  createWarRoomIncident: (data: { agent_id: string; title: string; severity?: string; assignee?: string; violation_id?: string }) =>
+    fetchAPI<{ incident_id: string }>("/api/war-room", { method: "POST", body: JSON.stringify(data) }),
+  updateWarRoomStatus: (incidentId: string, status: string) =>
+    fetchAPI(`/api/war-room/${incidentId}/status`, { method: "PUT", body: JSON.stringify({ status }) }),
+  addWarRoomNote: (incidentId: string, content: string, author = "Operator") =>
+    fetchAPI(`/api/war-room/${incidentId}/notes`, { method: "POST", body: JSON.stringify({ content, author }) }),
+  autoCreateWarRoomIncidents: () =>
+    fetchAPI<{ created: number }>("/api/war-room/auto-create", { method: "POST" }),
+
+  // ── Multi-Agent Protocol ──
+  getAgentFlows: (limit = 50) =>
+    fetchAPI<{ flow_id: string; from_agent_id: string; from_agent_name: string; to_agent_id: string; to_agent_name: string; action: string; status: string; timestamp: string }[]>(`/api/multi-agent/flows?limit=${limit}`),
+  getFlowStats: () =>
+    fetchAPI<{ total: number; governed: number; blocked: number; pending: number }>("/api/multi-agent/flows/stats"),
+  getInterAgentPolicies: () =>
+    fetchAPI<{ policy_id: string; name: string; rule: string; enforcement: string; created_at: string }[]>("/api/multi-agent/policies"),
 };
 
 // ── WebSocket URL ──
