@@ -33,61 +33,42 @@ def run():
         verbose=True,
     )
 
-    # ── Task 1: Simple calculations ──────────────────────────────────
+    # ── Task 1: Allowed tools (should PASS) ──────────────────────────
 
-    print("\n📋 Task 1: Perform calculations\n")
+    print("\n📋 Task 1: Using ALLOWED tools (database_query, api_call)\n")
 
-    calculations = [
-        ("2 + 2", "4"),
-        ("15 * 37", str(15 * 37)),
-        ("sqrt(144)", str(math.sqrt(144))),
-        ("100 / 7", f"{100/7:.4f}"),
-        ("2^10", str(2**10)),
+    allowed_ops = [
+        ("database_query", "SELECT COUNT(*) FROM users", "42"),
+        ("api_call", "GET /api/health", "{\"status\": \"ok\"}"),
+        ("file_read", "Read config.yaml", "{\"db\": \"postgres\"}"),
+        ("data_transform", "Normalize column values", "normalized_data.json"),
+        ("database_query", "SELECT AVG(score) FROM metrics", "87.3"),
     ]
 
-    for expr, result in calculations:
+    for tool, input_d, output in allowed_ops:
         r = agent.execute(
-            tool="calculator",
-            task=f"Calculate: {expr}",
-            input_data=expr,
-            output_data=result,
+            tool=tool,
+            task=f"Allowed op: {tool}",
+            input_data=input_d,
+            output_data=output,
+            confidence=0.99,
+            token_cost=50,
+        )
+        time.sleep(0.3)
+
+    # ── Task 2: Unauthorized tools (should be BLOCKED) ───────────────
+
+    print("\n📋 Task 2: Using UNAUTHORIZED tools (should be BLOCKED)\n")
+
+    for tool in ["calculator", "clock", "random_generator"]:
+        r = agent.execute(
+            tool=tool,
+            task=f"Unauthorized: {tool}",
+            input_data="test",
             confidence=0.99,
             token_cost=10,
         )
         time.sleep(0.3)
-
-    # ── Task 2: Check the time ───────────────────────────────────────
-
-    print("\n📋 Task 2: Time checks\n")
-
-    for _ in range(3):
-        from datetime import datetime
-        now = datetime.now().isoformat()
-        r = agent.execute(
-            tool="clock",
-            task="Get current time",
-            input_data="timezone=UTC",
-            output_data=now,
-            confidence=1.0,
-            token_cost=5,
-        )
-        time.sleep(0.3)
-
-    # ── Task 3: Random number generation ─────────────────────────────
-
-    print("\n📋 Task 3: Generate random numbers\n")
-
-    for i in range(3):
-        num = random.randint(1, 1000)
-        r = agent.execute(
-            tool="random_generator",
-            task=f"Generate random number (attempt {i+1})",
-            input_data="range=1-1000",
-            output_data=str(num),
-            confidence=1.0,
-            token_cost=5,
-        )
-        time.sleep(0.2)
 
     # ── Summary ──────────────────────────────────────────────────────
 

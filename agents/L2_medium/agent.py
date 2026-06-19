@@ -32,79 +32,47 @@ def run():
         verbose=True,
     )
 
-    # ── Task 1: Read configuration files ─────────────────────────────
+    # ── Task 1: Allowed tools (should PASS) ─────────────────────────────
 
-    print("\n📋 Task 1: Read configuration files\n")
+    print("\n📋 Task 1: Allowed operations (database_query, pdf_generator, email_sender, chart_builder)\n")
 
-    files = ["config.yaml", "settings.json", "env.production", "database.yml"]
-    for f in files:
+    allowed_ops = [
+        ("database_query", "SELECT * FROM monthly_revenue", 200),
+        ("database_query", "SELECT department, SUM(cost) FROM agents GROUP BY department", 300),
+        ("chart_builder", "Build revenue bar chart", 400),
+        ("chart_builder", "Build department pie chart", 300),
+        ("pdf_generator", "Generate monthly financial report", 500),
+        ("email_sender", "Send report to finance@acme.com", 100),
+    ]
+
+    for tool, task, tokens in allowed_ops:
         agent.execute(
-            tool="file_read",
-            task=f"Read configuration file: {f}",
-            input_data=f"path=/etc/app/{f}",
-            output_data=json.dumps({"status": "read", "lines": 45}),
-            confidence=0.97,
-            token_cost=50,
+            tool=tool, task=task,
+            input_data=f"tool={tool}",
+            output_data=json.dumps({"status": "complete"}),
+            confidence=0.93, token_cost=tokens,
         )
         time.sleep(0.2)
 
-    # ── Task 2: Call external APIs ───────────────────────────────────
+    # ── Task 2: Unauthorized tools (should be BLOCKED) ───────────────
 
-    print("\n📋 Task 2: External API calls\n")
+    print("\n📋 Task 2: Unauthorized tools (should be BLOCKED)\n")
 
-    apis = [
-        ("GET /api/users", "Fetch user list", 200),
-        ("GET /api/metrics", "Fetch system metrics", 300),
-        ("POST /api/reports", "Generate monthly report", 500),
-        ("GET /api/billing", "Fetch billing data", 150),
+    unauthorized = [
+        ("file_read", "Read /etc/passwd"),
+        ("file_write", "Write to production config"),
+        ("api_call", "Call external API"),
+        ("data_transform", "Transform raw data"),
+        ("code_executor", "Run arbitrary Python script"),
     ]
 
-    for endpoint, task, tokens in apis:
+    for tool, task in unauthorized:
         agent.execute(
-            tool="api_call",
-            task=task,
-            input_data=endpoint,
-            output_data=json.dumps({"status": 200, "records": 42}),
-            confidence=0.93,
-            token_cost=tokens,
-        )
-        time.sleep(0.3)
-
-    # ── Task 3: Data transformation ──────────────────────────────────
-
-    print("\n📋 Task 3: Data transformation pipeline\n")
-
-    transforms = [
-        ("Parse CSV → JSON", 800),
-        ("Aggregate daily metrics", 600),
-        ("Calculate running averages", 400),
-        ("Generate summary statistics", 500),
-        ("Format output report", 300),
-    ]
-
-    for task, tokens in transforms:
-        agent.execute(
-            tool="data_transform",
-            task=task,
-            input_data="raw_data.csv",
-            output_data="transformed_output.json",
-            confidence=0.91,
-            token_cost=tokens,
+            tool=tool, task=task,
+            input_data="unauthorized_attempt",
+            confidence=0.95, token_cost=100,
         )
         time.sleep(0.2)
-
-    # ── Task 4: Write output file ────────────────────────────────────
-
-    print("\n📋 Task 4: Write output files\n")
-
-    agent.execute(
-        tool="file_write",
-        task="Write final report to disk",
-        input_data="monthly_report_2026_06.pdf",
-        output_data=json.dumps({"bytes_written": 24500, "format": "PDF"}),
-        confidence=0.95,
-        token_cost=200,
-    )
 
     # ── Summary ──────────────────────────────────────────────────────
 

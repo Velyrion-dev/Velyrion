@@ -144,7 +144,7 @@ class VelyrionAgent:
 
         try:
             resp = self.client.post(
-                f"{self.api_url}/api/events",
+                f"{self.api_url}/api/agent/event",
                 json=event_payload,
                 headers=self._headers,
             )
@@ -156,31 +156,32 @@ class VelyrionAgent:
                 event_id = data.get("event_id", "")
                 risk = data.get("risk_level", "LOW")
 
-                # Check if a violation was created
-                blocked = data.get("blocked", False)
-                violation = data.get("violation", None)
-
                 self.total_tokens += token_cost
                 self.total_cost += compute_cost
                 self.total_actions += 1
                 self.session_events.append(event_payload)
-
-                if blocked or violation:
-                    self.violations += 1
-                    reason = violation.get("description", "Policy violation") if violation else "Action blocked by policy"
-                    self.log(f"BLOCKED: {tool} — {reason}", "BLOCK")
-                    return ExecutionResult(
-                        allowed=False, event_id=event_id, risk_level=risk,
-                        reason=reason, policy_result="BLOCKED",
-                        duration_ms=duration_ms, token_cost=token_cost,
-                        compute_cost_usd=compute_cost,
-                    )
 
                 self.log(f"✓ {tool} — {task[:60]} ({risk}, {duration_ms}ms)", "OK")
                 return ExecutionResult(
                     allowed=True, event_id=event_id, risk_level=risk,
                     policy_result="ALLOWED", duration_ms=duration_ms,
                     token_cost=token_cost, compute_cost_usd=compute_cost,
+                )
+
+            elif resp.status_code == 403:
+                # Governance platform BLOCKED the action — this is working correctly
+                data = resp.json()
+                reason = data.get("detail", "Action blocked by policy")
+                self.total_actions += 1
+                self.violations += 1
+                self.session_events.append({**event_payload, "blocked": True})
+
+                self.log(f"BLOCKED: {tool} — {reason}", "BLOCK")
+                return ExecutionResult(
+                    allowed=False, risk_level="HIGH",
+                    reason=reason, policy_result="BLOCKED",
+                    duration_ms=duration_ms, token_cost=token_cost,
+                    compute_cost_usd=compute_cost,
                 )
             else:
                 self.log(f"API error: {resp.status_code} — {resp.text[:100]}", "ERROR")
