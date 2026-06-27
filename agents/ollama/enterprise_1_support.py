@@ -50,6 +50,7 @@ def run():
         agent_name="🎧 Customer Support Agent",
         system_prompt=SYSTEM_PROMPT,
         tools=TOOLS,
+        data_sources=["zendesk", "knowledge_base", "crm"],
     )
 
     results = []

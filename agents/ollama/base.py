@@ -38,6 +38,7 @@ class OllamaGovernedAgent:
         agent_name: str,
         system_prompt: str,
         tools: list[dict],
+        data_sources: list[str] | None = None,
         api_url: str = "http://localhost:8000",
     ):
         self.agent_id = agent_id
@@ -45,6 +46,7 @@ class OllamaGovernedAgent:
         self.system_prompt = system_prompt
         self.tools = tools
         self.tool_names = [t["name"] for t in tools]
+        self.data_sources = data_sources or []
 
         # Velyrion governance SDK
         self.gov = VelyrionAgent(
@@ -190,10 +192,16 @@ If a tool call is BLOCKED, you must adapt and try a different approach.
             print(f"  🔧 Tool: {tool_name}")
             print(f"  📥 Input: {input_data[:80]}")
 
+            # Prepend data source tag so governance engine can validate
+            gov_input = input_data[:500]
+            if self.data_sources:
+                source_tag = f"[source: {' '.join(self.data_sources)}] "
+                gov_input = source_tag + gov_input
+
             gov_result = self.gov.execute(
                 tool=tool_name,
                 task=f"{task} — step {step+1}: {tool_name}",
-                input_data=input_data[:500],
+                input_data=gov_input,
                 output_data="",
                 confidence=0.85,
                 token_cost=150,

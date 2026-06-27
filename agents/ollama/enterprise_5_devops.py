@@ -55,6 +55,7 @@ def run():
         agent_name="🛠️ IT Operations Agent",
         system_prompt=SYSTEM_PROMPT,
         tools=TOOLS,
+        data_sources=["postgres_main", "redis_cache", "s3_datalake"],
     )
 
     results = []

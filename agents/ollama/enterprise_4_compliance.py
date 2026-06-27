@@ -53,6 +53,7 @@ def run():
         agent_name="⚖️ Compliance Agent",
         system_prompt=SYSTEM_PROMPT,
         tools=TOOLS,
+        data_sources=["security_logs", "network_data", "threat_intel"],
     )
 
     results = []

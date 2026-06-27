@@ -50,6 +50,7 @@ def run():
         agent_name="🔒 Code Security Agent",
         system_prompt=SYSTEM_PROMPT,
         tools=TOOLS,
+        data_sources=["github_repos", "jira_api"],
     )
 
     results = []

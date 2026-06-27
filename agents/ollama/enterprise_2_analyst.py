@@ -50,6 +50,7 @@ def run():
         agent_name="📊 Data Analyst Agent",
         system_prompt=SYSTEM_PROMPT,
         tools=TOOLS,
+        data_sources=["postgres_main", "financial_db"],
     )
 
     results = []
