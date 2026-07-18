@@ -1,0 +1,17 @@
+name: Keep Alive
+
+on:
+  schedule:
+    - cron: '*/14 * * * *'  # Every 14 minutes
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  ping:
+    name: Ping Backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Render backend
+        run: |
+          curl -sf https://velyrion.onrender.com/health || echo "Backend sleeping, waking up..."
+          sleep 5
+          curl -sf https://velyrion.onrender.com/health && echo "Backend is healthy!" || echo "Backend still waking..."

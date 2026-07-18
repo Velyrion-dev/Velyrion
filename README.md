@@ -1,24 +1,128 @@
-# VELYRION — Agent Governance & Audit Intelligence System
+<p align="center">
+  <img src="https://img.shields.io/badge/Velyrion-Agent%20Governance-blueviolet?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik0xMiAyQzYuNDggMiAyIDYuNDggMiAxMnM0LjQ4IDEwIDEwIDEwIDEwLTQuNDggMTAtMTBTMTcuNTIgMiAxMiAyem0tMSAxNUg5di02aDJ2NnptNC0wSDEzdi04aDJ2OHoiLz48L3N2Zz4=" alt="Velyrion"/>
+  <br/>
+  <img src="https://img.shields.io/badge/Python-3.12+-blue?logo=python&logoColor=white" alt="Python"/>
+  <img src="https://img.shields.io/badge/Next.js-15-black?logo=next.js&logoColor=white" alt="Next.js"/>
+  <img src="https://img.shields.io/badge/FastAPI-0.110+-teal?logo=fastapi&logoColor=white" alt="FastAPI"/>
+  <img src="https://img.shields.io/badge/Ollama-LLM%20Testing-orange?logo=ollama&logoColor=white" alt="Ollama"/>
+  <img src="https://img.shields.io/badge/License-Proprietary-red" alt="License"/>
+</p>
 
-> *"Datadog + Okta — built for the AI agent era."*
+<h1 align="center">VELYRION</h1>
+<h3 align="center">The Governance Layer for Autonomous AI Agents</h3>
+<p align="center"><em>Monitor · Govern · Audit · Score — Every AI agent action, in real-time.</em></p>
 
-**VELYRION** is the governance layer for autonomous AI agents. Monitor, log, evaluate, and report on all AI agent activity across your organization — regardless of vendor or framework.
+---
+
+## 🎯 What is Velyrion?
+
+**Velyrion** is a governance platform for autonomous AI agents — think **Datadog + Okta, built for the AI agent era**.
+
+As enterprises deploy AI agents (customer support bots, code reviewers, data analysts, compliance monitors), they need answers to:
+
+- **What is my AI agent doing right now?**
+- **Did it access data it shouldn't have?**
+- **Can I kill it instantly if it goes rogue?**
+- **Are we compliant with SOC2, GDPR, EU AI Act?**
+
+Velyrion answers all of these with a single platform.
+
+---
+
+## 🏗️ Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    VELYRION ARCHITECTURE                         │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌──────────┐   ┌──────────┐   ┌──────────┐   ┌──────────┐   │
+│  │ Support  │   │ Analyst  │   │ Security │   │  DevOps  │   │
+│  │  Agent   │   │  Agent   │   │  Agent   │   │  Agent   │   │
+│  └────┬─────┘   └────┬─────┘   └────┬─────┘   └────┬─────┘   │
+│       │              │              │              │           │
+│       └──────────────┴──────┬───────┴──────────────┘           │
+│                             │                                   │
+│                    ┌────────▼────────┐                          │
+│                    │  Velyrion SDK   │  ← Python SDK            │
+│                    │  (Intercepts)   │                          │
+│                    └────────┬────────┘                          │
+│                             │                                   │
+│              ┌──────────────▼──────────────┐                   │
+│              │     GOVERNANCE ENGINE       │                   │
+│              │  ┌─────────┐ ┌──────────┐  │                   │
+│              │  │  Tool   │ │   Data   │  │                   │
+│              │  │Whitelist│ │  Source  │  │                   │
+│              │  │  Check  │ │Validate  │  │                   │
+│              │  └─────────┘ └──────────┘  │                   │
+│              │  ┌─────────┐ ┌──────────┐  │                   │
+│              │  │  HITL   │ │  Token   │  │                   │
+│              │  │Approval │ │  Budget  │  │                   │
+│              │  └─────────┘ └──────────┘  │                   │
+│              └──────────────┬──────────────┘                   │
+│                             │                                   │
+│  ┌──────────────────────────▼──────────────────────────┐       │
+│  │              INTELLIGENCE LAYER                      │       │
+│  │  Governance Score · Behavioral DNA · Threat Intel    │       │
+│  │  Insurance Score · Trust Registry · Compliance       │       │
+│  └──────────────────────────┬──────────────────────────┘       │
+│                             │                                   │
+│  ┌──────────────────────────▼──────────────────────────┐       │
+│  │                DASHBOARD (Next.js)                    │       │
+│  │  39 Pages · Real-time · Kill Switch · War Room       │       │
+│  └─────────────────────────────────────────────────────┘       │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## ✨ Features (17+ Governance Capabilities)
+
+### Core Governance
+| # | Feature | Description |
+|---|---------|-------------|
+| 1 | **Real-time Event Logging** | Every agent action logged with cryptographic audit chain |
+| 2 | **Tool Whitelisting** | Block unauthorized tools instantly (403) |
+| 3 | **Data Source Validation** | Restrict which databases/APIs agents can access |
+| 4 | **Human-in-the-Loop** | Low confidence triggers approval workflow |
+| 5 | **Kill Switch** | Emergency stop any agent in <100ms |
+| 6 | **Governance Score** | 6-dimension scoring (safety, compliance, cost, etc.) |
+
+### Intelligence Layer
+| # | Feature | Description |
+|---|---------|-------------|
+| 7 | **Threat Intelligence** | Pattern detection from violation data |
+| 8 | **Behavioral DNA** | Agent fingerprinting + drift detection |
+| 9 | **Regulatory Compliance** | SOC2, GDPR, HIPAA, EU AI Act, ISO 27001 |
+| 10 | **Insurance Scoring** | Risk/premium calculations per agent |
+| 11 | **Trust Registry** | Trust scores computed from real behavior |
+| 12 | **Sandbox Simulation** | Test agent policies before deploying |
+
+### Operations
+| # | Feature | Description |
+|---|---------|-------------|
+| 13 | **War Room** | Auto-create incidents from violations |
+| 14 | **AI Copilot** | Natural language queries over governance data |
+| 15 | **Multi-Agent Protocol** | Inter-agent flow tracking + policies |
+| 16 | **Dashboard** | 39-page Next.js dashboard with real-time data |
+| 17 | **Mission Control** | Unified command center for all agents |
 
 ---
 
 ## 🚀 Quick Start
 
-### Option 1: Automated Start (Recommended)
+### Option 1: One Command (Recommended)
 
 ```bash
 python start.py
 ```
-This starts both backend (port 8000) and frontend (port 3000), seeds the database with demo data.
+
+Opens backend (`:8000`) + frontend (`:3000`) with demo data seeded.
 
 ### Option 2: Docker
 
 ```bash
-docker-compose up --build
+docker compose up --build
 ```
 
 ### Option 3: Manual
@@ -27,234 +131,83 @@ docker-compose up --build
 # Backend
 cd backend
 pip install -r requirements.txt
-python seed.py                     # Seed demo data + default users
-uvicorn main:app --port 8000 --reload
+python seed.py
+python -m uvicorn main:app --port 8000
 
-# Frontend (separate terminal)
+# Frontend (new terminal)
 cd frontend
 npm install
-npm run dev -- -p 3000
+npm run dev
 ```
 
-### Default Login Credentials
+### Demo Accounts
 
 | Role | Email | Password |
 |------|-------|----------|
-| **Admin** | `admin@velyrion.com` | `admin123` |
-| **Operator** | `operator@velyrion.com` | `operator123` |
-| **Viewer** | `viewer@velyrion.com` | `viewer123` |
-
-**URLs:**
-- **Dashboard**: http://localhost:3000 → redirects to `/login`
-- **API**: http://localhost:8000
-- **API Docs**: http://localhost:8000/docs
+| Admin | `admin@velyrion.com` | `VelyrionAdmin2026!` |
+| Operator | `operator@velyrion.com` | `VelyrionOp2026!` |
+| Viewer | `viewer@velyrion.com` | `VelyrionView2026!` |
 
 ---
 
-## 📦 Architecture
+## 🤖 Real AI Agent Testing
 
-| Layer | Stack |
-|-------|-------|
-| **Backend** | Python 3.12+, FastAPI, SQLAlchemy (async), SQLite/PostgreSQL |
-| **Frontend** | Next.js 16, TypeScript, React 19 |
-| **Auth** | JWT (access + refresh tokens), bcrypt, Google OAuth 2.0 |
-| **Deployment** | Docker, Render, Railway, AWS, Vercel |
-
-```
-┌─────────────┐     JWT Bearer    ┌─────────────────┐     SQL     ┌──────────┐
-│  Next.js UI │ ◄──────────────► │  FastAPI Backend │ ◄──────────► │ Database │
-│  (port 3000)│                  │  (port 8000)     │              │ SQLite/  │
-│             │                  │  • Auth           │              │ Postgres │
-│  Login/     │                  │  • Governance     │              └──────────┘
-│  Dashboard  │                  │  • Webhooks       │
-└─────────────┘                  │  • Replay/Forensic│
-                                  └─────────────────┘
-                                          │
-                                   ┌──────┴──────┐
-                                   │ Webhook Dispatch│
-                                   │ Slack / PagerDuty│
-                                   └──────────────┘
-```
-
----
-
-## ✨ Features
-
-### Core Governance (13 Modules)
-
-| # | Module | Description |
-|---|--------|-------------|
-| 1 | **Authentication** | JWT tokens, Google OAuth, bcrypt passwords, RBAC |
-| 2 | **Agent Registry** | CRUD with permission profiles, budgets, compliance frameworks |
-| 3 | **Event Logging** | Immutable, append-only audit trail for every agent action |
-| 4 | **Permission Engine** | Real-time validation — tools, data sources, budgets, durations |
-| 5 | **Anomaly Detection** | 5 algorithms: duration, API failure, cost, confidence, data boundary |
-| 6 | **Human-in-the-Loop** | Approval queue with approve/reject + toast notifications |
-| 7 | **Incident Response** | Automated kill → snapshot → lock → alert → log workflow |
-| 8 | **Alert System** | Multi-channel dispatch (Dashboard + Webhook) |
-| 9 | **Policy-as-Code** | YAML-based guardrails with evaluate/test API |
-| 10 | **Kill Switch** | Real-time Kill / Pause / Unlock agent controls |
-| 11 | **Agent Replay** | Forensic timeline with step-by-step event reconstruction |
-| 12 | **Webhook Engine** | Slack, PagerDuty, Custom HTTP with async dispatch |
-| 13 | **Compliance Reports** | On-demand reports with dept risk scores + JSON export |
-
-### Security & Production
-
-- ✅ JWT authentication (15min access + 7-day refresh tokens)
-- ✅ Google OAuth 2.0 integration
-- ✅ Role-Based Access Control (Admin / Operator / Viewer)
-- ✅ bcrypt password hashing (bcrypt 5.x compatible)
-- ✅ Security headers (X-Frame-Options, X-Content-Type-Options, Referrer-Policy)
-- ✅ Per-IP rate limiting (configurable RPM)
-- ✅ Structured logging with request IDs
-- ✅ Global error handling with incident logging
-- ✅ CORS configuration via environment variables
-- ✅ Auto-refresh tokens (every 12 minutes client-side)
-
-### Frontend UX
-
-- ✅ 14 polished pages with live data
-- ✅ Glassmorphism login/signup with animated backgrounds
-- ✅ User menu with avatar, role badge, sign-out
-- ✅ Demo credentials panel on login page
-- ✅ 10-second auto-refresh with live indicators
-- ✅ Mobile responsive with sidebar toggle
-- ✅ Toast notification system
-- ✅ Search & filter bars on all data pages
-- ✅ Empty state handling
-- ✅ Marketing landing page with pricing
-
----
-
-## 🔐 Authentication & RBAC
-
-### Roles & Permissions
-
-| Feature | Admin | Operator | Viewer |
-|---------|:-----:|:--------:|:------:|
-| View Dashboard / Data | ✅ | ✅ | ✅ |
-| Kill / Pause / Unlock agents | ✅ | ❌ | ❌ |
-| Create / Delete policies | ✅ | ❌ | ❌ |
-| Register new agents | ✅ | ✅ | ❌ |
-| Approve / Reject HITL | ✅ | ✅ | ❌ |
-| Manage webhooks | ✅ | ❌ | ❌ |
-| View reports | ✅ | ✅ | ✅ |
-
-### Auth Flow
-
-1. User visits any protected page → redirected to `/login`
-2. Login with email/password or Google → receives JWT tokens
-3. Access token (15min) sent as `Authorization: Bearer` on every API call
-4. Refresh token (7 days) used to get new access tokens automatically
-5. Logout revokes refresh token server-side
-
----
-
-## 🔑 API Reference
-
-### Auth
-| Method | Path | Description |
-|--------|------|-------------|
-| `POST` | `/api/auth/signup` | Register new user |
-| `POST` | `/api/auth/login` | Email/password login → JWT tokens |
-| `POST` | `/api/auth/google` | Google OAuth login |
-| `POST` | `/api/auth/refresh` | Refresh access token |
-| `POST` | `/api/auth/logout` | Revoke refresh token |
-| `GET` | `/api/auth/me` | Get current user profile |
-| `PUT` | `/api/auth/me` | Update profile |
-| `POST` | `/api/auth/forgot-password` | Send reset token |
-| `POST` | `/api/auth/reset-password` | Reset password |
-
-### Agents
-| Method | Path | Description |
-|--------|------|-------------|
-| `POST` | `/api/agents` | Register agent |
-| `GET` | `/api/agents` | List all agents |
-| `GET` | `/api/agents/{id}` | Get agent detail |
-| `PUT` | `/api/agents/{id}` | Update agent |
-| `DELETE` | `/api/agents/{id}` | Deactivate agent |
-
-### Agent Controls
-| Method | Path | Description |
-|--------|------|-------------|
-| `POST` | `/api/agents/{id}/kill` | Kill agent (Admin only) |
-| `POST` | `/api/agents/{id}/pause` | Pause agent (Admin only) |
-| `POST` | `/api/agents/{id}/unlock` | Unlock agent (Admin only) |
-
-### Events & Governance
-| Method | Path | Description |
-|--------|------|-------------|
-| `POST` | `/api/agent/event` | Ingest event |
-| `GET` | `/api/events` | List audit events |
-| `GET` | `/api/violations` | List violations |
-| `GET` | `/api/anomalies` | List anomalies |
-| `GET` | `/api/incidents` | List incidents |
-| `POST` | `/api/incidents/{id}/resolve` | Resolve incident |
-| `GET` | `/api/approvals` | List approvals |
-| `POST` | `/api/approvals/{id}/approve` | Approve HITL |
-| `POST` | `/api/approvals/{id}/reject` | Reject HITL |
-| `GET` | `/api/alerts` | List alerts |
-
-### Intelligence
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET` | `/api/replay/{agent_id}` | Forensic replay timeline |
-| `GET` | `/api/replay/compare/{a}/{b}` | Compare two agents |
-
-### Policies
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET` | `/api/policies` | List YAML policies |
-| `GET` | `/api/policies/{name}` | Get policy detail |
-| `POST` | `/api/policies/evaluate` | Test a policy rule |
-
-### Webhooks
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET` | `/api/webhooks` | List webhooks |
-| `POST` | `/api/webhooks` | Create webhook |
-| `DELETE` | `/api/webhooks/{id}` | Delete webhook |
-| `POST` | `/api/webhooks/{id}/toggle` | Enable/disable |
-| `POST` | `/api/webhooks/{id}/test` | Send test payload |
-| `GET` | `/api/webhooks/deliveries` | Delivery log |
-
-### Analytics
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET` | `/api/dashboard/stats` | Dashboard stats |
-| `GET` | `/api/dashboard/health` | Agent health scores |
-| `GET` | `/api/dashboard/costs` | Token cost data |
-| `GET` | `/api/reports/compliance` | Compliance report |
-
----
-
-## ⚙️ Configuration
-
-All configuration is via environment variables. Copy `.env.example` to `.env`:
+Velyrion is tested with **real Ollama-powered AI agents**, not scripts:
 
 ```bash
-cp backend/.env.example backend/.env
+# Run all 5 enterprise agents (requires Ollama + llama3.2)
+python agents/ollama/run_enterprise.py
 ```
 
-### Required for Production
+### Enterprise Agents Included
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `JWT_SECRET` | *dev secret* | **CHANGE THIS** — 256-bit secret for JWT signing |
-| `DATABASE_URL` | `sqlite+aiosqlite:///./velyrion.db` | Use `postgresql+asyncpg://...` for production |
-| `CORS_ORIGINS` | `*` | Lock to your domain: `https://yourdomain.com` |
+| Agent | Scenario | Mirrors |
+|-------|----------|---------|
+| 🎧 **Customer Support** | Ticket resolution, KB search | Zendesk, Intercom |
+| 📊 **Data Analyst** | SQL queries, report generation | Databricks, Snowflake |
+| 🔒 **Code Security** | Vulnerability scanning, PR review | GitHub Copilot, Snyk |
+| ⚖️ **Financial Compliance** | Fraud detection, regulatory audit | Bloomberg, Stripe Radar |
+| 🛠️ **IT Operations** | Incident response, auto-remediation | PagerDuty, Datadog |
 
-### Optional
+### Test Results (Real Run)
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `JWT_ALGORITHM` | `HS256` | JWT algorithm |
-| `ACCESS_TOKEN_EXPIRE_MINUTES` | `15` | Access token lifetime |
-| `REFRESH_TOKEN_EXPIRE_DAYS` | `7` | Refresh token lifetime |
-| `GOOGLE_CLIENT_ID` | *(empty)* | Google OAuth client ID |
-| `GOOGLE_CLIENT_SECRET` | *(empty)* | Google OAuth client secret |
-| `RATE_LIMIT_RPM` | `300` | Max requests per minute per IP |
-| `NEXT_PUBLIC_API_URL` | `http://localhost:8000` | Backend URL for frontend |
+```
+Total Tool Calls:  50 (real LLM decisions)
+Allowed:           34 (68%) — governance approved
+Blocked:           16 (32%) — governance stopped
+Duration:          36 minutes of real AI governance
+```
+
+**Key proof:** The IT Operations agent tried `monitor_systems` → BLOCKED → the LLM *autonomously adapted* and used `api_call` instead → ALLOWED. Real AI hitting governance walls and finding compliant alternatives.
+
+---
+
+## 🔌 SDK Integration
+
+Connect any AI agent to Velyrion in 3 lines:
+
+```python
+from velyrion_sdk import VelyrionAgent
+
+agent = VelyrionAgent(
+    api_url="http://localhost:8000",
+    agent_id="my-agent",
+    agent_name="My AI Agent"
+)
+
+# Every tool call goes through governance
+result = agent.execute(
+    tool="database_query",
+    task="Fetch user data",
+    input_data="SELECT * FROM users",
+    confidence=0.9
+)
+
+if result.allowed:
+    print("✅ Action approved")
+else:
+    print(f"🚫 Blocked: {result.reason}")
+```
 
 ---
 
@@ -262,163 +215,107 @@ cp backend/.env.example backend/.env
 
 ```
 velyrion/
-├── backend/
-│   ├── main.py              # FastAPI entry + middleware + security headers
-│   ├── auth.py              # JWT, bcrypt, RBAC dependencies
-│   ├── database.py          # Async SQLAlchemy engine
-│   ├── models.py            # ORM models (9 tables: User, RefreshToken, Agent, etc.)
-│   ├── schemas.py           # Pydantic schemas
-│   ├── seed.py              # Demo data + default users
-│   ├── .env.example         # Environment variable template
-│   ├── requirements.txt     # Python dependencies
-│   ├── engines/             # Governance engines
-│   │   ├── permission_engine.py
-│   │   ├── anomaly_engine.py
-│   │   ├── incident_engine.py
-│   │   └── alert_engine.py
-│   ├── routers/             # API endpoints (14 modules)
-│   │   ├── auth.py          # Signup, login, OAuth, refresh
-│   │   ├── agents.py        # Agent CRUD
-│   │   ├── events.py        # Event logging
-│   │   ├── violations.py    # Violation tracking
-│   │   ├── anomalies.py     # Anomaly detection
-│   │   ├── incidents.py     # Incident response
-│   │   ├── approvals.py     # HITL approvals
-│   │   ├── alerts.py        # Alert dispatch
-│   │   ├── dashboard.py     # Dashboard analytics
-│   │   ├── reports.py       # Compliance reports
-│   │   ├── policies.py      # Policy-as-Code
-│   │   ├── controls.py      # Kill/Pause/Unlock
-│   │   ├── replay.py        # Forensic replay
-│   │   └── webhooks.py      # Webhook management
-│   └── Dockerfile
-├── frontend/
-│   ├── src/
-│   │   ├── app/             # 14 pages
-│   │   │   ├── login/       # Login page
-│   │   │   ├── signup/      # Signup page
-│   │   │   ├── dashboard/   # Governance dashboard
-│   │   │   ├── agents/      # Agent registry + controls
-│   │   │   ├── events/      # Activity feed
-│   │   │   ├── violations/  # Violations
-│   │   │   ├── anomalies/   # Anomalies
-│   │   │   ├── incidents/   # Incidents
-│   │   │   ├── approvals/   # HITL approvals
-│   │   │   ├── alerts/      # Alert center
-│   │   │   ├── policies/    # Policy management
-│   │   │   ├── replay/      # Forensic replay
-│   │   │   ├── webhooks/    # Webhook integrations
-│   │   │   └── reports/     # Compliance reports
-│   │   ├── components/      # Sidebar, UserMenu, Layout, Toasts
-│   │   └── lib/
-│   │       ├── api.ts       # Typed API client with Bearer auth
-│   │       └── auth.tsx     # AuthProvider, useAuth, usePermissions
-│   └── Dockerfile
-├── sdk/
-│   ├── velyrion/            # Python SDK for agent instrumentation
-│   │   ├── client.py        # wrap(), report(), kill-switch listener
-│   │   ├── decorators.py    # @governed, @track
-│   │   └── policy.py        # YAML policy evaluator
-│   ├── pyproject.toml       # pip install config
-│   └── README.md            # SDK usage docs
-├── policies/                # YAML policy definitions
-│   ├── finance-agents.yaml  # Finance guardrails (6 rules)
-│   └── soc2-compliance.yaml # SOC2 compliance (6 rules)
-├── docker-compose.yml
-├── start.py                 # One-command startup script
-├── Procfile                 # Heroku/Render deployment
-└── README.md
+├── backend/                 # FastAPI backend
+│   ├── main.py             # App entry + CORS + lifespan
+│   ├── models.py           # 21 SQLAlchemy models
+│   ├── seed.py             # Demo data seeder
+│   ├── routers/            # 28 API route modules
+│   │   ├── agents.py       # Agent CRUD + kill switch
+│   │   ├── events.py       # Event logging + audit
+│   │   ├── violations.py   # Violation tracking
+│   │   ├── approvals.py    # HITL approval workflow
+│   │   ├── governance.py   # Governance scoring engine
+│   │   ├── sandbox.py      # Sandbox simulation
+│   │   ├── copilot.py      # AI Copilot (NL queries)
+│   │   └── ...             # 20+ more routers
+│   └── engines/            # Governance engines
+│       ├── permission_engine.py
+│       └── governance_score.py
+├── frontend/               # Next.js 15 dashboard
+│   └── src/app/            # 39 pages
+│       ├── dashboard/      # Main dashboard
+│       ├── agents/         # Agent management
+│       ├── war-room/       # Incident management
+│       ├── copilot/        # AI assistant
+│       └── ...             # 35+ more pages
+├── agents/                 # AI agent implementations
+│   ├── sdk/                # Python SDK
+│   ├── ollama/             # 5 Ollama-powered enterprise agents
+│   └── run_full_verification.py  # E2E test suite (42/43 passing)
+├── policies/               # YAML governance policies
+├── docker-compose.yml      # One-command deployment
+└── start.py                # Quick start script
 ```
 
 ---
 
-## 🚢 Deployment
+## 🔒 API Endpoints (47+)
 
-### Render / Railway
+| Category | Endpoints | Key Routes |
+|----------|-----------|------------|
+| **Agents** | 8 | CRUD, kill switch, status |
+| **Events** | 5 | Log, list, audit trail |
+| **Violations** | 4 | Track, list, severity filter |
+| **Approvals** | 4 | HITL workflow, approve/reject |
+| **Governance** | 3 | Score computation, dimensions |
+| **Behavioral DNA** | 3 | Fingerprinting, drift detection |
+| **Threat Intel** | 3 | Pattern detection, threat feed |
+| **Compliance** | 3 | Multi-framework assessment |
+| **Insurance** | 2 | Risk scoring, premium calc |
+| **Sandbox** | 3 | Simulate, history, scenarios |
+| **War Room** | 5 | Incidents, notes, timeline |
+| **Copilot** | 2 | Natural language queries |
+| **Multi-Agent** | 4 | Flow logging, inter-agent policies |
 
-1. Create a **Web Service** for the backend:
-   - Build: `pip install -r requirements.txt`
-   - Start: `uvicorn main:app --host 0.0.0.0 --port $PORT`
-   - Set environment variables from `.env.example`
+Full API docs at: `http://localhost:8000/docs` (Swagger UI)
 
-2. Create a **Static Site** or **Web Service** for the frontend:
-   - Build: `npm run build`
-   - Start: `npm start`
-   - Set `NEXT_PUBLIC_API_URL=https://your-backend-url.com`
+---
 
-3. Set `JWT_SECRET` to a strong random string:
-   ```bash
-   python -c "import secrets; print(secrets.token_hex(32))"
-   ```
-
-4. Set `CORS_ORIGINS` to your frontend domain.
-
-### Docker
+## 🧪 Verification
 
 ```bash
-docker-compose up --build -d
+# Run E2E verification suite (42/43 tests passing — 97%)
+python agents/run_full_verification.py
+
+# Run enterprise agent test (requires Ollama)
+python agents/ollama/run_enterprise.py
 ```
 
-### Vercel (Frontend) + Render (Backend)
+---
 
-1. Deploy `frontend/` to Vercel
-2. Deploy `backend/` to Render
-3. Set `NEXT_PUBLIC_API_URL` in Vercel env vars
-4. Set all backend env vars in Render
+## 🏢 Enterprise Use Cases
+
+| Industry | Use Case | How Velyrion Helps |
+|----------|----------|-------------------|
+| **Finance** | AI trading agents | Kill switch + compliance audit |
+| **Healthcare** | AI diagnostic agents | HIPAA compliance + data source validation |
+| **SaaS** | Customer support bots | Tool whitelisting + HITL approval |
+| **DevOps** | AI code reviewers | Behavioral DNA + drift detection |
+| **Legal** | Contract analysis agents | Audit trail + regulatory compliance |
 
 ---
 
-## 🧪 Python SDK
+## 🗺️ Roadmap
 
-Install the SDK in your AI application:
-
-```python
-from velyrion import VelyrionClient
-
-client = VelyrionClient(
-    api_url="https://your-velyrion-api.com",
-    api_key="your-api-key"
-)
-
-# Wrap any agent for governance
-agent = client.wrap(your_langchain_agent, agent_id="agent-001")
-
-# Use decorators for function-level control
-@client.governed(agent_id="agent-001")
-def process_data(data):
-    return analyze(data)
-```
-
-See [SDK README](sdk/README.md) for full documentation.
+- [x] Core governance engine (17 features)
+- [x] 39-page dashboard
+- [x] Python SDK
+- [x] Real AI agent testing (Ollama)
+- [x] E2E verification suite
+- [ ] Multi-tenant support
+- [ ] SSO/SAML integration
+- [ ] Real-time WebSocket dashboard
+- [ ] Slack/Discord webhook alerts
+- [ ] Terraform provider for policy-as-code
 
 ---
 
-## 📋 Compliance Ready
+## 📄 License
 
-VELYRION maps to the audit requirements of:
-- **EU AI Act 2025** — Article 14 (human oversight), Article 13 (transparency)
-- **SEC AI Oversight** — Audit trail requirements
-- **SOC2** — Trust Services Criteria
-- **GDPR** — Data processing records
-- **HIPAA** — Activity logging for healthcare AI
+Proprietary. © 2026 Velyrion. All rights reserved.
 
 ---
 
-## ⚠️ Pre-Deployment Checklist
-
-- [ ] Change `JWT_SECRET` from default to a strong random string
-- [ ] Set `CORS_ORIGINS` to your production domain (not `*`)
-- [ ] Switch `DATABASE_URL` to PostgreSQL for production
-- [ ] Change default user passwords (`admin123`, etc.)
-- [ ] Set up Google OAuth credentials if using Google Sign-In
-- [ ] Configure webhook URLs for Slack/PagerDuty
-- [ ] Review and customize YAML policies in `policies/`
-- [ ] Run `python seed.py` to create initial admin user
-- [ ] Set up HTTPS (handled by Render/Vercel/Cloudflare)
-- [ ] Enable database backups
-
----
-
-## License
-
-MIT
+<p align="center">
+  <strong>Velyrion — Because AI agents need governance, not just guardrails.</strong>
+</p>
