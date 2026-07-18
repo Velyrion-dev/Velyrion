@@ -263,25 +263,83 @@ class VelyrionClient:
         """
         Wrap an agent object to automatically report all tool calls.
 
-        Works with:
-          - LangChain agents (AgentExecutor, RunnableSequence)
-          - OpenAI client (chat.completions.create)
-          - Any object with a .run(), .invoke(), or .execute() method
+        Works with 19+ frameworks:
+          - OpenAI / Azure OpenAI (chat.completions.create)
+          - Anthropic Claude (messages.create)
+          - Google Gemini (generate_content)
+          - Mistral (chat.complete)
+          - Cohere (chat / generate)
+          - LangChain (invoke with callbacks)
+          - LangGraph (compiled graph invoke/stream)
+          - LlamaIndex (query / chat engines)
+          - CrewAI (execute_task)
+          - AutoGen (generate_reply)
+          - Semantic Kernel (invoke / invoke_prompt)
+          - Haystack (pipeline.run)
+          - PydanticAI (run / run_sync)
+          - Agno / Phidata (run / chat)
+          - OpenAI Swarm (swarm.run)
+          - Smolagents (CodeAgent.run)
+          - AWS Bedrock (invoke_model / invoke_agent)
+          - Google Vertex AI (generate_content / predict)
+          - HuggingFace Transformers (pipeline / generate)
+          - Ollama / vLLM / Groq / Together / Fireworks / DeepSeek
+          - Any object with run(), invoke(), execute(), or __call__()
 
         Returns the same agent object, now governed by VELYRION.
         """
         client = self
+        module = type(agent).__module__ or ""
+        cls_name = type(agent).__name__.lower()
 
-        # LangChain AgentExecutor
+        # ─── Cloud LLM APIs ──────────────────────────────────────────
+
+        # OpenAI / Azure OpenAI client
+        if hasattr(agent, "chat") and hasattr(agent.chat, "completions"):
+            # Detect Azure vs standard OpenAI
+            if "azure" in module.lower() or "azure" in cls_name:
+                return self._wrap_azure_openai(agent, agent_id)
+            return self._wrap_openai(agent, agent_id)
+
+        # Anthropic client
+        if hasattr(agent, "messages") and hasattr(agent.messages, "create"):
+            return self._wrap_anthropic(agent, agent_id)
+
+        # Google Gemini (google.generativeai)
+        if ("google.generativeai" in module or "genai" in module) and hasattr(agent, "generate_content"):
+            return self._wrap_gemini(agent, agent_id)
+
+        # Google Vertex AI
+        if "vertexai" in module or "google.cloud.aiplatform" in module:
+            return self._wrap_vertex_ai(agent, agent_id)
+
+        # Mistral client
+        if "mistralai" in module and hasattr(agent, "chat"):
+            return self._wrap_mistral(agent, agent_id)
+
+        # Cohere client
+        if "cohere" in module and (hasattr(agent, "chat") or hasattr(agent, "generate")):
+            return self._wrap_cohere(agent, agent_id)
+
+        # AWS Bedrock runtime
+        if hasattr(agent, "invoke_model") or (hasattr(agent, "meta") and "bedrock" in str(getattr(agent, "meta", {}))):
+            return self._wrap_bedrock(agent, agent_id)
+
+        # Ollama native client
+        if "ollama" in module:
+            return self._wrap_ollama(agent, agent_id)
+
+        # ─── Agent Frameworks ────────────────────────────────────────
+
+        # LangGraph compiled graph (check BEFORE LangChain — LangGraph also has invoke)
+        if "langgraph" in module and hasattr(agent, "invoke"):
+            return self._wrap_langgraph(agent, agent_id)
+
+        # LangChain AgentExecutor / RunnableSequence
         if hasattr(agent, "invoke") and hasattr(agent, "callbacks"):
             return self._wrap_langchain(agent, agent_id)
 
-        # OpenAI client
-        if hasattr(agent, "chat") and hasattr(agent.chat, "completions"):
-            return self._wrap_openai(agent, agent_id)
-
         # CrewAI agent
-        module = type(agent).__module__ or ""
         if "crewai" in module and hasattr(agent, "execute_task"):
             return self._wrap_crewai(agent, agent_id)
 
@@ -289,19 +347,46 @@ class VelyrionClient:
         if "autogen" in module and hasattr(agent, "generate_reply"):
             return self._wrap_autogen(agent, agent_id)
 
-        # Anthropic client — has `messages` attribute with a `create` method
-        if hasattr(agent, "messages") and hasattr(agent.messages, "create"):
-            return self._wrap_anthropic(agent, agent_id)
+        # Semantic Kernel
+        if "semantic_kernel" in module and (hasattr(agent, "invoke") or hasattr(agent, "invoke_prompt")):
+            return self._wrap_semantic_kernel(agent, agent_id)
 
-        # Google Gemini model — module contains google.generativeai / genai
-        if ("google.generativeai" in module or "genai" in module) and hasattr(agent, "generate_content"):
-            return self._wrap_gemini(agent, agent_id)
+        # LlamaIndex query/chat engine
+        if "llama_index" in module or "llamaindex" in module:
+            return self._wrap_llamaindex(agent, agent_id)
 
-        # Mistral client — module contains mistralai, has `chat` attribute
-        if "mistralai" in module and hasattr(agent, "chat"):
-            return self._wrap_mistral(agent, agent_id)
+        # Haystack pipeline
+        if "haystack" in module and hasattr(agent, "run"):
+            return self._wrap_haystack(agent, agent_id)
 
-        # Generic: wrap .run(), .invoke(), or .execute()
+        # PydanticAI agent
+        if "pydantic_ai" in module and (hasattr(agent, "run") or hasattr(agent, "run_sync")):
+            return self._wrap_pydantic_ai(agent, agent_id)
+
+        # Agno / Phidata agent
+        if ("agno" in module or "phi" in module) and hasattr(agent, "run"):
+            return self._wrap_agno(agent, agent_id)
+
+        # OpenAI Swarm
+        if "swarm" in module and hasattr(agent, "run"):
+            return self._wrap_swarm(agent, agent_id)
+
+        # Smolagents (HuggingFace)
+        if "smolagents" in module and hasattr(agent, "run"):
+            return self._wrap_smolagents(agent, agent_id)
+
+        # HuggingFace Transformers pipeline or model
+        if "transformers" in module:
+            return self._wrap_huggingface(agent, agent_id)
+
+        # ─── OpenAI-Compatible Clients ───────────────────────────────
+        # Together, Groq, Fireworks, DeepSeek, vLLM, LiteLLM, Anyscale
+        # all use the OpenAI SDK interface
+        if hasattr(agent, "chat") and hasattr(getattr(agent, "chat", None), "completions"):
+            return self._wrap_openai(agent, agent_id)
+
+        # ─── Generic Fallback ────────────────────────────────────────
+        # Wrap any object with run(), invoke(), execute(), or call()
         for method_name in ["run", "invoke", "execute", "call", "__call__"]:
             if hasattr(agent, method_name) and callable(getattr(agent, method_name)):
                 original = getattr(agent, method_name)
@@ -343,7 +428,7 @@ class VelyrionClient:
                 logger.info(f"Wrapped {type(agent).__name__}.{method_name}() for agent {agent_id}")
                 return agent
 
-        logger.warning(f"Could not wrap {type(agent).__name__} — no run/invoke/execute method found")
+        logger.warning(f"Could not wrap {type(agent).__name__} — no known method found")
         return agent
 
     # ── LangChain Integration ────────────────────────────────────────────
@@ -806,7 +891,895 @@ class VelyrionClient:
         logger.info(f"Wrapped Mistral client for {agent_id}")
         return client_obj
 
+    # ── AWS Bedrock Integration ──────────────────────────────────────────
+
+    def _wrap_bedrock(self, client_obj: Any, agent_id: str) -> Any:
+        """
+        Wrap an AWS Bedrock runtime client to report all model invocations.
+
+        Intercepts ``invoke_model`` and ``invoke_agent`` calls.
+        Works with ``boto3.client('bedrock-runtime')``.
+
+        Args:
+            client_obj: A ``boto3`` bedrock-runtime client.
+            agent_id: Unique agent identifier.
+
+        Returns:
+            The same client with governance applied.
+        """
+        velyrion = self
+
+        if hasattr(client_obj, "invoke_model"):
+            original_invoke = client_obj.invoke_model
+
+            @wraps(original_invoke)
+            def governed_invoke_model(**kwargs: Any) -> Any:
+                start = time.time()
+                model_id = kwargs.get("modelId", "bedrock-model")
+                body = kwargs.get("body", "")
+                task = str(body)[:300] if isinstance(body, str) else "bedrock invocation"
+
+                pre_result = velyrion.report(
+                    agent_id=agent_id,
+                    task=task,
+                    tool=f"bedrock:{model_id}",
+                    input_data=str(body)[:500],
+                    confidence=1.0, duration_ms=0, tokens=0,
+                )
+                if pre_result.get("blocked"):
+                    raise ActionBlockedException(pre_result.get("detail", "Blocked by VELYRION"))
+
+                result = original_invoke(**kwargs)
+                duration = int((time.time() - start) * 1000)
+
+                response_body = ""
+                if "body" in result:
+                    try:
+                        response_body = result["body"].read().decode("utf-8")
+                        result["body"] = type(result["body"])(response_body.encode())
+                    except Exception:
+                        response_body = str(result)[:500]
+
+                velyrion.report(
+                    agent_id=agent_id,
+                    task=task,
+                    tool=f"bedrock:{model_id}",
+                    output_data=response_body[:500],
+                    confidence=0.9, duration_ms=duration,
+                )
+                return result
+
+            client_obj.invoke_model = governed_invoke_model
+
+        if hasattr(client_obj, "invoke_agent"):
+            original_invoke_agent = client_obj.invoke_agent
+
+            @wraps(original_invoke_agent)
+            def governed_invoke_agent(**kwargs: Any) -> Any:
+                start = time.time()
+                agent_alias = kwargs.get("agentAliasId", "bedrock-agent")
+                input_text = kwargs.get("inputText", "")
+
+                pre_result = velyrion.report(
+                    agent_id=agent_id,
+                    task=str(input_text)[:300],
+                    tool=f"bedrock-agent:{agent_alias}",
+                    input_data=str(input_text)[:500],
+                    confidence=1.0, duration_ms=0, tokens=0,
+                )
+                if pre_result.get("blocked"):
+                    raise ActionBlockedException(pre_result.get("detail", "Blocked by VELYRION"))
+
+                result = original_invoke_agent(**kwargs)
+                duration = int((time.time() - start) * 1000)
+
+                velyrion.report(
+                    agent_id=agent_id,
+                    task=str(input_text)[:300],
+                    tool=f"bedrock-agent:{agent_alias}",
+                    output_data=str(result)[:500],
+                    confidence=0.85, duration_ms=duration,
+                )
+                return result
+
+            client_obj.invoke_agent = governed_invoke_agent
+
+        logger.info(f"Wrapped AWS Bedrock client for {agent_id}")
+        return client_obj
+
+    # ── Azure OpenAI Integration ─────────────────────────────────────────
+
+    def _wrap_azure_openai(self, client_obj: Any, agent_id: str) -> Any:
+        """
+        Wrap an Azure OpenAI client to report all completions.
+
+        Uses the same pattern as OpenAI since Azure OpenAI SDK extends it.
+        Works with ``openai.AzureOpenAI``.
+
+        Args:
+            client_obj: An ``openai.AzureOpenAI`` instance.
+            agent_id: Unique agent identifier.
+
+        Returns:
+            The same client with governance applied.
+        """
+        return self._wrap_openai(client_obj, agent_id)
+
+    # ── Google Vertex AI Integration ─────────────────────────────────────
+
+    def _wrap_vertex_ai(self, model: Any, agent_id: str) -> Any:
+        """
+        Wrap a Google Vertex AI model to report all predictions.
+
+        Works with ``vertexai.generative_models.GenerativeModel``
+        and ``vertexai.language_models.TextGenerationModel``.
+
+        Args:
+            model: A Vertex AI model instance.
+            agent_id: Unique agent identifier.
+
+        Returns:
+            The same model with governance applied.
+        """
+        velyrion = self
+
+        # Vertex AI GenerativeModel uses generate_content
+        if hasattr(model, "generate_content"):
+            original_generate = model.generate_content
+
+            @wraps(original_generate)
+            def governed_generate(contents: Any, *args: Any, **kwargs: Any) -> Any:
+                start = time.time()
+                task = str(contents)[:300]
+                model_name = getattr(model, "_model_name", "vertex-ai")
+
+                pre_result = velyrion.report(
+                    agent_id=agent_id, task=task,
+                    tool=f"vertex:{model_name}",
+                    input_data=task[:500], confidence=1.0,
+                    duration_ms=0, tokens=0,
+                )
+                if pre_result.get("blocked"):
+                    raise ActionBlockedException(pre_result.get("detail", "Blocked by VELYRION"))
+
+                result = original_generate(contents, *args, **kwargs)
+                duration = int((time.time() - start) * 1000)
+
+                tokens = 0
+                if hasattr(result, "usage_metadata"):
+                    meta = result.usage_metadata
+                    tokens = (getattr(meta, "prompt_token_count", 0) or 0) + \
+                             (getattr(meta, "candidates_token_count", 0) or 0)
+
+                output = str(getattr(result, "text", result))[:500]
+
+                velyrion.report(
+                    agent_id=agent_id, task=task,
+                    tool=f"vertex:{model_name}",
+                    output_data=output, confidence=0.9,
+                    duration_ms=duration, tokens=tokens,
+                )
+                return result
+
+            model.generate_content = governed_generate
+
+        # Vertex AI TextGenerationModel uses predict
+        elif hasattr(model, "predict"):
+            original_predict = model.predict
+
+            @wraps(original_predict)
+            def governed_predict(prompt: str, *args: Any, **kwargs: Any) -> Any:
+                start = time.time()
+                pre_result = velyrion.report(
+                    agent_id=agent_id, task=prompt[:300],
+                    tool="vertex:text-model", input_data=prompt[:500],
+                    confidence=1.0, duration_ms=0, tokens=0,
+                )
+                if pre_result.get("blocked"):
+                    raise ActionBlockedException(pre_result.get("detail", "Blocked by VELYRION"))
+
+                result = original_predict(prompt, *args, **kwargs)
+                duration = int((time.time() - start) * 1000)
+                output = str(getattr(result, "text", result))[:500]
+
+                velyrion.report(
+                    agent_id=agent_id, task=prompt[:300],
+                    tool="vertex:text-model", output_data=output,
+                    confidence=0.9, duration_ms=duration,
+                )
+                return result
+
+            model.predict = governed_predict
+
+        logger.info(f"Wrapped Google Vertex AI model for {agent_id}")
+        return model
+
+    # ── LangGraph Integration ────────────────────────────────────────────
+
+    def _wrap_langgraph(self, graph: Any, agent_id: str) -> Any:
+        """
+        Wrap a LangGraph compiled graph to report all state transitions.
+
+        Works with ``langgraph.graph.StateGraph`` compiled graphs
+        (``CompiledGraph.invoke``).
+
+        Args:
+            graph: A compiled LangGraph instance.
+            agent_id: Unique agent identifier.
+
+        Returns:
+            The same graph with governance applied.
+        """
+        client = self
+        original_invoke = graph.invoke
+
+        @wraps(original_invoke)
+        def governed_invoke(state: Any, *args: Any, **kwargs: Any) -> Any:
+            start = time.time()
+            task = str(state)[:300]
+
+            try:
+                result = original_invoke(state, *args, **kwargs)
+                duration = int((time.time() - start) * 1000)
+
+                # LangGraph returns state dicts
+                output = str(result)[:500] if result else ""
+
+                client.report(
+                    agent_id=agent_id, task=task,
+                    tool="langgraph", output_data=output,
+                    confidence=0.85, duration_ms=duration,
+                )
+                return result
+            except (AgentKilledException, ActionBlockedException):
+                raise
+            except Exception as e:
+                duration = int((time.time() - start) * 1000)
+                client.report(
+                    agent_id=agent_id, task=task,
+                    tool="langgraph", output_data=f"ERROR: {e}",
+                    confidence=0.1, duration_ms=duration,
+                )
+                raise
+
+        graph.invoke = governed_invoke
+
+        # Also wrap stream if available (LangGraph streaming)
+        if hasattr(graph, "stream"):
+            original_stream = graph.stream
+
+            @wraps(original_stream)
+            def governed_stream(state: Any, *args: Any, **kwargs: Any):
+                start = time.time()
+                task = str(state)[:300]
+                chunks = []
+
+                for chunk in original_stream(state, *args, **kwargs):
+                    chunks.append(str(chunk)[:200])
+                    yield chunk
+
+                duration = int((time.time() - start) * 1000)
+                client.report(
+                    agent_id=agent_id, task=task,
+                    tool="langgraph:stream",
+                    output_data="; ".join(chunks[-3:])[:500],
+                    confidence=0.85, duration_ms=duration,
+                )
+
+            graph.stream = governed_stream
+
+        logger.info(f"Wrapped LangGraph for {agent_id}")
+        return graph
+
+    # ── LlamaIndex Integration ───────────────────────────────────────────
+
+    def _wrap_llamaindex(self, engine: Any, agent_id: str) -> Any:
+        """
+        Wrap a LlamaIndex query engine or chat engine.
+
+        Works with ``QueryEngine.query()``, ``ChatEngine.chat()``,
+        and ``AgentRunner.chat()``/``AgentRunner.query()``.
+
+        Args:
+            engine: A LlamaIndex engine or agent runner.
+            agent_id: Unique agent identifier.
+
+        Returns:
+            The same engine with governance applied.
+        """
+        client = self
+
+        for method_name in ["query", "chat", "aquery", "achat"]:
+            if not hasattr(engine, method_name):
+                continue
+            original = getattr(engine, method_name)
+
+            @wraps(original)
+            def governed(input_data: Any, *args: Any, _orig=original, _name=method_name, **kwargs: Any) -> Any:
+                start = time.time()
+                task = str(input_data)[:300]
+
+                try:
+                    result = _orig(input_data, *args, **kwargs)
+                    duration = int((time.time() - start) * 1000)
+
+                    output = str(getattr(result, "response", result))[:500]
+                    sources = []
+                    if hasattr(result, "source_nodes"):
+                        sources = [str(n.node.metadata.get("file_name", ""))
+                                   for n in result.source_nodes[:5]]
+
+                    client.report(
+                        agent_id=agent_id, task=task,
+                        tool=f"llamaindex:{_name}",
+                        data_sources=sources if sources else None,
+                        output_data=output,
+                        confidence=0.85, duration_ms=duration,
+                    )
+                    return result
+                except (AgentKilledException, ActionBlockedException):
+                    raise
+                except Exception as e:
+                    duration = int((time.time() - start) * 1000)
+                    client.report(
+                        agent_id=agent_id, task=task,
+                        tool=f"llamaindex:{_name}",
+                        output_data=f"ERROR: {e}",
+                        confidence=0.1, duration_ms=duration,
+                    )
+                    raise
+
+            setattr(engine, method_name, governed)
+
+        logger.info(f"Wrapped LlamaIndex engine for {agent_id}")
+        return engine
+
+    # ── Haystack Integration ─────────────────────────────────────────────
+
+    def _wrap_haystack(self, pipeline: Any, agent_id: str) -> Any:
+        """
+        Wrap a Haystack pipeline to report all runs.
+
+        Works with ``haystack.Pipeline.run()``.
+
+        Args:
+            pipeline: A Haystack Pipeline instance.
+            agent_id: Unique agent identifier.
+
+        Returns:
+            The same pipeline with governance applied.
+        """
+        client = self
+        original_run = pipeline.run
+
+        @wraps(original_run)
+        def governed_run(data: Any = None, *args: Any, **kwargs: Any) -> Any:
+            start = time.time()
+            task = str(data)[:300] if data else "haystack pipeline"
+
+            try:
+                result = original_run(data, *args, **kwargs) if data else original_run(*args, **kwargs)
+                duration = int((time.time() - start) * 1000)
+
+                output = str(result)[:500]
+
+                client.report(
+                    agent_id=agent_id, task=task,
+                    tool="haystack_pipeline",
+                    output_data=output,
+                    confidence=0.85, duration_ms=duration,
+                )
+                return result
+            except (AgentKilledException, ActionBlockedException):
+                raise
+            except Exception as e:
+                duration = int((time.time() - start) * 1000)
+                client.report(
+                    agent_id=agent_id, task=task,
+                    tool="haystack_pipeline",
+                    output_data=f"ERROR: {e}",
+                    confidence=0.1, duration_ms=duration,
+                )
+                raise
+
+        pipeline.run = governed_run
+        logger.info(f"Wrapped Haystack pipeline for {agent_id}")
+        return pipeline
+
+    # ── Semantic Kernel Integration ──────────────────────────────────────
+
+    def _wrap_semantic_kernel(self, kernel: Any, agent_id: str) -> Any:
+        """
+        Wrap a Microsoft Semantic Kernel instance.
+
+        Intercepts ``kernel.invoke()`` and ``kernel.invoke_prompt()``.
+
+        Args:
+            kernel: A ``semantic_kernel.Kernel`` instance.
+            agent_id: Unique agent identifier.
+
+        Returns:
+            The same kernel with governance applied.
+        """
+        client = self
+
+        for method_name in ["invoke", "invoke_prompt"]:
+            if not hasattr(kernel, method_name):
+                continue
+            original = getattr(kernel, method_name)
+
+            @wraps(original)
+            def governed(
+                *args: Any, _orig=original, _name=method_name, **kwargs: Any
+            ) -> Any:
+                start = time.time()
+                task = str(args[0])[:300] if args else str(kwargs)[:300]
+
+                try:
+                    result = _orig(*args, **kwargs)
+                    duration = int((time.time() - start) * 1000)
+
+                    output = str(result)[:500]
+
+                    client.report(
+                        agent_id=agent_id, task=task,
+                        tool=f"semantic_kernel:{_name}",
+                        output_data=output,
+                        confidence=0.85, duration_ms=duration,
+                    )
+                    return result
+                except (AgentKilledException, ActionBlockedException):
+                    raise
+                except Exception as e:
+                    duration = int((time.time() - start) * 1000)
+                    client.report(
+                        agent_id=agent_id, task=task,
+                        tool=f"semantic_kernel:{_name}",
+                        output_data=f"ERROR: {e}",
+                        confidence=0.1, duration_ms=duration,
+                    )
+                    raise
+
+            setattr(kernel, method_name, governed)
+
+        logger.info(f"Wrapped Semantic Kernel for {agent_id}")
+        return kernel
+
+    # ── Cohere Integration ───────────────────────────────────────────────
+
+    def _wrap_cohere(self, client_obj: Any, agent_id: str) -> Any:
+        """
+        Wrap a Cohere client to report all chat/generate calls.
+
+        Works with ``cohere.Client`` — intercepts ``.chat()`` and
+        ``.generate()``.
+
+        Args:
+            client_obj: A ``cohere.Client`` or ``cohere.ClientV2`` instance.
+            agent_id: Unique agent identifier.
+
+        Returns:
+            The same client with governance applied.
+        """
+        velyrion = self
+
+        for method_name in ["chat", "generate", "chat_stream"]:
+            if not hasattr(client_obj, method_name):
+                continue
+            original = getattr(client_obj, method_name)
+
+            @wraps(original)
+            def governed(
+                *args: Any, _orig=original, _name=method_name, **kwargs: Any
+            ) -> Any:
+                start = time.time()
+                message = kwargs.get("message", kwargs.get("prompt", str(args[0]) if args else ""))
+                task = str(message)[:300]
+                model = kwargs.get("model", "cohere")
+
+                pre_result = velyrion.report(
+                    agent_id=agent_id, task=task,
+                    tool=f"cohere:{model}:{_name}",
+                    input_data=task[:500], confidence=1.0,
+                    duration_ms=0, tokens=0,
+                )
+                if pre_result.get("blocked"):
+                    raise ActionBlockedException(pre_result.get("detail", "Blocked by VELYRION"))
+
+                result = _orig(*args, **kwargs)
+                duration = int((time.time() - start) * 1000)
+
+                output = str(getattr(result, "text", result))[:500]
+                tokens = 0
+                if hasattr(result, "meta") and hasattr(result.meta, "billed_units"):
+                    billed = result.meta.billed_units
+                    tokens = (getattr(billed, "input_tokens", 0) or 0) + \
+                             (getattr(billed, "output_tokens", 0) or 0)
+
+                velyrion.report(
+                    agent_id=agent_id, task=task,
+                    tool=f"cohere:{model}:{_name}",
+                    output_data=output, confidence=0.9,
+                    duration_ms=duration, tokens=tokens,
+                )
+                return result
+
+            setattr(client_obj, method_name, governed)
+
+        logger.info(f"Wrapped Cohere client for {agent_id}")
+        return client_obj
+
+    # ── Ollama / vLLM / OpenAI-compatible Integration ────────────────────
+
+    def _wrap_ollama(self, client_obj: Any, agent_id: str) -> Any:
+        """
+        Wrap an Ollama client or any OpenAI-compatible local server.
+
+        Works with ``ollama.Client`` (``chat``, ``generate``),
+        and OpenAI-compatible clients (Together, Groq, Fireworks, DeepSeek,
+        vLLM, LiteLLM, Anyscale).
+
+        For OpenAI-compatible clients, use ``_wrap_openai()`` directly — they
+        all share the same ``chat.completions.create`` interface.
+
+        Args:
+            client_obj: An ``ollama.Client`` instance.
+            agent_id: Unique agent identifier.
+
+        Returns:
+            The same client with governance applied.
+        """
+        velyrion = self
+
+        # Native Ollama client
+        for method_name in ["chat", "generate"]:
+            if not hasattr(client_obj, method_name):
+                continue
+            original = getattr(client_obj, method_name)
+
+            @wraps(original)
+            def governed(
+                *args: Any, _orig=original, _name=method_name, **kwargs: Any
+            ) -> Any:
+                start = time.time()
+                model = kwargs.get("model", "ollama-local")
+                prompt = kwargs.get("prompt", "")
+                messages = kwargs.get("messages", [])
+                task = str(prompt or messages)[:300]
+
+                pre_result = velyrion.report(
+                    agent_id=agent_id, task=task,
+                    tool=f"ollama:{model}:{_name}",
+                    input_data=task[:500], confidence=1.0,
+                    duration_ms=0, tokens=0,
+                )
+                if pre_result.get("blocked"):
+                    raise ActionBlockedException(pre_result.get("detail", "Blocked by VELYRION"))
+
+                result = _orig(*args, **kwargs)
+                duration = int((time.time() - start) * 1000)
+
+                output = ""
+                tokens = 0
+                if isinstance(result, dict):
+                    output = str(result.get("message", {}).get("content",
+                                 result.get("response", "")))[:500]
+                    tokens = result.get("eval_count", 0) + result.get("prompt_eval_count", 0)
+                else:
+                    output = str(result)[:500]
+
+                velyrion.report(
+                    agent_id=agent_id, task=task,
+                    tool=f"ollama:{model}:{_name}",
+                    output_data=output, confidence=0.9,
+                    duration_ms=duration, tokens=tokens,
+                )
+                return result
+
+            setattr(client_obj, method_name, governed)
+
+        logger.info(f"Wrapped Ollama/local client for {agent_id}")
+        return client_obj
+
+    # ── HuggingFace Transformers Integration ─────────────────────────────
+
+    def _wrap_huggingface(self, pipeline_or_model: Any, agent_id: str) -> Any:
+        """
+        Wrap a HuggingFace Transformers pipeline or model.
+
+        Works with ``transformers.pipeline()`` objects and any model
+        with a ``generate()`` or ``__call__()`` method.
+
+        Args:
+            pipeline_or_model: A HF pipeline or model instance.
+            agent_id: Unique agent identifier.
+
+        Returns:
+            The same object with governance applied.
+        """
+        client = self
+
+        # HuggingFace pipelines are callable
+        if callable(pipeline_or_model) and hasattr(pipeline_or_model, "task"):
+            original_call = pipeline_or_model.__class__.__call__
+
+            @wraps(original_call)
+            def governed_call(self_obj: Any, *args: Any, **kwargs: Any) -> Any:
+                start = time.time()
+                task = str(args[0])[:300] if args else str(kwargs)[:300]
+
+                result = original_call(self_obj, *args, **kwargs)
+                duration = int((time.time() - start) * 1000)
+
+                output = str(result)[:500]
+
+                client.report(
+                    agent_id=agent_id, task=task,
+                    tool=f"huggingface:{getattr(pipeline_or_model, 'task', 'pipeline')}",
+                    output_data=output, confidence=0.85,
+                    duration_ms=duration,
+                )
+                return result
+
+            pipeline_or_model.__class__.__call__ = governed_call
+            logger.info(f"Wrapped HuggingFace pipeline for {agent_id}")
+            return pipeline_or_model
+
+        # Model with generate()
+        if hasattr(pipeline_or_model, "generate"):
+            original_generate = pipeline_or_model.generate
+
+            @wraps(original_generate)
+            def governed_generate(*args: Any, **kwargs: Any) -> Any:
+                start = time.time()
+                result = original_generate(*args, **kwargs)
+                duration = int((time.time() - start) * 1000)
+
+                client.report(
+                    agent_id=agent_id,
+                    task="model.generate()",
+                    tool="huggingface:generate",
+                    output_data=str(result)[:500],
+                    confidence=0.85, duration_ms=duration,
+                )
+                return result
+
+            pipeline_or_model.generate = governed_generate
+
+        logger.info(f"Wrapped HuggingFace model for {agent_id}")
+        return pipeline_or_model
+
+    # ── PydanticAI Integration ───────────────────────────────────────────
+
+    def _wrap_pydantic_ai(self, agent: Any, agent_id: str) -> Any:
+        """
+        Wrap a PydanticAI agent to report all runs.
+
+        Works with ``pydantic_ai.Agent`` — intercepts ``.run()``
+        and ``.run_sync()``.
+
+        Args:
+            agent: A ``pydantic_ai.Agent`` instance.
+            agent_id: Unique agent identifier.
+
+        Returns:
+            The same agent with governance applied.
+        """
+        client = self
+
+        for method_name in ["run", "run_sync", "run_stream"]:
+            if not hasattr(agent, method_name):
+                continue
+            original = getattr(agent, method_name)
+
+            @wraps(original)
+            def governed(
+                prompt: Any = None, *args: Any,
+                _orig=original, _name=method_name, **kwargs: Any
+            ) -> Any:
+                start = time.time()
+                task = str(prompt)[:300] if prompt else str(kwargs)[:300]
+
+                try:
+                    result = _orig(prompt, *args, **kwargs) if prompt else _orig(*args, **kwargs)
+                    duration = int((time.time() - start) * 1000)
+
+                    output = str(getattr(result, "data", result))[:500]
+
+                    client.report(
+                        agent_id=agent_id, task=task,
+                        tool=f"pydantic_ai:{_name}",
+                        output_data=output, confidence=0.85,
+                        duration_ms=duration,
+                    )
+                    return result
+                except (AgentKilledException, ActionBlockedException):
+                    raise
+                except Exception as e:
+                    duration = int((time.time() - start) * 1000)
+                    client.report(
+                        agent_id=agent_id, task=task,
+                        tool=f"pydantic_ai:{_name}",
+                        output_data=f"ERROR: {e}",
+                        confidence=0.1, duration_ms=duration,
+                    )
+                    raise
+
+            setattr(agent, method_name, governed)
+
+        logger.info(f"Wrapped PydanticAI agent for {agent_id}")
+        return agent
+
+    # ── Agno (Phidata) Integration ───────────────────────────────────────
+
+    def _wrap_agno(self, agent: Any, agent_id: str) -> Any:
+        """
+        Wrap an Agno (formerly Phidata) agent to report all runs.
+
+        Works with ``agno.Agent`` and ``phi.agent.Agent`` —
+        intercepts ``.run()`` and ``.print_response()``.
+
+        Args:
+            agent: An Agno/Phidata agent instance.
+            agent_id: Unique agent identifier.
+
+        Returns:
+            The same agent with governance applied.
+        """
+        client = self
+
+        for method_name in ["run", "print_response", "chat"]:
+            if not hasattr(agent, method_name):
+                continue
+            original = getattr(agent, method_name)
+
+            @wraps(original)
+            def governed(
+                message: Any = None, *args: Any,
+                _orig=original, _name=method_name, **kwargs: Any
+            ) -> Any:
+                start = time.time()
+                task = str(message)[:300] if message else str(kwargs)[:300]
+
+                try:
+                    result = _orig(message, *args, **kwargs) if message else _orig(*args, **kwargs)
+                    duration = int((time.time() - start) * 1000)
+
+                    output = str(getattr(result, "content", result))[:500]
+
+                    client.report(
+                        agent_id=agent_id, task=task,
+                        tool=f"agno:{_name}",
+                        output_data=output, confidence=0.85,
+                        duration_ms=duration,
+                    )
+                    return result
+                except (AgentKilledException, ActionBlockedException):
+                    raise
+                except Exception as e:
+                    duration = int((time.time() - start) * 1000)
+                    client.report(
+                        agent_id=agent_id, task=task,
+                        tool=f"agno:{_name}",
+                        output_data=f"ERROR: {e}",
+                        confidence=0.1, duration_ms=duration,
+                    )
+                    raise
+
+            setattr(agent, method_name, governed)
+
+        logger.info(f"Wrapped Agno/Phidata agent for {agent_id}")
+        return agent
+
+    # ── OpenAI Swarm Integration ─────────────────────────────────────────
+
+    def _wrap_swarm(self, swarm: Any, agent_id: str) -> Any:
+        """
+        Wrap an OpenAI Swarm client.
+
+        Works with ``swarm.Swarm`` — intercepts ``.run()``.
+
+        Args:
+            swarm: A ``swarm.Swarm`` instance.
+            agent_id: Unique agent identifier.
+
+        Returns:
+            The same Swarm with governance applied.
+        """
+        client = self
+        original_run = swarm.run
+
+        @wraps(original_run)
+        def governed_run(agent: Any = None, messages: Any = None, *args: Any, **kwargs: Any) -> Any:
+            start = time.time()
+            task = str(messages[-1].get("content", ""))[:300] if messages else "swarm run"
+
+            try:
+                result = original_run(agent, messages, *args, **kwargs)
+                duration = int((time.time() - start) * 1000)
+
+                output = ""
+                if hasattr(result, "messages") and result.messages:
+                    output = str(result.messages[-1].get("content", ""))[:500]
+
+                client.report(
+                    agent_id=agent_id, task=task,
+                    tool="openai_swarm",
+                    output_data=output, confidence=0.85,
+                    duration_ms=duration,
+                )
+                return result
+            except (AgentKilledException, ActionBlockedException):
+                raise
+            except Exception as e:
+                duration = int((time.time() - start) * 1000)
+                client.report(
+                    agent_id=agent_id, task=task,
+                    tool="openai_swarm",
+                    output_data=f"ERROR: {e}",
+                    confidence=0.1, duration_ms=duration,
+                )
+                raise
+
+        swarm.run = governed_run
+        logger.info(f"Wrapped OpenAI Swarm for {agent_id}")
+        return swarm
+
+    # ── Smolagents (HuggingFace) Integration ─────────────────────────────
+
+    def _wrap_smolagents(self, agent: Any, agent_id: str) -> Any:
+        """
+        Wrap a HuggingFace Smolagents agent.
+
+        Works with ``smolagents.CodeAgent`` and ``smolagents.ToolCallingAgent``
+        — intercepts ``.run()``.
+
+        Args:
+            agent: A smolagents agent instance.
+            agent_id: Unique agent identifier.
+
+        Returns:
+            The same agent with governance applied.
+        """
+        client = self
+        original_run = agent.run
+
+        @wraps(original_run)
+        def governed_run(task_str: str, *args: Any, **kwargs: Any) -> Any:
+            start = time.time()
+            task = str(task_str)[:300]
+
+            try:
+                result = original_run(task_str, *args, **kwargs)
+                duration = int((time.time() - start) * 1000)
+
+                output = str(result)[:500]
+
+                client.report(
+                    agent_id=agent_id, task=task,
+                    tool="smolagents",
+                    output_data=output, confidence=0.85,
+                    duration_ms=duration,
+                )
+                return result
+            except (AgentKilledException, ActionBlockedException):
+                raise
+            except Exception as e:
+                duration = int((time.time() - start) * 1000)
+                client.report(
+                    agent_id=agent_id, task=task,
+                    tool="smolagents",
+                    output_data=f"ERROR: {e}",
+                    confidence=0.1, duration_ms=duration,
+                )
+                raise
+
+        agent.run = governed_run
+        logger.info(f"Wrapped Smolagents for {agent_id}")
+        return agent
+
     # ── Track: Decorator for Individual Functions ────────────────────────
+
 
     def track(
         self,
