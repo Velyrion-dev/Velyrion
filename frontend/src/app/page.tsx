@@ -57,10 +57,19 @@ const FRAMEWORKS = [
   { name: "OpenAI", color: "#10a37f" },
   { name: "Anthropic", color: "#d4a574" },
   { name: "Google Gemini", color: "#4285f4" },
+  { name: "AWS Bedrock", color: "#ff9900" },
+  { name: "Azure OpenAI", color: "#0078d4" },
+  { name: "Vertex AI", color: "#4285f4" },
   { name: "LangChain", color: "#1c3c3c" },
+  { name: "LangGraph", color: "#1c3c3c" },
   { name: "CrewAI", color: "#ff6b35" },
   { name: "AutoGen", color: "#0078d4" },
+  { name: "LlamaIndex", color: "#8b5cf6" },
   { name: "Mistral", color: "#ff7000" },
+  { name: "Cohere", color: "#39594d" },
+  { name: "Ollama", color: "#ffffff" },
+  { name: "HuggingFace", color: "#ffd21e" },
+  { name: "PydanticAI", color: "#e92063" },
   { name: "n8n", color: "#ea4b71" },
 ];
 
@@ -167,7 +176,7 @@ export default function LandingPage() {
           </div>
           <div className="hero-stats-row">
             <div className="hero-stat">
-              <div className="hero-stat-value"><Counter end={7} /></div>
+              <div className="hero-stat-value"><Counter end={21} suffix="+" /></div>
               <div className="hero-stat-label">Frameworks</div>
             </div>
             <div className="hero-stat-divider" />
@@ -191,9 +200,16 @@ export default function LandingPage() {
 
       {/* ── Framework Logos ── */}
       <section className="landing-section" style={{ paddingTop: 40, paddingBottom: 40 }}>
-        <p className="logos-label">Works with every agent framework — from no-code to enterprise</p>
+        <p className="logos-label">Trusted by teams using every AI agent framework — from no-code to enterprise</p>
         <div className="logos-row">
           {FRAMEWORKS.map(f => <div key={f.name} className="logo-chip" style={{ borderColor: `${f.color}40` }}>{f.name}</div>)}
+        </div>
+        {/* ── Trust Badges — Security & Compliance Social Proof ── */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 20, marginTop: 28, flexWrap: "wrap" }}>
+          <div className="trust-shield">🔒 End-to-End Encrypted</div>
+          <div className="trust-shield">🛡️ SOC2 Compliant</div>
+          <div className="trust-shield">📋 GDPR Ready</div>
+          <div className="trust-shield">✓ ISO 27001 Aligned</div>
         </div>
       </section>
 
@@ -347,7 +363,7 @@ export default function LandingPage() {
           </div>
         </div>
         <div className="footer-bottom">
-          © 2025 Velyrion Inc. All rights reserved.
+          © 2026 Velyrion Inc. All rights reserved. · Privacy Policy · Terms of Service
         </div>
       </footer>
     </div>

@@ -15,6 +15,11 @@ export default function ConditionalLayout({ children }: { children: React.ReactN
 
   const isPublic = PUBLIC_PATHS.includes(pathname);
 
+  // Close sidebar on route change (mobile UX)
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [pathname]);
+
   useEffect(() => {
     if (!isLoading && !isAuthenticated && !isPublic) {
       router.replace("/login");
