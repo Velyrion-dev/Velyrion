@@ -230,7 +230,7 @@ class VelyrionClient:
                 detail = r.json().get("detail", "Action blocked")
                 logger.warning(f"[{agent_id}] BLOCKED: {detail}")
 
-                if "locked" in detail.lower() or "CRITICAL" in detail:
+                if "agent locked" in detail.lower() or "account locked" in detail.lower() or detail == "CRITICAL":
                     self._killed_agents.add(agent_id)
 
                 if self.block_on_violation:
@@ -521,7 +521,7 @@ class VelyrionClient:
                 tokens=0,
             )
 
-            if pre_result.get("blocked"):
+            if pre_result.get("blocked") and velyrion.block_on_violation:
                 raise ActionBlockedException(pre_result.get("detail", "Blocked by VELYRION"))
 
             # Execute the actual API call
@@ -702,7 +702,7 @@ class VelyrionClient:
                 duration_ms=0,
                 tokens=0,
             )
-            if pre_result.get("blocked"):
+            if pre_result.get("blocked") and velyrion.block_on_violation:
                 raise ActionBlockedException(pre_result.get("detail", "Blocked by VELYRION"))
 
             result = original_create(*args, **kwargs)
@@ -774,7 +774,7 @@ class VelyrionClient:
                 duration_ms=0,
                 tokens=0,
             )
-            if pre_result.get("blocked"):
+            if pre_result.get("blocked") and velyrion.block_on_violation:
                 raise ActionBlockedException(pre_result.get("detail", "Blocked by VELYRION"))
 
             result = original_generate(content, *args, **kwargs)
@@ -853,7 +853,7 @@ class VelyrionClient:
                 duration_ms=0,
                 tokens=0,
             )
-            if pre_result.get("blocked"):
+            if pre_result.get("blocked") and velyrion.block_on_violation:
                 raise ActionBlockedException(pre_result.get("detail", "Blocked by VELYRION"))
 
             result = original_complete(*args, **kwargs)
@@ -926,7 +926,7 @@ class VelyrionClient:
                     input_data=str(body)[:500],
                     confidence=1.0, duration_ms=0, tokens=0,
                 )
-                if pre_result.get("blocked"):
+                if pre_result.get("blocked") and velyrion.block_on_violation:
                     raise ActionBlockedException(pre_result.get("detail", "Blocked by VELYRION"))
 
                 result = original_invoke(**kwargs)
@@ -967,7 +967,7 @@ class VelyrionClient:
                     input_data=str(input_text)[:500],
                     confidence=1.0, duration_ms=0, tokens=0,
                 )
-                if pre_result.get("blocked"):
+                if pre_result.get("blocked") and velyrion.block_on_violation:
                     raise ActionBlockedException(pre_result.get("detail", "Blocked by VELYRION"))
 
                 result = original_invoke_agent(**kwargs)
@@ -1039,7 +1039,7 @@ class VelyrionClient:
                     input_data=task[:500], confidence=1.0,
                     duration_ms=0, tokens=0,
                 )
-                if pre_result.get("blocked"):
+                if pre_result.get("blocked") and velyrion.block_on_violation:
                     raise ActionBlockedException(pre_result.get("detail", "Blocked by VELYRION"))
 
                 result = original_generate(contents, *args, **kwargs)
@@ -1075,7 +1075,7 @@ class VelyrionClient:
                     tool="vertex:text-model", input_data=prompt[:500],
                     confidence=1.0, duration_ms=0, tokens=0,
                 )
-                if pre_result.get("blocked"):
+                if pre_result.get("blocked") and velyrion.block_on_violation:
                     raise ActionBlockedException(pre_result.get("detail", "Blocked by VELYRION"))
 
                 result = original_predict(prompt, *args, **kwargs)
@@ -1383,7 +1383,7 @@ class VelyrionClient:
                     input_data=task[:500], confidence=1.0,
                     duration_ms=0, tokens=0,
                 )
-                if pre_result.get("blocked"):
+                if pre_result.get("blocked") and velyrion.block_on_violation:
                     raise ActionBlockedException(pre_result.get("detail", "Blocked by VELYRION"))
 
                 result = _orig(*args, **kwargs)
@@ -1453,7 +1453,7 @@ class VelyrionClient:
                     input_data=task[:500], confidence=1.0,
                     duration_ms=0, tokens=0,
                 )
-                if pre_result.get("blocked"):
+                if pre_result.get("blocked") and velyrion.block_on_violation:
                     raise ActionBlockedException(pre_result.get("detail", "Blocked by VELYRION"))
 
                 result = _orig(*args, **kwargs)

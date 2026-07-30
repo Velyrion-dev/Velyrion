@@ -24,12 +24,12 @@ logger = logging.getLogger("velyrion")
 _global_client = None
 
 
-def _get_client(api_url: str = "http://localhost:8000", api_key: str = ""):
+def _get_client(api_url: str = "http://localhost:8000", api_key: str = "", block_on_violation: bool = True):
     """Get or create a global VelyrionClient."""
     global _global_client
     if _global_client is None:
         from velyrion.client import VelyrionClient
-        _global_client = VelyrionClient(api_url=api_url, api_key=api_key)
+        _global_client = VelyrionClient(api_url=api_url, api_key=api_key, block_on_violation=block_on_violation)
     return _global_client
 
 
@@ -52,7 +52,7 @@ def governed(
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            client = _get_client(api_url, api_key)
+            client = _get_client(api_url, api_key, block_on_violation)
             start = time.time()
             task = f"{func.__name__}({str(args)[:100]})"
 
