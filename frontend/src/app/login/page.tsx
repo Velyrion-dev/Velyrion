@@ -77,7 +77,12 @@ export default function LoginPage() {
       await login(email, password);
       router.push("/dashboard");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Login failed");
+      const msg = err instanceof Error ? err.message : "Login failed";
+      if (msg.includes("Failed to fetch") || msg.includes("aborted") || msg.includes("NetworkError")) {
+        setError("Server is waking up — please try again in a few seconds.");
+      } else {
+        setError(msg);
+      }
     } finally {
       setLoading(false);
     }
