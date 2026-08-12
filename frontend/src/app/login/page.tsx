@@ -26,11 +26,7 @@ export default function LoginPage() {
       router.push("/dashboard");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Login failed";
-      if (msg.includes("Failed to fetch") || msg.includes("aborted") || msg.includes("NetworkError")) {
-        setError("Server is waking up — please try again in a few seconds.");
-      } else {
-        setError(msg);
-      }
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -48,11 +44,7 @@ export default function LoginPage() {
       router.push("/dashboard");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Google sign-in failed";
-      if (msg.includes("Failed to fetch") || msg.includes("aborted")) {
-        setError("Server is waking up — please try again in a few seconds.");
-      } else {
-        setError(msg);
-      }
+      setError(`Google Auth Error: ${msg}`);
     } finally {
       setLoading(false);
     }
