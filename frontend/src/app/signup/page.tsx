@@ -76,11 +76,7 @@ export default function SignupPage() {
       router.push("/dashboard");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Google sign-up failed";
-      if (msg.includes("Failed to fetch") || msg.includes("aborted")) {
-        setError("Server is waking up — please try again in a few seconds.");
-      } else {
-        setError(msg);
-      }
+      setError(`Google Auth Error: ${msg}`);
     } finally {
       setLoading(false);
     }
