@@ -39,12 +39,40 @@ export default function LoginPage() {
     }
     setError("");
     setLoading(true);
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
     try {
-      await googleLogin(credentialResponse.credential);
+      // Direct fetch with detailed error handling instead of authFetch
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 45000); // 45s
+      
+      const res = await fetch(`${apiUrl}/api/auth/google`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ credential: credentialResponse.credential }),
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+      
+      const data = await res.json();
+      if (!res.ok) {
+        setError(`Backend error (${res.status}): ${data.detail || JSON.stringify(data)}`);
+        return;
+      }
+      
+      // Success! Save tokens manually
+      localStorage.setItem("velyrion_access_token", data.access_token);
+      localStorage.setItem("velyrion_refresh_token", data.refresh_token);
+      localStorage.setItem("velyrion_user", JSON.stringify(data.user));
       router.push("/dashboard");
+      window.location.reload();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Google sign-in failed";
-      setError(`Google Auth Error: ${msg}`);
+      const msg = err instanceof Error ? err.message : String(err);
+      const apiDisplay = apiUrl.replace("https://", "").replace("http://", "");
+      if (msg.includes("aborted")) {
+        setError(`Timeout (45s) connecting to ${apiDisplay}. Backend may be sleeping.`);
+      } else {
+        setError(`Network error → ${apiDisplay}: ${msg}`);
+      }
     } finally {
       setLoading(false);
     }
