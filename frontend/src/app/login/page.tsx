@@ -39,27 +39,22 @@ export default function LoginPage() {
     }
     setError("");
     setLoading(true);
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
     try {
-      // Direct fetch with detailed error handling instead of authFetch
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 45000); // 45s
-      
-      const res = await fetch(`${apiUrl}/api/auth/google`, {
+      // Call our Next.js API proxy (same-origin, no CORS issues)
+      // The proxy on Vercel forwards to the Render backend server-side
+      const res = await fetch("/api/auth/google", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ credential: credentialResponse.credential }),
-        signal: controller.signal,
       });
-      clearTimeout(timeoutId);
       
       const data = await res.json();
       if (!res.ok) {
-        setError(`Backend error (${res.status}): ${data.detail || JSON.stringify(data)}`);
+        setError(data.detail || `Error (${res.status})`);
         return;
       }
       
-      // Success! Save tokens manually
+      // Success! Save tokens and redirect
       localStorage.setItem("velyrion_access_token", data.access_token);
       localStorage.setItem("velyrion_refresh_token", data.refresh_token);
       localStorage.setItem("velyrion_user", JSON.stringify(data.user));
@@ -67,12 +62,7 @@ export default function LoginPage() {
       window.location.reload();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      const apiDisplay = apiUrl.replace("https://", "").replace("http://", "");
-      if (msg.includes("aborted")) {
-        setError(`Timeout (45s) connecting to ${apiDisplay}. Backend may be sleeping.`);
-      } else {
-        setError(`Network error → ${apiDisplay}: ${msg}`);
-      }
+      setError(`Google sign-in error: ${msg}`);
     } finally {
       setLoading(false);
     }
