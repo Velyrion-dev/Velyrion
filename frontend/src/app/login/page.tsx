@@ -41,22 +41,31 @@ export default function LoginPage() {
     setLoading(true);
     try {
       // Call our Next.js API proxy (same-origin, no CORS issues)
-      // The proxy on Vercel forwards to the Render backend server-side
       const res = await fetch("/api/auth/google", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ credential: credentialResponse.credential }),
       });
       
-      const data = await res.json();
+      // Read as text first to handle non-JSON responses
+      const text = await res.text();
+      let data: Record<string, unknown>;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        // Response is not JSON (probably HTML error page)
+        setError(`Server error (${res.status}): ${text.substring(0, 100)}`);
+        return;
+      }
+      
       if (!res.ok) {
-        setError(data.detail || `Error (${res.status})`);
+        setError(String(data.detail || data.error || data.message || `Error ${res.status}`));
         return;
       }
       
       // Success! Save tokens and redirect
-      localStorage.setItem("velyrion_access_token", data.access_token);
-      localStorage.setItem("velyrion_refresh_token", data.refresh_token);
+      localStorage.setItem("velyrion_access_token", data.access_token as string);
+      localStorage.setItem("velyrion_refresh_token", data.refresh_token as string);
       localStorage.setItem("velyrion_user", JSON.stringify(data.user));
       router.push("/dashboard");
       window.location.reload();
