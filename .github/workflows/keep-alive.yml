@@ -2,7 +2,7 @@ name: Keep Alive
 
 on:
   schedule:
-    - cron: '*/14 * * * *'  # Every 14 minutes
+    - cron: '*/5 * * * *'  # Every 5 minutes — Render sleeps after 15min
   workflow_dispatch:  # Allow manual trigger
 
 jobs:
@@ -12,6 +12,4 @@ jobs:
     steps:
       - name: Ping Render backend
         run: |
-          curl -sf https://velyrion.onrender.com/health || echo "Backend sleeping, waking up..."
-          sleep 5
-          curl -sf https://velyrion.onrender.com/health && echo "Backend is healthy!" || echo "Backend still waking..."
+          curl -sf https://velyrion.onrender.com/health && echo "Backend is healthy!" || echo "Backend sleeping, sending wake request..."
