@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "https://velyrion.onrender.com";
 
+// Allow up to 60s for Render backend cold starts (default is 10s which times out)
+export const maxDuration = 60;
+
 export async function POST(req: NextRequest) {
   let body: string;
   try {
