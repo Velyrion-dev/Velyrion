@@ -59,7 +59,9 @@ export default function LoginPage() {
       }
       
       if (!res.ok) {
-        setError(String(data.detail || data.error || data.message || `Error ${res.status}`));
+        // Show EVERYTHING for debugging
+        const errMsg = data.detail || data.error || data.message || "unknown";
+        setError(`[${res.status}] ${errMsg} | raw: ${text.substring(0, 150)}`);
         return;
       }
       
