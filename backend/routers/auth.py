@@ -173,63 +173,91 @@ async def google_auth(req: GoogleAuthRequest, db: AsyncSession = Depends(get_db)
     Authenticate with a Google ID token (from Sign In With Google).
     Creates a new user if they don't exist.
     """
-    # Verify the Google ID token
+    # Step 1: Verify the Google ID token
     try:
         async with httpx.AsyncClient() as client:
             r = await client.get(
                 f"https://oauth2.googleapis.com/tokeninfo?id_token={req.credential}"
             )
             if r.status_code != 200:
+                logger.error(f"Google tokeninfo returned {r.status_code}: {r.text[:200]}")
                 raise HTTPException(401, "Invalid Google token")
             google_data = r.json()
-    except httpx.HTTPError:
+    except httpx.HTTPError as e:
+        logger.error(f"Google tokeninfo HTTP error: {e}")
         raise HTTPException(401, "Failed to verify Google token")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Google tokeninfo unexpected error: {e}")
+        raise HTTPException(500, f"Token verification failed: {type(e).__name__}")
 
-    google_id = google_data.get("sub")
-    email = google_data.get("email", "").lower()
-    name = google_data.get("name", email.split("@")[0])
-    picture = google_data.get("picture", "")
+    # Step 2: Extract user info
+    try:
+        google_id = google_data.get("sub")
+        email = google_data.get("email", "").lower().strip()
+        name = google_data.get("name") or google_data.get("given_name") or email.split("@")[0]
+        picture = google_data.get("picture", "")
 
-    if not email:
-        raise HTTPException(400, "Google account has no email")
+        if not email:
+            raise HTTPException(400, "Google account has no email")
+        if not google_id:
+            raise HTTPException(400, "Google token missing user ID (sub)")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Google data extraction error: {e}, data={google_data}")
+        raise HTTPException(500, f"Data extraction failed: {type(e).__name__}")
 
-    # Check if user exists by google_id or email
-    result = await db.execute(
-        select(User).where((User.google_id == google_id) | (User.email == email))
-    )
-    user = result.scalar_one_or_none()
+    # Step 3: Find or create user
+    try:
+        # First try by google_id, then by email (avoid OR query issues)
+        user = None
+        if google_id:
+            result = await db.execute(select(User).where(User.google_id == google_id))
+            user = result.scalar_one_or_none()
 
-    if user:
-        # Update Google info
-        if not user.google_id:
-            user.google_id = google_id
-        if picture:
-            user.avatar_url = picture
-        user.email_verified = True
-        user.last_login = datetime.utcnow()
-    else:
-        # Create new user
-        user = User(
-            email=email,
-            name=name,
-            google_id=google_id,
-            avatar_url=picture,
-            role=UserRole.VIEWER,
-            email_verified=True,
+        if not user:
+            result = await db.execute(select(User).where(User.email == email))
+            user = result.scalar_one_or_none()
+
+        if user:
+            # Update Google info
+            if not user.google_id:
+                user.google_id = google_id
+            if picture:
+                user.avatar_url = picture
+            user.email_verified = True
+            user.last_login = datetime.utcnow()
+        else:
+            # Create new user
+            user = User(
+                email=email,
+                name=name,
+                google_id=google_id,
+                avatar_url=picture,
+                role=UserRole.VIEWER,
+                email_verified=True,
+            )
+            db.add(user)
+
+        access, refresh, expires = _create_tokens(user)
+        db.add(RefreshToken(user_id=user.user_id, token=refresh, expires_at=expires))
+
+        await db.commit()
+        logger.info(f"Google login: {user.email}")
+
+        return AuthResponse(
+            access_token=access,
+            refresh_token=refresh,
+            user=_user_to_dict(user),
         )
-        db.add(user)
-
-    access, refresh, expires = _create_tokens(user)
-    db.add(RefreshToken(user_id=user.user_id, token=refresh, expires_at=expires))
-
-    await db.commit()
-    logger.info(f"Google login: {user.email}")
-
-    return AuthResponse(
-        access_token=access,
-        refresh_token=refresh,
-        user=_user_to_dict(user),
-    )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Google auth DB error: {type(e).__name__}: {e}")
+        await db.rollback()
+        raise HTTPException(500, f"Database error: {type(e).__name__}: {str(e)[:100]}")
 
 
 # ── Token Refresh ────────────────────────────────────────────────────────────
