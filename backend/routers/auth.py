@@ -1,6 +1,7 @@
 """Auth Router — signup, login, Google OAuth, token refresh, profile."""
 
 import logging
+import uuid
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -230,8 +231,9 @@ async def google_auth(req: GoogleAuthRequest, db: AsyncSession = Depends(get_db)
             user.email_verified = True
             user.last_login = datetime.utcnow()
         else:
-            # Create new user
+            # Create new user — set user_id explicitly
             user = User(
+                user_id=str(uuid.uuid4()),
                 email=email,
                 name=name,
                 google_id=google_id,
@@ -240,6 +242,7 @@ async def google_auth(req: GoogleAuthRequest, db: AsyncSession = Depends(get_db)
                 email_verified=True,
             )
             db.add(user)
+            await db.flush()  # Ensure user_id is persisted before creating RefreshToken
 
         access, refresh, expires = _create_tokens(user)
         db.add(RefreshToken(user_id=user.user_id, token=refresh, expires_at=expires))
