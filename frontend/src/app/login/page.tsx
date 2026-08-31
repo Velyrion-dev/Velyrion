@@ -59,9 +59,7 @@ export default function LoginPage() {
       }
       
       if (!res.ok) {
-        // Show EVERYTHING for debugging
-        const errMsg = data.detail || data.error || data.message || "unknown";
-        setError(`[${res.status}] ${errMsg} | raw: ${text.substring(0, 150)}`);
+        setError(String(data.detail || data.error || data.message || "Sign-in failed. Please try again."));
         return;
       }
       
