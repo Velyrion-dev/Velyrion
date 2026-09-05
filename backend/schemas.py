@@ -10,8 +10,7 @@ from pydantic import BaseModel, Field
 
 class AgentCreate(BaseModel):
     agent_name: str
-    owner_email: str
-    department: str
+    department: str = "General"
     allowed_tools: list[str] = []
     allowed_data_sources: list[str] = []
     max_token_budget: int = 100000
@@ -22,7 +21,6 @@ class AgentCreate(BaseModel):
 
 class AgentUpdate(BaseModel):
     agent_name: Optional[str] = None
-    owner_email: Optional[str] = None
     department: Optional[str] = None
     allowed_tools: Optional[list[str]] = None
     allowed_data_sources: Optional[list[str]] = None
@@ -35,6 +33,7 @@ class AgentUpdate(BaseModel):
 class AgentResponse(BaseModel):
     agent_id: str
     agent_name: str
+    owner_id: str
     owner_email: str
     department: str
     allowed_tools: list[str]

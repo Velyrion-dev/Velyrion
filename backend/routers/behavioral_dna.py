@@ -5,7 +5,9 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, delete
 from database import get_db
-from models import Agent, AuditLog, Violation, BehavioralProfile
+from models import Agent, AuditLog, Violation, BehavioralProfile, User
+from auth import get_current_user
+from routers.user_scope import get_user_agent_ids
 
 router = APIRouter(prefix="/api/behavioral-dna", tags=["behavioral-dna"])
 
@@ -74,11 +76,20 @@ async def compute_profiles(db: AsyncSession):
 
 
 @router.get("")
-async def list_profiles(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(BehavioralProfile))
+async def list_profiles(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    agent_ids = await get_user_agent_ids(user, db)
+    if not agent_ids:
+        return []
+    result = await db.execute(
+        select(BehavioralProfile).where(BehavioralProfile.agent_id.in_(agent_ids))
+    )
     profiles = result.scalars().all()
     if not profiles:
         profiles = await compute_profiles(db)
+        profiles = [p for p in profiles if p.agent_id in agent_ids]
     return [
         {
             "profile_id": p.profile_id, "agent_id": p.agent_id, "fingerprint": p.fingerprint,
@@ -89,6 +100,12 @@ async def list_profiles(db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/recompute")
-async def recompute(db: AsyncSession = Depends(get_db)):
+async def recompute(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     profiles = await compute_profiles(db)
-    return {"recomputed": len(profiles)}
+    agent_ids = await get_user_agent_ids(user, db)
+    user_profiles = [p for p in profiles if p.agent_id in agent_ids]
+    return {"recomputed": len(user_profiles)}
+

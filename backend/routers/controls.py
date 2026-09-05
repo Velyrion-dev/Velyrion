@@ -1,12 +1,13 @@
-"""Agent Control Router — Kill switch, pause, unlock, and real-time actions."""
+"""Agent Control Router — Kill switch, pause, unlock (auth-protected, user-scoped)."""
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
 from database import get_db
-from models import Agent, AgentStatus, Violation, RiskLevel
+from models import Agent, AgentStatus, Violation, RiskLevel, User
 from engines.alert_engine import dispatch_alert
 from models import AlertType
+from auth import get_current_user
 
 router = APIRouter(prefix="/api/agents", tags=["agent-control"])
 
@@ -24,22 +25,27 @@ class ControlResponse(BaseModel):
     message: str
 
 
+async def _get_user_agent(agent_id: str, user: User, db: AsyncSession) -> Agent:
+    """Fetch an agent and verify it belongs to the current user."""
+    agent = await db.get(Agent, agent_id)
+    if not agent or agent.owner_id != user.user_id:
+        raise HTTPException(404, f"Agent not found")
+    return agent
+
+
 # ── Kill Agent (Emergency Termination) ───────────────────────────────────
 
 @router.post("/{agent_id}/kill", response_model=ControlResponse)
-async def kill_agent(agent_id: str, body: ControlAction, db: AsyncSession = Depends(get_db)):
-    """
-    EMERGENCY KILL — Immediately lock the agent and flag all future actions.
-    This is the nuclear option. Use when an agent is actively causing harm.
-    """
-    agent = await db.get(Agent, agent_id)
-    if not agent:
-        raise HTTPException(404, f"Agent '{agent_id}' not found")
-
+async def kill_agent(
+    agent_id: str,
+    body: ControlAction,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    agent = await _get_user_agent(agent_id, user, db)
     previous = agent.status.value
     agent.status = AgentStatus.LOCKED
 
-    # Log violation
     violation = Violation(
         agent_id=agent_id,
         violation_type="MANUAL_KILL_SWITCH",
@@ -59,11 +65,8 @@ async def kill_agent(agent_id: str, body: ControlAction, db: AsyncSession = Depe
     await db.commit()
 
     return ControlResponse(
-        agent_id=agent_id,
-        agent_name=agent.agent_name,
-        action="KILL",
-        previous_status=previous,
-        new_status="LOCKED",
+        agent_id=agent_id, agent_name=agent.agent_name,
+        action="KILL", previous_status=previous, new_status="LOCKED",
         message=f"Agent '{agent.agent_name}' has been killed and locked.",
     )
 
@@ -71,12 +74,13 @@ async def kill_agent(agent_id: str, body: ControlAction, db: AsyncSession = Depe
 # ── Pause Agent ──────────────────────────────────────────────────────────
 
 @router.post("/{agent_id}/pause", response_model=ControlResponse)
-async def pause_agent(agent_id: str, body: ControlAction, db: AsyncSession = Depends(get_db)):
-    """Pause an agent — actions will be queued pending review."""
-    agent = await db.get(Agent, agent_id)
-    if not agent:
-        raise HTTPException(404, f"Agent '{agent_id}' not found")
-
+async def pause_agent(
+    agent_id: str,
+    body: ControlAction,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    agent = await _get_user_agent(agent_id, user, db)
     previous = agent.status.value
     agent.status = AgentStatus.DEACTIVATED
 
@@ -90,11 +94,8 @@ async def pause_agent(agent_id: str, body: ControlAction, db: AsyncSession = Dep
     await db.commit()
 
     return ControlResponse(
-        agent_id=agent_id,
-        agent_name=agent.agent_name,
-        action="PAUSE",
-        previous_status=previous,
-        new_status="DEACTIVATED",
+        agent_id=agent_id, agent_name=agent.agent_name,
+        action="PAUSE", previous_status=previous, new_status="DEACTIVATED",
         message=f"Agent '{agent.agent_name}' has been paused.",
     )
 
@@ -102,12 +103,13 @@ async def pause_agent(agent_id: str, body: ControlAction, db: AsyncSession = Dep
 # ── Unlock / Resume Agent ───────────────────────────────────────────────
 
 @router.post("/{agent_id}/unlock", response_model=ControlResponse)
-async def unlock_agent(agent_id: str, body: ControlAction, db: AsyncSession = Depends(get_db)):
-    """Unlock a locked or paused agent, allowing it to resume actions."""
-    agent = await db.get(Agent, agent_id)
-    if not agent:
-        raise HTTPException(404, f"Agent '{agent_id}' not found")
-
+async def unlock_agent(
+    agent_id: str,
+    body: ControlAction,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    agent = await _get_user_agent(agent_id, user, db)
     previous = agent.status.value
     agent.status = AgentStatus.ACTIVE
 
@@ -121,11 +123,8 @@ async def unlock_agent(agent_id: str, body: ControlAction, db: AsyncSession = De
     await db.commit()
 
     return ControlResponse(
-        agent_id=agent_id,
-        agent_name=agent.agent_name,
-        action="UNLOCK",
-        previous_status=previous,
-        new_status="ACTIVE",
+        agent_id=agent_id, agent_name=agent.agent_name,
+        action="UNLOCK", previous_status=previous, new_status="ACTIVE",
         message=f"Agent '{agent.agent_name}' has been unlocked and is now active.",
     )
 
@@ -138,11 +137,13 @@ class RevokeToolRequest(BaseModel):
 
 
 @router.post("/{agent_id}/revoke-tool", response_model=ControlResponse)
-async def revoke_tool(agent_id: str, body: RevokeToolRequest, db: AsyncSession = Depends(get_db)):
-    """Remove a tool from an agent's allowed tools list in real-time."""
-    agent = await db.get(Agent, agent_id)
-    if not agent:
-        raise HTTPException(404, f"Agent '{agent_id}' not found")
+async def revoke_tool(
+    agent_id: str,
+    body: RevokeToolRequest,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    agent = await _get_user_agent(agent_id, user, db)
 
     if agent.allowed_tools and body.tool in agent.allowed_tools:
         agent.allowed_tools = [t for t in agent.allowed_tools if t != body.tool]
@@ -158,10 +159,8 @@ async def revoke_tool(agent_id: str, body: RevokeToolRequest, db: AsyncSession =
         await db.commit()
 
         return ControlResponse(
-            agent_id=agent_id,
-            agent_name=agent.agent_name,
-            action="REVOKE_TOOL",
-            previous_status=agent.status.value,
+            agent_id=agent_id, agent_name=agent.agent_name,
+            action="REVOKE_TOOL", previous_status=agent.status.value,
             new_status=agent.status.value,
             message=f"Tool '{body.tool}' has been revoked from '{agent.agent_name}'.",
         )
@@ -169,7 +168,7 @@ async def revoke_tool(agent_id: str, body: RevokeToolRequest, db: AsyncSession =
         raise HTTPException(400, f"Tool '{body.tool}' not in agent's allowed tools")
 
 
-# ── Agent Status Check (for SDK heartbeat) ───────────────────────────────
+# ── Agent Status Check (for SDK heartbeat — no auth required) ────────────
 
 class AgentStatusResponse(BaseModel):
     agent_id: str
@@ -180,7 +179,7 @@ class AgentStatusResponse(BaseModel):
 
 @router.get("/{agent_id}/status", response_model=AgentStatusResponse)
 async def check_agent_status(agent_id: str, db: AsyncSession = Depends(get_db)):
-    """SDK heartbeat — check if agent should continue, pause, or die."""
+    """SDK heartbeat — check if agent should continue, pause, or die. No auth (SDK endpoint)."""
     agent = await db.get(Agent, agent_id)
     if not agent:
         raise HTTPException(404, f"Agent '{agent_id}' not found")

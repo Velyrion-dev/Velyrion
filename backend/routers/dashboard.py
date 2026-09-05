@@ -1,68 +1,101 @@
-"""Dashboard Router — aggregated stats and health scores for the UI."""
+"""Dashboard Router — aggregated stats for the UI (auth-protected, user-scoped)."""
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta
 from database import get_db
 from models import (
     Agent, AuditLog, Violation, Anomaly, Incident,
-    ApprovalRequest, AgentStatus, ApprovalStatus, RiskLevel,
+    ApprovalRequest, AgentStatus, ApprovalStatus, RiskLevel, User,
 )
 from schemas import DashboardStats, AgentHealthScore, AgentCostData
+from auth import get_current_user
 
 router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
 
 
+async def _user_agent_ids(user: User, db: AsyncSession) -> list[str]:
+    """Get all agent_ids owned by the current user."""
+    result = await db.execute(
+        select(Agent.agent_id).where(Agent.owner_id == user.user_id)
+    )
+    return [row[0] for row in result.all()]
+
+
 @router.get("/stats", response_model=DashboardStats)
-async def get_dashboard_stats(db: AsyncSession = Depends(get_db)):
-    # Agent counts
-    agents_result = await db.execute(select(Agent))
+async def get_dashboard_stats(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    agent_ids = await _user_agent_ids(user, db)
+
+    # Agent counts (user's only)
+    agents_result = await db.execute(
+        select(Agent).where(Agent.owner_id == user.user_id)
+    )
     agents = agents_result.scalars().all()
 
     total_agents = len(agents)
     active_agents = sum(1 for a in agents if a.status == AgentStatus.ACTIVE)
     locked_agents = sum(1 for a in agents if a.status == AgentStatus.LOCKED)
 
-    # Event count
-    events_count = await db.execute(select(func.count()).select_from(AuditLog))
-    total_events = events_count.scalar() or 0
-
-    # Events in last 24h
-    cutoff = datetime.utcnow() - timedelta(hours=24)
-    recent_count = await db.execute(
-        select(func.count()).select_from(AuditLog).where(AuditLog.timestamp >= cutoff)
-    )
-    events_last_24h = recent_count.scalar() or 0
-
-    # Violations
-    violations_count = await db.execute(select(func.count()).select_from(Violation))
-    total_violations = violations_count.scalar() or 0
-
-    # Violations by severity
-    violations_by_severity = {}
-    for level in ["LOW", "MEDIUM", "HIGH", "CRITICAL"]:
-        count_result = await db.execute(
-            select(func.count()).select_from(Violation).where(Violation.severity == level)
+    if agent_ids:
+        # Event count
+        events_count = await db.execute(
+            select(func.count()).select_from(AuditLog).where(AuditLog.agent_id.in_(agent_ids))
         )
-        violations_by_severity[level] = count_result.scalar() or 0
+        total_events = events_count.scalar() or 0
 
-    # Anomalies
-    anomalies_count = await db.execute(select(func.count()).select_from(Anomaly))
-    total_anomalies = anomalies_count.scalar() or 0
+        # Events in last 24h
+        cutoff = datetime.utcnow() - timedelta(hours=24)
+        recent_count = await db.execute(
+            select(func.count()).select_from(AuditLog)
+            .where(AuditLog.agent_id.in_(agent_ids))
+            .where(AuditLog.timestamp >= cutoff)
+        )
+        events_last_24h = recent_count.scalar() or 0
 
-    # Incidents
-    incidents_count = await db.execute(select(func.count()).select_from(Incident))
-    total_incidents = incidents_count.scalar() or 0
+        # Violations
+        violations_count = await db.execute(
+            select(func.count()).select_from(Violation).where(Violation.agent_id.in_(agent_ids))
+        )
+        total_violations = violations_count.scalar() or 0
 
-    # Pending approvals
-    pending_count = await db.execute(
-        select(func.count()).select_from(ApprovalRequest)
-        .where(ApprovalRequest.status == ApprovalStatus.PENDING)
-    )
-    pending_approvals = pending_count.scalar() or 0
+        # Violations by severity
+        violations_by_severity = {}
+        for level in ["LOW", "MEDIUM", "HIGH", "CRITICAL"]:
+            count_result = await db.execute(
+                select(func.count()).select_from(Violation)
+                .where(Violation.agent_id.in_(agent_ids))
+                .where(Violation.severity == level)
+            )
+            violations_by_severity[level] = count_result.scalar() or 0
 
-    # Total cost
+        # Anomalies
+        anomalies_count = await db.execute(
+            select(func.count()).select_from(Anomaly).where(Anomaly.agent_id.in_(agent_ids))
+        )
+        total_anomalies = anomalies_count.scalar() or 0
+
+        # Incidents
+        incidents_count = await db.execute(
+            select(func.count()).select_from(Incident).where(Incident.agent_id.in_(agent_ids))
+        )
+        total_incidents = incidents_count.scalar() or 0
+
+        # Pending approvals
+        pending_count = await db.execute(
+            select(func.count()).select_from(ApprovalRequest)
+            .where(ApprovalRequest.agent_id.in_(agent_ids))
+            .where(ApprovalRequest.status == ApprovalStatus.PENDING)
+        )
+        pending_approvals = pending_count.scalar() or 0
+    else:
+        total_events = events_last_24h = total_violations = 0
+        total_anomalies = total_incidents = pending_approvals = 0
+        violations_by_severity = {"LOW": 0, "MEDIUM": 0, "HIGH": 0, "CRITICAL": 0}
+
     total_cost_usd = sum(a.total_cost_usd for a in agents)
 
     return DashboardStats(
@@ -81,16 +114,20 @@ async def get_dashboard_stats(db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/health", response_model=list[AgentHealthScore])
-async def get_agent_health(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Agent).order_by(Agent.agent_name))
+async def get_agent_health(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(Agent).where(Agent.owner_id == user.user_id).order_by(Agent.agent_name)
+    )
     agents = result.scalars().all()
     scores = []
 
     for agent in agents:
-        # Health = 100 - (violations penalty) - (cost overrun penalty)
-        violation_penalty = min(agent.total_violations * 5, 50)  # Max 50 points
+        violation_penalty = min(agent.total_violations * 5, 50)
         cost_ratio = (agent.tokens_used / agent.max_token_budget) if agent.max_token_budget > 0 else 0
-        cost_penalty = max(0, (cost_ratio - 1.0) * 30)  # Penalty only if over budget
+        cost_penalty = max(0, (cost_ratio - 1.0) * 30)
         health = max(0.0, min(100.0, 100.0 - violation_penalty - cost_penalty))
 
         scores.append(AgentHealthScore(
@@ -107,8 +144,13 @@ async def get_agent_health(db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/costs", response_model=list[AgentCostData])
-async def get_agent_costs(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Agent).order_by(Agent.agent_name))
+async def get_agent_costs(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(Agent).where(Agent.owner_id == user.user_id).order_by(Agent.agent_name)
+    )
     agents = result.scalars().all()
 
     return [

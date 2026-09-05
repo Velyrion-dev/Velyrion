@@ -7,7 +7,7 @@ name = "velyrion"
 version = "1.0.0"
 description = "AI Agent Governance SDK — Monitor, control, and audit every AI agent action. 21+ framework integrations."
 readme = "README.md"
-license = {text = "MIT"}
+license = "MIT"
 requires-python = ">=3.9"
 authors = [{name = "VELYRION", email = "hello@velyrion.com"}]
 keywords = ["ai", "agent", "governance", "monitoring", "audit", "llm", "safety", "openai", "langchain", "anthropic"]

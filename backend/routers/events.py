@@ -6,7 +6,7 @@ from sqlalchemy import select
 from database import get_db
 from models import (
     Agent, AuditLog, Violation, ApprovalRequest, RiskLevel,
-    AlertType, AgentStatus, ApprovalStatus,
+    AlertType, AgentStatus, ApprovalStatus, User,
 )
 from schemas import EventCreate, EventResponse
 from engines.permission_engine import check_permissions, has_critical_violation, has_blocking_violation
@@ -228,18 +228,31 @@ async def ingest_event(event: EventCreate, db: AsyncSession = Depends(get_db)):
 
     return audit
 
+from auth import get_current_user
+from routers.user_scope import get_user_agent_ids
+
 
 @router.get("/events", response_model=list[EventResponse])
 async def list_events(
     agent_id: str | None = None,
     risk_level: str | None = None,
     limit: int = 100,
+    user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    stmt = select(AuditLog).order_by(AuditLog.timestamp.desc()).limit(limit)
+    agent_ids = await get_user_agent_ids(user, db)
+    if not agent_ids:
+        return []
+    stmt = (
+        select(AuditLog)
+        .where(AuditLog.agent_id.in_(agent_ids))
+        .order_by(AuditLog.timestamp.desc())
+        .limit(limit)
+    )
     if agent_id:
         stmt = stmt.where(AuditLog.agent_id == agent_id)
     if risk_level:
         stmt = stmt.where(AuditLog.risk_level == risk_level)
     result = await db.execute(stmt)
     return result.scalars().all()
+

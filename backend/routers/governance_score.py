@@ -4,7 +4,9 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, delete
 from database import get_db
-from models import Agent, Violation, AuditLog, GovernanceScore
+from models import Agent, Violation, AuditLog, GovernanceScore, User
+from auth import get_current_user
+from routers.user_scope import get_user_agent_ids
 from datetime import datetime
 
 router = APIRouter(prefix="/api/governance-score", tags=["governance-score"])
@@ -80,11 +82,23 @@ async def compute_scores(db: AsyncSession):
 
 
 @router.get("")
-async def list_scores(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(GovernanceScore).order_by(GovernanceScore.overall_score.desc()))
+async def list_scores(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    agent_ids = await get_user_agent_ids(user, db)
+    if not agent_ids:
+        return []
+    result = await db.execute(
+        select(GovernanceScore)
+        .where(GovernanceScore.agent_id.in_(agent_ids))
+        .order_by(GovernanceScore.overall_score.desc())
+    )
     scores = result.scalars().all()
     if not scores:
         scores = await compute_scores(db)
+        # Re-filter for this user's agents
+        scores = [s for s in scores if s.agent_id in agent_ids]
     return [
         {
             "score_id": s.score_id, "agent_id": s.agent_id, "overall_score": s.overall_score,
@@ -104,6 +118,11 @@ async def list_scores(db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/recompute")
-async def recompute_scores(db: AsyncSession = Depends(get_db)):
+async def recompute_scores(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     scores = await compute_scores(db)
-    return {"recomputed": len(scores)}
+    agent_ids = await get_user_agent_ids(user, db)
+    user_scores = [s for s in scores if s.agent_id in agent_ids]
+    return {"recomputed": len(user_scores)}

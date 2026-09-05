@@ -101,6 +101,7 @@ class Agent(Base):
 
     agent_id: Mapped[str] = mapped_column(String(64), primary_key=True, default=_uuid)
     agent_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    owner_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)  # links to User.user_id
     owner_email: Mapped[str] = mapped_column(String(255), nullable=False)
     department: Mapped[str] = mapped_column(String(128), nullable=False)
     allowed_tools: Mapped[dict] = mapped_column(JSON, default=list)
