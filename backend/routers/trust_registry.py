@@ -4,7 +4,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete
 from database import get_db
-from models import Agent, TrustRegistryEntry
+from models import Agent, TrustRegistryEntry, User
+from auth import get_current_user
+from routers.user_scope import get_user_agent_ids
 
 router = APIRouter(prefix="/api/trust-registry", tags=["trust-registry"])
 
@@ -43,14 +45,18 @@ async def build_registry(db: AsyncSession):
 
 
 @router.get("")
-async def list_registry(tier: str | None = None, db: AsyncSession = Depends(get_db)):
-    stmt = select(TrustRegistryEntry).order_by(TrustRegistryEntry.trust_score.desc())
+async def list_registry(tier: str | None = None, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    agent_ids = await get_user_agent_ids(user, db)
+    if not agent_ids:
+        return []
+    stmt = select(TrustRegistryEntry).where(TrustRegistryEntry.agent_id.in_(agent_ids)).order_by(TrustRegistryEntry.trust_score.desc())
     if tier:
         stmt = stmt.where(TrustRegistryEntry.tier == tier)
     result = await db.execute(stmt)
     entries = result.scalars().all()
     if not entries:
         entries = await build_registry(db)
+        entries = [e for e in entries if e.agent_id in agent_ids]
     return [
         {
             "entry_id": e.entry_id, "agent_id": e.agent_id, "trust_score": e.trust_score,
@@ -62,6 +68,6 @@ async def list_registry(tier: str | None = None, db: AsyncSession = Depends(get_
 
 
 @router.post("/rebuild")
-async def rebuild(db: AsyncSession = Depends(get_db)):
+async def rebuild(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     entries = await build_registry(db)
     return {"rebuilt": len(entries)}

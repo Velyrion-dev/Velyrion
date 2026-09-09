@@ -4,7 +4,8 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from database import get_db
-from models import SimulationRun, Agent
+from models import SimulationRun, Agent, User
+from auth import get_current_user
 
 router = APIRouter(prefix="/api/sandbox", tags=["sandbox"])
 
@@ -27,7 +28,7 @@ SCENARIOS = {
 
 
 @router.post("/run")
-async def run_simulation(scenario_id: str, agent_id: str | None = None, db: AsyncSession = Depends(get_db)):
+async def run_simulation(scenario_id: str, agent_id: str | None = None, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     if scenario_id not in SCENARIOS:
         return {"error": f"Unknown scenario: {scenario_id}"}
 
@@ -52,7 +53,7 @@ async def run_simulation(scenario_id: str, agent_id: str | None = None, db: Asyn
 
 
 @router.get("/history")
-async def simulation_history(limit: int = 20, db: AsyncSession = Depends(get_db)):
+async def simulation_history(limit: int = 20, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(SimulationRun).order_by(SimulationRun.ran_at.desc()).limit(limit))
     runs = result.scalars().all()
     return [

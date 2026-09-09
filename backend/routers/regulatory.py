@@ -4,7 +4,8 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, delete
 from database import get_db
-from models import Agent, AuditLog, Violation, Anomaly, Incident, RegulatoryAssessment
+from models import Agent, AuditLog, Violation, Anomaly, Incident, RegulatoryAssessment, User
+from auth import get_current_user
 
 router = APIRouter(prefix="/api/regulatory", tags=["regulatory"])
 
@@ -95,7 +96,7 @@ async def assess_compliance(db: AsyncSession):
 
 
 @router.get("")
-async def list_assessments(db: AsyncSession = Depends(get_db)):
+async def list_assessments(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(RegulatoryAssessment))
     assessments = result.scalars().all()
     if not assessments:
@@ -111,13 +112,13 @@ async def list_assessments(db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/reassess")
-async def reassess(db: AsyncSession = Depends(get_db)):
+async def reassess(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     results = await assess_compliance(db)
     return {"assessed": len(results)}
 
 
 @router.get("/export/{regulation_id}")
-async def export_report(regulation_id: str, db: AsyncSession = Depends(get_db)):
+async def export_report(regulation_id: str, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     result = await db.execute(
         select(RegulatoryAssessment).where(RegulatoryAssessment.regulation_id == regulation_id)
     )

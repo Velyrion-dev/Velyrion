@@ -4,8 +4,9 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from database import get_db
-from models import Agent, Violation, AuditLog, Anomaly
+from models import Agent, Violation, AuditLog, Anomaly, User
 from pydantic import BaseModel
+from auth import get_current_user
 
 router = APIRouter(prefix="/api/copilot", tags=["copilot"])
 
@@ -15,13 +16,14 @@ class CopilotQuery(BaseModel):
 
 
 @router.post("/ask")
-async def ask_copilot(data: CopilotQuery, db: AsyncSession = Depends(get_db)):
+async def ask_copilot(data: CopilotQuery, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     q = data.query.lower()
 
-    agents = (await db.execute(select(Agent))).scalars().all()
+    agents = (await db.execute(select(Agent).where(Agent.owner_id == user.user_id))).scalars().all()
+    agent_ids = [a.agent_id for a in agents]
     total_cost = sum(a.total_cost_usd for a in agents)
     total_violations = sum(a.total_violations for a in agents)
-    total_events = (await db.execute(select(func.count()).select_from(AuditLog))).scalar() or 0
+    total_events = (await db.execute(select(func.count()).select_from(AuditLog).where(AuditLog.agent_id.in_(agent_ids)) if agent_ids else select(func.count()).select_from(AuditLog).where(AuditLog.agent_id == "__none__"))).scalar() or 0
     active_agents = [a for a in agents if a.status == "ACTIVE"]
     high_risk = [a for a in agents if a.total_violations > 3]
     over_budget = [a for a in agents if a.max_token_budget > 0 and (a.tokens_used / a.max_token_budget) > 0.85]

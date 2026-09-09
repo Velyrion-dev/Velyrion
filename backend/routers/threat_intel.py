@@ -4,7 +4,9 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, delete
 from database import get_db
-from models import Violation, ThreatPattern
+from models import Violation, ThreatPattern, User
+from auth import get_current_user
+from routers.user_scope import get_user_agent_ids
 
 router = APIRouter(prefix="/api/threat-intel", tags=["threat-intel"])
 
@@ -54,7 +56,7 @@ async def detect_patterns(db: AsyncSession):
 
 
 @router.get("/patterns")
-async def list_patterns(db: AsyncSession = Depends(get_db)):
+async def list_patterns(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(ThreatPattern).order_by(ThreatPattern.occurrences.desc()))
     patterns = result.scalars().all()
     if not patterns:
@@ -71,8 +73,11 @@ async def list_patterns(db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/feed")
-async def threat_feed(limit: int = 20, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Violation).order_by(Violation.timestamp.desc()).limit(limit))
+async def threat_feed(limit: int = 20, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    agent_ids = await get_user_agent_ids(user, db)
+    if not agent_ids:
+        return []
+    result = await db.execute(select(Violation).where(Violation.agent_id.in_(agent_ids)).order_by(Violation.timestamp.desc()).limit(limit))
     violations = result.scalars().all()
     return [
         {"timestamp": str(v.timestamp), "type": v.violation_type, "agent_id": v.agent_id,
@@ -82,8 +87,11 @@ async def threat_feed(limit: int = 20, db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/hourly")
-async def hourly_distribution(db: AsyncSession = Depends(get_db)):
-    violations = (await db.execute(select(Violation))).scalars().all()
+async def hourly_distribution(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    agent_ids = await get_user_agent_ids(user, db)
+    if not agent_ids:
+        return {"hours": [0] * 24}
+    violations = (await db.execute(select(Violation).where(Violation.agent_id.in_(agent_ids)))).scalars().all()
     hours = [0] * 24
     for v in violations:
         try:
@@ -94,6 +102,6 @@ async def hourly_distribution(db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/redetect")
-async def redetect_patterns(db: AsyncSession = Depends(get_db)):
+async def redetect_patterns(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     patterns = await detect_patterns(db)
     return {"detected": len(patterns)}

@@ -4,9 +4,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from database import get_db
-from models import WarRoomIncident, Violation, Agent
+from models import WarRoomIncident, Violation, Agent, User
 from pydantic import BaseModel
 from datetime import datetime
+from auth import get_current_user
+from routers.user_scope import get_user_agent_ids
 
 router = APIRouter(prefix="/api/war-room", tags=["war-room"])
 
@@ -29,8 +31,11 @@ class NoteAdd(BaseModel):
 
 
 @router.get("")
-async def list_incidents(status: str | None = None, db: AsyncSession = Depends(get_db)):
-    stmt = select(WarRoomIncident).order_by(WarRoomIncident.created_at.desc())
+async def list_incidents(status: str | None = None, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    agent_ids = await get_user_agent_ids(user, db)
+    if not agent_ids:
+        return []
+    stmt = select(WarRoomIncident).where(WarRoomIncident.agent_id.in_(agent_ids)).order_by(WarRoomIncident.created_at.desc())
     if status:
         stmt = stmt.where(WarRoomIncident.status == status)
     result = await db.execute(stmt)
@@ -48,7 +53,7 @@ async def list_incidents(status: str | None = None, db: AsyncSession = Depends(g
 
 
 @router.post("")
-async def create_incident(data: IncidentCreate, db: AsyncSession = Depends(get_db)):
+async def create_incident(data: IncidentCreate, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     now = datetime.utcnow().isoformat()
     incident = WarRoomIncident(
         violation_id=data.violation_id, agent_id=data.agent_id,
@@ -64,7 +69,7 @@ async def create_incident(data: IncidentCreate, db: AsyncSession = Depends(get_d
 
 
 @router.put("/{incident_id}/status")
-async def update_status(incident_id: str, data: StatusUpdate, db: AsyncSession = Depends(get_db)):
+async def update_status(incident_id: str, data: StatusUpdate, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     incident = await db.get(WarRoomIncident, incident_id)
     if not incident:
         raise HTTPException(404, "Incident not found")
@@ -77,7 +82,7 @@ async def update_status(incident_id: str, data: StatusUpdate, db: AsyncSession =
 
 
 @router.post("/{incident_id}/notes")
-async def add_note(incident_id: str, data: NoteAdd, db: AsyncSession = Depends(get_db)):
+async def add_note(incident_id: str, data: NoteAdd, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     incident = await db.get(WarRoomIncident, incident_id)
     if not incident:
         raise HTTPException(404, "Incident not found")
@@ -92,7 +97,7 @@ async def add_note(incident_id: str, data: NoteAdd, db: AsyncSession = Depends(g
 
 
 @router.post("/auto-create")
-async def auto_create_from_violations(db: AsyncSession = Depends(get_db)):
+async def auto_create_from_violations(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     """Create war room incidents from unresolved violations that don't have incidents yet."""
     existing = (await db.execute(select(WarRoomIncident.violation_id))).scalars().all()
     violations = (await db.execute(

@@ -4,8 +4,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from database import get_db
-from models import AuditLog
+from models import AuditLog, User
 from engines.crypto_chain import verify_chain, compute_merkle_root, get_merkle_proof, verify_merkle_proof
+from auth import get_current_user
+from routers.user_scope import get_user_agent_ids
 
 router = APIRouter(prefix="/api/audit", tags=["audit-proof"])
 
@@ -13,13 +15,13 @@ router = APIRouter(prefix="/api/audit", tags=["audit-proof"])
 @router.get("/verify")
 async def verify_audit_chain(
     limit: int = 1000,
+    user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Verify the cryptographic integrity of the entire audit chain.
-    
-    Returns whether any events have been tampered with and the Merkle root.
-    """
-    stmt = select(AuditLog).order_by(AuditLog.timestamp.asc()).limit(limit)
+    agent_ids = await get_user_agent_ids(user, db)
+    if not agent_ids:
+        return {"chain_integrity": "VERIFIED", "total_events": 0, "verified_events": 0, "merkle_root": None, "broken_at": None, "error": None}
+    stmt = select(AuditLog).where(AuditLog.agent_id.in_(agent_ids)).order_by(AuditLog.timestamp.asc()).limit(limit)
     result = await db.execute(stmt)
     events = result.scalars().all()
     
@@ -52,12 +54,16 @@ async def verify_audit_chain(
 @router.get("/proof/{event_id}")
 async def get_event_proof(
     event_id: str,
+    user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Get a Merkle proof for a specific event — verifies membership without scanning the full chain."""
     # Get target event
     target = await db.get(AuditLog, event_id)
     if not target:
+        raise HTTPException(404, "Event not found")
+    agent_ids = await get_user_agent_ids(user, db)
+    if target.agent_id not in agent_ids:
         raise HTTPException(404, "Event not found")
     
     # Get all events for Merkle tree
@@ -101,13 +107,14 @@ async def get_event_proof(
 @router.get("/export")
 async def export_audit_report(
     limit: int = 500,
+    user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Export a signed audit report — for regulatory submission."""
     import hashlib
     from datetime import datetime
-    
-    stmt = select(AuditLog).order_by(AuditLog.timestamp.asc()).limit(limit)
+
+    agent_ids = await get_user_agent_ids(user, db)
+    stmt = select(AuditLog).where(AuditLog.agent_id.in_(agent_ids)).order_by(AuditLog.timestamp.asc()).limit(limit) if agent_ids else select(AuditLog).where(AuditLog.agent_id == "__none__")
     result = await db.execute(stmt)
     events = result.scalars().all()
     
@@ -147,10 +154,13 @@ async def export_audit_report(
 @router.get("/chain")
 async def get_chain_summary(
     limit: int = 20,
+    user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Get recent chain entries with their hashes — visual chain display."""
-    stmt = select(AuditLog).order_by(AuditLog.timestamp.desc()).limit(limit)
+    agent_ids = await get_user_agent_ids(user, db)
+    if not agent_ids:
+        return []
+    stmt = select(AuditLog).where(AuditLog.agent_id.in_(agent_ids)).order_by(AuditLog.timestamp.desc()).limit(limit)
     result = await db.execute(stmt)
     events = result.scalars().all()
     

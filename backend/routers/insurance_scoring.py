@@ -4,7 +4,9 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete
 from database import get_db
-from models import Agent, InsuranceProfile
+from models import Agent, InsuranceProfile, User
+from auth import get_current_user
+from routers.user_scope import get_user_agent_ids
 
 router = APIRouter(prefix="/api/insurance-scoring", tags=["insurance-scoring"])
 
@@ -76,11 +78,20 @@ async def compute_insurance(db: AsyncSession):
 
 
 @router.get("")
-async def list_profiles(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(InsuranceProfile).order_by(InsuranceProfile.risk_score))
+async def list_profiles(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    agent_ids = await get_user_agent_ids(user, db)
+    if not agent_ids:
+        return []
+    result = await db.execute(
+        select(InsuranceProfile).where(InsuranceProfile.agent_id.in_(agent_ids)).order_by(InsuranceProfile.risk_score)
+    )
     profiles = result.scalars().all()
     if not profiles:
         profiles = await compute_insurance(db)
+        profiles = [p for p in profiles if p.agent_id in agent_ids]
     return [
         {
             "profile_id": p.profile_id, "agent_id": p.agent_id, "risk_score": p.risk_score,
@@ -93,6 +104,11 @@ async def list_profiles(db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/recompute")
-async def recompute(db: AsyncSession = Depends(get_db)):
+async def recompute(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     profiles = await compute_insurance(db)
-    return {"recomputed": len(profiles)}
+    agent_ids = await get_user_agent_ids(user, db)
+    user_profiles = [p for p in profiles if p.agent_id in agent_ids]
+    return {"recomputed": len(user_profiles)}

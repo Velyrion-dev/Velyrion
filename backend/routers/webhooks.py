@@ -7,8 +7,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from database import get_db
-from models import Alert
+from models import Alert, User
 from pydantic import BaseModel
+from auth import get_current_user
 
 logger = logging.getLogger("velyrion.webhooks")
 
@@ -64,7 +65,7 @@ _delivery_stats: dict[int, dict] = {}  # webhook_id -> {deliveries, failures}
 # ── CRUD Endpoints ──────────────────────────────────────────────────────
 
 @router.get("", response_model=list[WebhookConfigResponse])
-async def list_webhooks():
+async def list_webhooks(user: User = Depends(get_current_user)):
     """List all configured webhooks."""
     result = []
     for i, wh in enumerate(_webhook_configs):
@@ -84,7 +85,7 @@ async def list_webhooks():
 
 
 @router.post("", status_code=201, response_model=WebhookConfigResponse)
-async def create_webhook(config: WebhookConfig):
+async def create_webhook(config: WebhookConfig, user: User = Depends(get_current_user)):
     """Register a new webhook endpoint."""
     idx = len(_webhook_configs)
     _webhook_configs.append(config.model_dump())
@@ -106,7 +107,7 @@ async def create_webhook(config: WebhookConfig):
 
 
 @router.put("/{webhook_id}", response_model=WebhookConfigResponse)
-async def update_webhook(webhook_id: int, config: WebhookConfig):
+async def update_webhook(webhook_id: int, config: WebhookConfig, user: User = Depends(get_current_user)):
     """Update a webhook configuration."""
     if webhook_id < 0 or webhook_id >= len(_webhook_configs):
         raise HTTPException(404, "Webhook not found")
@@ -121,7 +122,7 @@ async def update_webhook(webhook_id: int, config: WebhookConfig):
 
 
 @router.delete("/{webhook_id}")
-async def delete_webhook(webhook_id: int):
+async def delete_webhook(webhook_id: int, user: User = Depends(get_current_user)):
     """Delete a webhook."""
     if webhook_id < 0 or webhook_id >= len(_webhook_configs):
         raise HTTPException(404, "Webhook not found")
@@ -133,7 +134,7 @@ async def delete_webhook(webhook_id: int):
 
 
 @router.post("/{webhook_id}/toggle")
-async def toggle_webhook(webhook_id: int):
+async def toggle_webhook(webhook_id: int, user: User = Depends(get_current_user)):
     """Enable/disable a webhook."""
     if webhook_id < 0 or webhook_id >= len(_webhook_configs):
         raise HTTPException(404, "Webhook not found")
@@ -147,7 +148,7 @@ async def toggle_webhook(webhook_id: int):
 # ── Test a webhook ──────────────────────────────────────────────────────
 
 @router.post("/{webhook_id}/test", response_model=WebhookTestResult)
-async def test_webhook(webhook_id: int):
+async def test_webhook(webhook_id: int, user: User = Depends(get_current_user)):
     """Send a test payload to verify webhook connectivity."""
     if webhook_id < 0 or webhook_id >= len(_webhook_configs):
         raise HTTPException(404, "Webhook not found")
@@ -333,7 +334,7 @@ def _build_payload(
 # ── Get recent webhook deliveries from alerts table ─────────────────────
 
 @router.get("/deliveries")
-async def get_deliveries(limit: int = 50, db: AsyncSession = Depends(get_db)):
+async def get_deliveries(limit: int = 50, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     """Get recent alert deliveries (used as webhook delivery log)."""
     stmt = select(Alert).order_by(Alert.timestamp.desc()).limit(limit)
     result = await db.execute(stmt)

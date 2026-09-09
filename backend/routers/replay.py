@@ -5,9 +5,10 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from database import get_db
-from models import AuditLog, Agent, Violation, Anomaly
+from models import AuditLog, Agent, Violation, Anomaly, User
 from pydantic import BaseModel
 from datetime import datetime
+from auth import get_current_user
 import logging, traceback
 
 logger = logging.getLogger("velyrion.replay")
@@ -60,6 +61,7 @@ class ReplayResponse(BaseModel):
 async def get_agent_replay(
     agent_id: str,
     limit: int = 500,
+    user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -68,7 +70,7 @@ async def get_agent_replay(
     """
     try:
         agent = await db.get(Agent, agent_id)
-        if not agent:
+        if not agent or agent.owner_id != user.user_id:
             raise HTTPException(404, f"Agent '{agent_id}' not found")
 
         # Get all events for this agent

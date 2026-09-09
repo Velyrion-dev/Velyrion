@@ -4,8 +4,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from database import get_db
-from models import AgentFlow, InterAgentPolicy, Agent
+from models import AgentFlow, InterAgentPolicy, Agent, User
 from pydantic import BaseModel
+from auth import get_current_user
+from routers.user_scope import get_user_agent_ids
 
 router = APIRouter(prefix="/api/multi-agent", tags=["multi-agent"])
 
@@ -24,13 +26,19 @@ class PolicyCreate(BaseModel):
 
 
 @router.get("/flows")
-async def list_flows(limit: int = 50, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(AgentFlow).order_by(AgentFlow.timestamp.desc()).limit(limit))
+async def list_flows(limit: int = 50, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    agent_ids = await get_user_agent_ids(user, db)
+    if not agent_ids:
+        return []
+    result = await db.execute(
+        select(AgentFlow)
+        .where((AgentFlow.from_agent_id.in_(agent_ids)) | (AgentFlow.to_agent_id.in_(agent_ids)))
+        .order_by(AgentFlow.timestamp.desc()).limit(limit)
+    )
     flows = result.scalars().all()
 
-    # Enrich with agent names
     agent_map = {}
-    agents = (await db.execute(select(Agent))).scalars().all()
+    agents = (await db.execute(select(Agent).where(Agent.owner_id == user.user_id))).scalars().all()
     for a in agents:
         agent_map[a.agent_id] = a.agent_name
 
@@ -47,7 +55,7 @@ async def list_flows(limit: int = 50, db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/flows")
-async def create_flow(data: FlowCreate, db: AsyncSession = Depends(get_db)):
+async def create_flow(data: FlowCreate, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     flow = AgentFlow(
         from_agent_id=data.from_agent_id, to_agent_id=data.to_agent_id,
         action=data.action, status=data.status,
@@ -58,7 +66,7 @@ async def create_flow(data: FlowCreate, db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/flows/stats")
-async def flow_stats(db: AsyncSession = Depends(get_db)):
+async def flow_stats(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     total = (await db.execute(select(func.count()).select_from(AgentFlow))).scalar() or 0
     governed = (await db.execute(select(func.count()).where(AgentFlow.status == "governed"))).scalar() or 0
     blocked = (await db.execute(select(func.count()).where(AgentFlow.status == "blocked"))).scalar() or 0
@@ -67,7 +75,7 @@ async def flow_stats(db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/policies")
-async def list_policies(db: AsyncSession = Depends(get_db)):
+async def list_policies(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(InterAgentPolicy).order_by(InterAgentPolicy.created_at.desc()))
     policies = result.scalars().all()
     return [
@@ -80,7 +88,7 @@ async def list_policies(db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/policies")
-async def create_policy(data: PolicyCreate, db: AsyncSession = Depends(get_db)):
+async def create_policy(data: PolicyCreate, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     policy = InterAgentPolicy(name=data.name, rule=data.rule, enforcement=data.enforcement)
     db.add(policy)
     await db.commit()

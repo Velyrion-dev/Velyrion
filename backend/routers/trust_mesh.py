@@ -4,8 +4,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from database import get_db
-from models import TrustAgreement, CrossOrgEvent
+from models import TrustAgreement, CrossOrgEvent, User
 from pydantic import BaseModel
+from auth import get_current_user
 
 router = APIRouter(prefix="/api/trust-mesh", tags=["trust-mesh"])
 
@@ -27,7 +28,7 @@ class CrossOrgEventCreate(BaseModel):
 
 
 @router.get("/agreements")
-async def list_agreements(db: AsyncSession = Depends(get_db)):
+async def list_agreements(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(TrustAgreement).order_by(TrustAgreement.created_at.desc()))
     agreements = result.scalars().all()
     return [
@@ -42,7 +43,7 @@ async def list_agreements(db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/agreements")
-async def create_agreement(data: AgreementCreate, db: AsyncSession = Depends(get_db)):
+async def create_agreement(data: AgreementCreate, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     agreement = TrustAgreement(
         org_a=data.org_a, org_b=data.org_b, status="pending",
         agent_count=data.agent_count, shared_policies=data.shared_policies,
@@ -53,7 +54,7 @@ async def create_agreement(data: AgreementCreate, db: AsyncSession = Depends(get
 
 
 @router.post("/agreements/{agreement_id}/activate")
-async def activate_agreement(agreement_id: str, db: AsyncSession = Depends(get_db)):
+async def activate_agreement(agreement_id: str, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     agreement = await db.get(TrustAgreement, agreement_id)
     if not agreement:
         raise HTTPException(404, "Agreement not found")
@@ -63,7 +64,7 @@ async def activate_agreement(agreement_id: str, db: AsyncSession = Depends(get_d
 
 
 @router.get("/events")
-async def list_cross_org_events(limit: int = 50, db: AsyncSession = Depends(get_db)):
+async def list_cross_org_events(limit: int = 50, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(CrossOrgEvent).order_by(CrossOrgEvent.timestamp.desc()).limit(limit))
     events = result.scalars().all()
     return [
@@ -78,7 +79,7 @@ async def list_cross_org_events(limit: int = 50, db: AsyncSession = Depends(get_
 
 
 @router.post("/events")
-async def log_cross_org_event(data: CrossOrgEventCreate, db: AsyncSession = Depends(get_db)):
+async def log_cross_org_event(data: CrossOrgEventCreate, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     event = CrossOrgEvent(
         from_org=data.from_org, from_agent=data.from_agent,
         to_org=data.to_org, to_agent=data.to_agent,

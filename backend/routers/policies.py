@@ -3,8 +3,10 @@
 import yaml
 import os
 from pathlib import Path
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
+from auth import get_current_user
+from models import User
 
 router = APIRouter(prefix="/api/policies", tags=["policies"])
 
@@ -37,7 +39,7 @@ class PolicyResponse(BaseModel):
 # ── List all policies ────────────────────────────────────────────────────
 
 @router.get("", response_model=list[PolicyResponse])
-async def list_policies():
+async def list_policies(user: User = Depends(get_current_user)):
     """List all YAML policy files."""
     policies = []
     if not POLICY_DIR.exists():
@@ -64,7 +66,7 @@ async def list_policies():
 # ── Get a specific policy ────────────────────────────────────────────────
 
 @router.get("/{filename}")
-async def get_policy(filename: str):
+async def get_policy(filename: str, user: User = Depends(get_current_user)):
     """Get full policy content by filename."""
     path = POLICY_DIR / filename
     if not path.exists() or not path.suffix == ".yaml":
@@ -78,7 +80,7 @@ async def get_policy(filename: str):
 # ── Create/update a policy ───────────────────────────────────────────────
 
 @router.post("", status_code=201)
-async def create_policy(policy: PolicySchema):
+async def create_policy(policy: PolicySchema, user: User = Depends(get_current_user)):
     """Create or update a YAML policy file."""
     POLICY_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -103,7 +105,7 @@ async def create_policy(policy: PolicySchema):
 # ── Delete a policy ─────────────────────────────────────────────────────
 
 @router.delete("/{filename}")
-async def delete_policy(filename: str):
+async def delete_policy(filename: str, user: User = Depends(get_current_user)):
     """Delete a policy file."""
     path = POLICY_DIR / filename
     if not path.exists():
@@ -136,7 +138,7 @@ class EvalViolation(BaseModel):
 
 
 @router.post("/evaluate", response_model=list[EvalViolation])
-async def evaluate_policies(req: EvalRequest):
+async def evaluate_policies(req: EvalRequest, user: User = Depends(get_current_user)):
     """Evaluate all policies against a proposed action."""
     # Lazy import to avoid circular dependency
     import sys
