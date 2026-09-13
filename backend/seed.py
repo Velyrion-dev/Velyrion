@@ -407,10 +407,28 @@ async def seed():
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
 
+    # ── Seed Users FIRST (agents reference owner_id) ──────────────────────
+    DEMO_USERS = [
+        ("user-admin", "admin@velyrion.com", "Admin User", "V3lyr!0n@Adm1n", UserRole.ADMIN),
+        ("user-operator", "operator@velyrion.com", "Operator User", "V3lyr!0n@0ps24", UserRole.OPERATOR),
+        ("user-viewer", "viewer@velyrion.com", "Viewer User", "V3lyr!0n@V1ew9", UserRole.VIEWER),
+    ]
     async with async_session() as db:
-        # ── Agents ──
+        for uid, email, name, pwd, role in DEMO_USERS:
+            db.add(User(
+                user_id=uid, email=email, name=name,
+                password_hash=hash_password(pwd),
+                role=role, email_verified=True,
+            ))
+            print(f"  → Created {email}")
+        await db.commit()
+
+    async with async_session() as db:
+        # ── Agents (all assigned to admin user) ──
         for data in AGENTS:
-            agent = Agent(**data)
+            data_copy = dict(data)
+            data_copy["owner_id"] = "user-admin"  # all demo agents belong to admin
+            agent = Agent(**data_copy)
             db.add(agent)
 
         # ── Audit Logs ──
@@ -560,29 +578,7 @@ async def seed():
 
         await db.commit()
 
-    # ── Seed Users ──────────────────────────────────────────────────────────
-    DEMO_USERS = [
-        ("user-admin", "admin@velyrion.com", "Admin User", "V3lyr!0n@Adm1n", UserRole.ADMIN),
-        ("user-operator", "operator@velyrion.com", "Operator User", "V3lyr!0n@0ps24", UserRole.OPERATOR),
-        ("user-viewer", "viewer@velyrion.com", "Viewer User", "V3lyr!0n@V1ew9", UserRole.VIEWER),
-    ]
-    async with async_session() as db:
-        from sqlalchemy import select
-        for uid, email, name, pwd, role in DEMO_USERS:
-            existing = await db.execute(select(User).where(User.email == email))
-            user = existing.scalar_one_or_none()
-            if user:
-                # Update password to latest
-                user.password_hash = hash_password(pwd)
-                print(f"  → Updated password for {email}")
-            else:
-                db.add(User(
-                    user_id=uid, email=email, name=name,
-                    password_hash=hash_password(pwd),
-                    role=role, email_verified=True,
-                ))
-                print(f"  → Created {email}")
-        await db.commit()
+
 
     print("✓ Database seeded successfully!")
     print(f"  → {len(AGENTS)} agents")

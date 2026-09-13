@@ -59,6 +59,32 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"Seed skipped (data may already exist): {e}")
         logger.info("System operational")
+
+    # ── Migration: fix orphaned agents with NULL owner_id ──
+    try:
+        from database import async_session
+        from sqlalchemy import select, update, text
+        from models import Agent, User
+        async with async_session() as db:
+            # Find agents with NULL or empty owner_id
+            orphans = await db.execute(
+                select(Agent).where(
+                    (Agent.owner_id == None) | (Agent.owner_id == "")  # noqa: E711
+                )
+            )
+            orphan_list = orphans.scalars().all()
+            if orphan_list:
+                # Assign to first admin user
+                admin = await db.execute(select(User).where(User.role == "ADMIN"))
+                admin_user = admin.scalars().first()
+                if admin_user:
+                    for agent in orphan_list:
+                        agent.owner_id = admin_user.user_id
+                    await db.commit()
+                    logger.info(f"Migration: assigned {len(orphan_list)} orphaned agents to admin {admin_user.email}")
+    except Exception as e:
+        logger.warning(f"Migration check skipped: {e}")
+
     yield
     logger.info("VELYRION shutting down")
 
