@@ -5,12 +5,22 @@ import os
 from pathlib import Path
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
-from auth import get_current_user
-from models import User
+from auth import get_current_user, require_role
+from models import User, UserRole
+import re
 
 router = APIRouter(prefix="/api/policies", tags=["policies"])
 
 POLICY_DIR = Path(__file__).parent.parent.parent / "policies"
+
+
+def _validate_filename(filename: str) -> str:
+    """Validate filename to prevent path traversal."""
+    if not filename or ".." in filename or "/" in filename or "\\" in filename:
+        raise HTTPException(400, "Invalid filename")
+    if not re.match(r'^[a-zA-Z0-9_\-]+\.yaml$', filename):
+        raise HTTPException(400, "Filename must be alphanumeric with .yaml extension")
+    return filename
 
 
 class PolicyRule(BaseModel):
@@ -68,6 +78,7 @@ async def list_policies(user: User = Depends(get_current_user)):
 @router.get("/{filename}")
 async def get_policy(filename: str, user: User = Depends(get_current_user)):
     """Get full policy content by filename."""
+    filename = _validate_filename(filename)
     path = POLICY_DIR / filename
     if not path.exists() or not path.suffix == ".yaml":
         raise HTTPException(404, f"Policy '{filename}' not found")
@@ -80,7 +91,7 @@ async def get_policy(filename: str, user: User = Depends(get_current_user)):
 # ── Create/update a policy ───────────────────────────────────────────────
 
 @router.post("", status_code=201)
-async def create_policy(policy: PolicySchema, user: User = Depends(get_current_user)):
+async def create_policy(policy: PolicySchema, user: User = Depends(require_role(UserRole.ADMIN, UserRole.OPERATOR))):
     """Create or update a YAML policy file."""
     POLICY_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -105,8 +116,9 @@ async def create_policy(policy: PolicySchema, user: User = Depends(get_current_u
 # ── Delete a policy ─────────────────────────────────────────────────────
 
 @router.delete("/{filename}")
-async def delete_policy(filename: str, user: User = Depends(get_current_user)):
+async def delete_policy(filename: str, user: User = Depends(require_role(UserRole.ADMIN))):
     """Delete a policy file."""
+    filename = _validate_filename(filename)
     path = POLICY_DIR / filename
     if not path.exists():
         raise HTTPException(404, f"Policy '{filename}' not found")

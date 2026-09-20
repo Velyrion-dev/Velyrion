@@ -50,8 +50,10 @@ export default function StatusPage() {
 
     // Check WebSocket
     try {
-      const wsUrl = API_BASE.replace("https://", "wss://").replace("http://", "ws://") + "/ws/events";
+      const wsBase = API_BASE.replace("https://", "wss://").replace("http://", "ws://") + "/ws/events";
       const wsStart = Date.now();
+      const wsToken = typeof window !== "undefined" ? localStorage.getItem("velyrion_access_token") : null;
+      const wsUrl = wsToken ? `${wsBase}?token=${encodeURIComponent(wsToken)}` : wsBase;
       const ws = new WebSocket(wsUrl);
       await new Promise<void>((resolve, reject) => {
         ws.onopen = () => { resolve(); ws.close(); };

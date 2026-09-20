@@ -364,4 +364,12 @@ export const api = {
 };
 
 // ── WebSocket URL ──
-export const WS_URL = API_BASE.replace("https://", "wss://").replace("http://", "ws://") + "/ws/events";
+const WS_BASE = API_BASE.replace("https://", "wss://").replace("http://", "ws://") + "/ws/events";
+export const WS_URL = WS_BASE;
+
+/** Get authenticated WebSocket URL (appends ?token=JWT) */
+export function getAuthenticatedWsUrl(): string {
+  const token = getToken();
+  if (!token) return WS_BASE;
+  return `${WS_BASE}?token=${encodeURIComponent(token)}`;
+}

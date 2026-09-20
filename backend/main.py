@@ -43,7 +43,16 @@ logger = logging.getLogger("velyrion")
 # ── Configuration ───────────────────────────────────────────────────────────────
 
 API_KEY = os.getenv("VELYRION_API_KEY", "")  # Optional — empty means no auth
-ALLOWED_ORIGINS = [o.strip() for o in os.getenv("CORS_ORIGINS", "*").split(",") if o.strip()]
+_ENV = os.getenv("ENV", os.getenv("RAILWAY_ENVIRONMENT", "development")).lower()
+_IS_PRODUCTION = _ENV in ("production", "prod")
+
+# CORS: never allow * with credentials in production
+_cors_raw = os.getenv("CORS_ORIGINS", "" if _IS_PRODUCTION else "*")
+ALLOWED_ORIGINS = [o.strip() for o in _cors_raw.split(",") if o.strip()]
+if "*" in ALLOWED_ORIGINS and _IS_PRODUCTION:
+    logger.warning("CORS_ORIGINS=* in production is insecure! Set explicit origins.")
+    ALLOWED_ORIGINS = ["https://velyrion.vercel.app", "https://velyrion.com"]
+
 RATE_LIMIT_RPM = int(os.getenv("RATE_LIMIT_RPM", "300"))
 
 
@@ -94,8 +103,8 @@ app = FastAPI(
     description="Agent Governance & Audit Intelligence System — https://velyrion.com",
     version="3.0.0",
     lifespan=lifespan,
-    docs_url="/docs",
-    redoc_url="/redoc",
+    docs_url=None if _IS_PRODUCTION else "/docs",
+    redoc_url=None if _IS_PRODUCTION else "/redoc",
 )
 
 # ── Middleware: CORS ────────────────────────────────────────────────────────────
@@ -104,8 +113,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "X-API-Key", "X-Request-ID"],
 )
 
 # ── Middleware: Request ID + Logging ────────────────────────────────────────────
@@ -168,6 +177,9 @@ async def request_middleware(request: Request, call_next):
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    if _IS_PRODUCTION:
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
     return response
 
 
@@ -257,7 +269,23 @@ async def health_check():
 
 @app.websocket("/ws/events")
 async def websocket_events(websocket: WebSocket):
-    """Real-time event stream — broadcasts audit events, violations, anomalies."""
+    """Real-time event stream — requires ?token=JWT for authentication."""
+    # Authenticate via query param
+    token = websocket.query_params.get("token")
+    if not token:
+        await websocket.close(code=1008, reason="Authentication required. Pass ?token=JWT")
+        return
+
+    try:
+        from auth import decode_token
+        payload = decode_token(token)
+        if payload.get("type") != "access":
+            await websocket.close(code=1008, reason="Invalid token type")
+            return
+    except Exception:
+        await websocket.close(code=1008, reason="Invalid or expired token")
+        return
+
     await ws_manager.connect(websocket)
     try:
         while True:

@@ -6,7 +6,8 @@ from sqlalchemy import select
 from database import get_db
 from models import Agent, AgentStatus, User
 from schemas import AgentCreate, AgentUpdate, AgentResponse
-from auth import get_current_user
+from auth import get_current_user, require_role
+from models import UserRole
 
 router = APIRouter(prefix="/api/agents", tags=["agents"])
 
@@ -80,11 +81,15 @@ async def get_agent(
 async def update_agent(
     agent_id: str,
     data: AgentUpdate,
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_role(UserRole.ADMIN, UserRole.OPERATOR)),
     db: AsyncSession = Depends(get_db),
 ):
     agent = await _get_user_agent(agent_id, user, db)
-    for field, value in data.model_dump(exclude_unset=True).items():
+    update_data = data.model_dump(exclude_unset=True)
+    # Security: never allow owner_id to be changed via update
+    update_data.pop("owner_id", None)
+    update_data.pop("owner_email", None)
+    for field, value in update_data.items():
         setattr(agent, field, value)
     await db.commit()
     await db.refresh(agent)
@@ -94,7 +99,7 @@ async def update_agent(
 @router.delete("/{agent_id}")
 async def deactivate_agent(
     agent_id: str,
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_role(UserRole.ADMIN, UserRole.OPERATOR)),
     db: AsyncSession = Depends(get_db),
 ):
     agent = await _get_user_agent(agent_id, user, db)

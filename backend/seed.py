@@ -403,6 +403,18 @@ AGENT_TASKS = {
 
 
 async def seed():
+    import os
+    async with engine.begin() as conn:
+        # Always create tables (safe — create_all is idempotent)
+        await conn.run_sync(Base.metadata.create_all)
+
+    # In production, only create schema — never seed demo data with known passwords
+    env = os.getenv("ENV", os.getenv("RAILWAY_ENVIRONMENT", "development"))
+    if env.lower() in ("production", "prod"):
+        print("⚠ Production mode — skipping demo data seed (security)")
+        return
+
+    # Development/staging: drop and recreate for fresh demo data
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)

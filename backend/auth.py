@@ -15,7 +15,13 @@ from models import User, UserRole
 
 # ── Configuration ────────────────────────────────────────────────────────────
 
-JWT_SECRET = os.getenv("JWT_SECRET", "velyrion-dev-secret-change-in-production-2026")
+_jwt_secret = os.getenv("JWT_SECRET", "")
+if not _jwt_secret:
+    import warnings
+    warnings.warn("JWT_SECRET not set — using dev-only fallback. NEVER use in production!", stacklevel=2)
+    _jwt_secret = "velyrion-dev-only-NOT-FOR-PRODUCTION-" + os.urandom(8).hex()
+
+JWT_SECRET = _jwt_secret
 JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "15"))
 REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))

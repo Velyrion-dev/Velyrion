@@ -2,18 +2,61 @@
 
 import asyncio
 import logging
+import ipaddress
+from urllib.parse import urlparse
+import socket
 import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from database import get_db
-from models import Alert, User
+from models import Alert, User, UserRole
 from pydantic import BaseModel
-from auth import get_current_user
+from auth import get_current_user, require_role
 
 logger = logging.getLogger("velyrion.webhooks")
 
 router = APIRouter(prefix="/api/webhooks", tags=["webhooks"])
+
+
+# ── SSRF Protection ──────────────────────────────────────────────────────
+
+_BLOCKED_NETWORKS = [
+    ipaddress.ip_network("10.0.0.0/8"),
+    ipaddress.ip_network("172.16.0.0/12"),
+    ipaddress.ip_network("192.168.0.0/16"),
+    ipaddress.ip_network("169.254.0.0/16"),  # AWS metadata
+    ipaddress.ip_network("127.0.0.0/8"),
+    ipaddress.ip_network("0.0.0.0/8"),
+    ipaddress.ip_network("::1/128"),
+    ipaddress.ip_network("fc00::/7"),
+    ipaddress.ip_network("fe80::/10"),
+]
+
+
+def _validate_webhook_url(url: str) -> None:
+    """Validate webhook URL to prevent SSRF attacks."""
+    parsed = urlparse(url)
+    if parsed.scheme not in ("https", "http"):
+        raise HTTPException(400, "Webhook URL must use http or https")
+    if not parsed.hostname:
+        raise HTTPException(400, "Invalid webhook URL")
+
+    # Resolve hostname and check against blocked networks
+    try:
+        resolved = socket.getaddrinfo(parsed.hostname, None)
+        for _, _, _, _, addr in resolved:
+            ip = ipaddress.ip_address(addr[0])
+            for network in _BLOCKED_NETWORKS:
+                if ip in network:
+                    raise HTTPException(400, f"Webhook URL points to blocked private network")
+    except socket.gaierror:
+        raise HTTPException(400, "Cannot resolve webhook URL hostname")
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(400, "Invalid webhook URL")
+
 
 # ── In-memory webhook config (in production, store in DB) ────────────────
 
@@ -85,8 +128,9 @@ async def list_webhooks(user: User = Depends(get_current_user)):
 
 
 @router.post("", status_code=201, response_model=WebhookConfigResponse)
-async def create_webhook(config: WebhookConfig, user: User = Depends(get_current_user)):
+async def create_webhook(config: WebhookConfig, user: User = Depends(require_role(UserRole.ADMIN, UserRole.OPERATOR))):
     """Register a new webhook endpoint."""
+    _validate_webhook_url(config.url)
     idx = len(_webhook_configs)
     _webhook_configs.append(config.model_dump())
     _delivery_stats[idx] = {"deliveries": 0, "failures": 0}
@@ -107,8 +151,9 @@ async def create_webhook(config: WebhookConfig, user: User = Depends(get_current
 
 
 @router.put("/{webhook_id}", response_model=WebhookConfigResponse)
-async def update_webhook(webhook_id: int, config: WebhookConfig, user: User = Depends(get_current_user)):
+async def update_webhook(webhook_id: int, config: WebhookConfig, user: User = Depends(require_role(UserRole.ADMIN, UserRole.OPERATOR))):
     """Update a webhook configuration."""
+    _validate_webhook_url(config.url)
     if webhook_id < 0 or webhook_id >= len(_webhook_configs):
         raise HTTPException(404, "Webhook not found")
 

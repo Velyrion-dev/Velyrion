@@ -3,7 +3,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { api, Agent, DashboardStats } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://velyrion.onrender.com";
-const WS_URL = API_BASE.replace("https://", "wss://").replace("http://", "ws://") + "/ws/events";
+const WS_BASE = API_BASE.replace("https://", "wss://").replace("http://", "ws://") + "/ws/events";
 
 // ── Types ──
 interface LiveEvent {
@@ -214,7 +214,9 @@ export default function MissionControlPage() {
 
     const connect = () => {
       try {
-        ws = new WebSocket(WS_URL);
+        const token = typeof window !== "undefined" ? localStorage.getItem("velyrion_access_token") : null;
+        const wsUrl = token ? `${WS_BASE}?token=${encodeURIComponent(token)}` : WS_BASE;
+        ws = new WebSocket(wsUrl);
 
         ws.onopen = () => {
           setConnected(true);

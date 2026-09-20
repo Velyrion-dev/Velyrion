@@ -4,10 +4,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
 from database import get_db
-from models import Agent, AgentStatus, Violation, RiskLevel, User
+from models import Agent, AgentStatus, Violation, RiskLevel, User, UserRole
 from engines.alert_engine import dispatch_alert
 from models import AlertType
-from auth import get_current_user
+from auth import get_current_user, require_role
 
 router = APIRouter(prefix="/api/agents", tags=["agent-control"])
 
@@ -39,7 +39,7 @@ async def _get_user_agent(agent_id: str, user: User, db: AsyncSession) -> Agent:
 async def kill_agent(
     agent_id: str,
     body: ControlAction,
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_role(UserRole.ADMIN, UserRole.OPERATOR)),
     db: AsyncSession = Depends(get_db),
 ):
     agent = await _get_user_agent(agent_id, user, db)
@@ -77,7 +77,7 @@ async def kill_agent(
 async def pause_agent(
     agent_id: str,
     body: ControlAction,
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_role(UserRole.ADMIN, UserRole.OPERATOR)),
     db: AsyncSession = Depends(get_db),
 ):
     agent = await _get_user_agent(agent_id, user, db)
@@ -106,7 +106,7 @@ async def pause_agent(
 async def unlock_agent(
     agent_id: str,
     body: ControlAction,
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_role(UserRole.ADMIN, UserRole.OPERATOR)),
     db: AsyncSession = Depends(get_db),
 ):
     agent = await _get_user_agent(agent_id, user, db)
@@ -140,7 +140,7 @@ class RevokeToolRequest(BaseModel):
 async def revoke_tool(
     agent_id: str,
     body: RevokeToolRequest,
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_role(UserRole.ADMIN, UserRole.OPERATOR)),
     db: AsyncSession = Depends(get_db),
 ):
     agent = await _get_user_agent(agent_id, user, db)

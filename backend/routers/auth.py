@@ -193,7 +193,7 @@ async def google_auth(req: GoogleAuthRequest, db: AsyncSession = Depends(get_db)
         logger.error(f"Google tokeninfo unexpected error: {e}")
         raise HTTPException(500, f"Token verification failed: {type(e).__name__}")
 
-    # Step 2: Extract user info
+    # Step 2: Extract + validate user info
     try:
         google_id = google_data.get("sub")
         email = google_data.get("email", "").lower().strip()
@@ -204,6 +204,12 @@ async def google_auth(req: GoogleAuthRequest, db: AsyncSession = Depends(get_db)
             raise HTTPException(400, "Google account has no email")
         if not google_id:
             raise HTTPException(400, "Google token missing user ID (sub)")
+
+        # Validate audience — token must be issued for OUR app
+        token_aud = google_data.get("aud", "")
+        if GOOGLE_CLIENT_ID and token_aud != GOOGLE_CLIENT_ID:
+            logger.warning(f"Google token audience mismatch: {token_aud} != {GOOGLE_CLIENT_ID}")
+            raise HTTPException(401, "Google token was not issued for this application")
     except HTTPException:
         raise
     except Exception as e:
@@ -362,8 +368,9 @@ async def forgot_password(req: ForgotPasswordRequest, db: AsyncSession = Depends
         # Create a short-lived reset token
         from auth import create_access_token
         reset_token = create_access_token(user.user_id, user.email, "reset", user.name)
-        # In production: send via email. For dev: log it.
-        logger.info(f"PASSWORD RESET TOKEN for {user.email}: {reset_token}")
+        # In production: send via email. For dev: log that a token was generated (NOT the token itself).
+        logger.info(f"Password reset token generated for {user.email}")
+        # TODO: Send reset_token via email service
 
     # Always return success to prevent email enumeration
     return {"message": "If that email exists, a reset link has been sent."}
