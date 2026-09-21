@@ -7,7 +7,7 @@ from datetime import datetime, timezone, timedelta
 from database import engine, async_session, Base
 from models import (
     Agent, AuditLog, Violation, Anomaly, Incident, ApprovalRequest, Alert,
-    User, UserRole,
+    User, UserRole, Organization, OrgMembership, OrgRole,
     RiskLevel, AnomalyType, AlertType, AgentStatus, ApprovalStatus,
     ResolutionStatus,
 )
@@ -433,13 +433,42 @@ async def seed():
                 role=role, email_verified=True,
             ))
             print(f"  → Created {email}")
+
+        # ── Create Demo Organization ──
+        demo_org = Organization(
+            org_id="org-demo",
+            name="Velyrion Demo",
+            slug="velyrion-demo",
+            plan="enterprise",
+            max_agents=50,
+            max_members=25,
+            created_by="user-admin",
+        )
+        db.add(demo_org)
+        print("  → Created demo org: Velyrion Demo")
+
+        # ── Add all demo users to org ──
+        DEMO_ORG_ROLES = [
+            ("user-admin", OrgRole.SUPER_ADMIN),
+            ("user-operator", OrgRole.OPERATOR),
+            ("user-viewer", OrgRole.VIEWER),
+        ]
+        for uid, org_role in DEMO_ORG_ROLES:
+            db.add(OrgMembership(
+                org_id="org-demo",
+                user_id=uid,
+                role=org_role,
+            ))
+        print("  → Added demo users to org with roles")
+
         await db.commit()
 
     async with async_session() as db:
-        # ── Agents (all assigned to admin user) ──
+        # ── Agents (all assigned to admin user + demo org) ──
         for data in AGENTS:
             data_copy = dict(data)
             data_copy["owner_id"] = "user-admin"  # all demo agents belong to admin
+            data_copy["org_id"] = "org-demo"       # all demo agents belong to demo org
             agent = Agent(**data_copy)
             db.add(agent)
 

@@ -35,6 +35,7 @@ class AgentResponse(BaseModel):
     agent_name: str
     owner_id: str
     owner_email: str
+    org_id: str | None = None
     department: str
     allowed_tools: list[str]
     allowed_data_sources: list[str]

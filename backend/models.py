@@ -53,9 +53,16 @@ class ResolutionStatus(str, enum.Enum):
 
 
 class UserRole(str, enum.Enum):
-    ADMIN = "ADMIN"
+    ADMIN = "ADMIN"        # Platform-level admin (can see all orgs)
     OPERATOR = "OPERATOR"
     VIEWER = "VIEWER"
+
+
+class OrgRole(str, enum.Enum):
+    SUPER_ADMIN = "SUPER_ADMIN"  # Org owner — full control
+    ADMIN = "ADMIN"              # Can manage members, agents, policies
+    OPERATOR = "OPERATOR"        # Can manage agents, run sandbox
+    VIEWER = "VIEWER"            # Read-only access
 
 
 def _uuid() -> str:
@@ -94,6 +101,46 @@ class RefreshToken(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
 
 
+# ── Organizations ──────────────────────────────────────────────────────────────
+
+class Organization(Base):
+    __tablename__ = "organizations"
+
+    org_id: Mapped[str] = mapped_column(String(64), primary_key=True, default=_uuid)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    slug: Mapped[str] = mapped_column(String(128), unique=True, nullable=False, index=True)
+    plan: Mapped[str] = mapped_column(String(32), default="free")  # free, pro, enterprise
+    max_agents: Mapped[int] = mapped_column(Integer, default=10)
+    max_members: Mapped[int] = mapped_column(Integer, default=5)
+    created_by: Mapped[str] = mapped_column(String(64), nullable=False)  # User.user_id of creator
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
+class OrgMembership(Base):
+    __tablename__ = "org_memberships"
+
+    membership_id: Mapped[str] = mapped_column(String(64), primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    user_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    role: Mapped[str] = mapped_column(SAEnum(OrgRole), default=OrgRole.VIEWER)
+    invited_by: Mapped[str] = mapped_column(String(64), nullable=True)
+    joined_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
+class Invitation(Base):
+    __tablename__ = "invitations"
+
+    invite_id: Mapped[str] = mapped_column(String(64), primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    email: Mapped[str] = mapped_column(String(255), nullable=False)
+    role: Mapped[str] = mapped_column(SAEnum(OrgRole), default=OrgRole.VIEWER)
+    token: Mapped[str] = mapped_column(String(128), unique=True, nullable=False)
+    invited_by: Mapped[str] = mapped_column(String(64), nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    accepted: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
 # ── Agent Registry ─────────────────────────────────────────────────────────────
 
 class Agent(Base):
@@ -101,8 +148,9 @@ class Agent(Base):
 
     agent_id: Mapped[str] = mapped_column(String(64), primary_key=True, default=_uuid)
     agent_name: Mapped[str] = mapped_column(String(255), nullable=False)
-    owner_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)  # links to User.user_id
+    owner_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)  # who created it (User.user_id)
     owner_email: Mapped[str] = mapped_column(String(255), nullable=False)
+    org_id: Mapped[str] = mapped_column(String(64), nullable=True, index=True)  # Organization.org_id
     department: Mapped[str] = mapped_column(String(128), nullable=False)
     allowed_tools: Mapped[dict] = mapped_column(JSON, default=list)
     allowed_data_sources: Mapped[dict] = mapped_column(JSON, default=list)

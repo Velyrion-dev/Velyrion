@@ -11,7 +11,7 @@ from pydantic import BaseModel, EmailStr
 import httpx
 
 from database import get_db
-from models import User, RefreshToken, UserRole
+from models import User, RefreshToken, UserRole, Organization, OrgMembership, OrgRole
 from auth import (
     hash_password, verify_password,
     create_access_token, create_refresh_token, decode_token,
@@ -75,8 +75,8 @@ class UserResponse(BaseModel):
     created_at: str
 
 
-def _user_to_dict(user: User) -> dict:
-    return {
+async def _user_to_dict(user: User, db: AsyncSession = None) -> dict:
+    data = {
         "user_id": user.user_id,
         "email": user.email,
         "name": user.name,
@@ -84,7 +84,26 @@ def _user_to_dict(user: User) -> dict:
         "role": user.role.value if hasattr(user.role, "value") else str(user.role),
         "email_verified": user.email_verified,
         "created_at": user.created_at.isoformat() if user.created_at else "",
+        "org": None,
     }
+    if db:
+        # Fetch org membership
+        from sqlalchemy import select as sa_select
+        result = await db.execute(
+            sa_select(OrgMembership).where(OrgMembership.user_id == user.user_id)
+        )
+        membership = result.scalars().first()
+        if membership:
+            org = await db.get(Organization, membership.org_id)
+            if org:
+                data["org"] = {
+                    "org_id": org.org_id,
+                    "name": org.name,
+                    "slug": org.slug,
+                    "plan": org.plan,
+                    "role": membership.role.value if hasattr(membership.role, "value") else str(membership.role),
+                }
+    return data
 
 
 def _create_tokens(user: User) -> tuple[str, str, datetime]:
@@ -120,18 +139,40 @@ async def signup(req: SignupRequest, db: AsyncSession = Depends(get_db)):
         email_verified=False,
     )
     db.add(user)
+    await db.flush()  # get user_id
+
+    # Auto-create personal organization
+    import re
+    slug = re.sub(r'[^a-z0-9-]', '', req.name.strip().lower().replace(' ', '-'))[:48] or "my-org"
+    # Ensure unique slug
+    import secrets as _secrets
+    slug = f"{slug}-{_secrets.token_hex(3)}"
+    org = Organization(
+        name=f"{req.name.strip()}'s Organization",
+        slug=slug,
+        created_by=user.user_id,
+    )
+    db.add(org)
+    await db.flush()
+
+    membership = OrgMembership(
+        org_id=org.org_id,
+        user_id=user.user_id,
+        role=OrgRole.SUPER_ADMIN,
+    )
+    db.add(membership)
 
     # Create tokens
     access, refresh, expires = _create_tokens(user)
     db.add(RefreshToken(user_id=user.user_id, token=refresh, expires_at=expires))
 
     await db.commit()
-    logger.info(f"New user registered: {user.email} ({user.user_id})")
+    logger.info(f"New user registered: {user.email} ({user.user_id}) + org '{org.name}'")
 
     return AuthResponse(
         access_token=access,
         refresh_token=refresh,
-        user=_user_to_dict(user),
+        user=await _user_to_dict(user, db),
     )
 
 
@@ -162,7 +203,7 @@ async def login(req: LoginRequest, db: AsyncSession = Depends(get_db)):
     return AuthResponse(
         access_token=access,
         refresh_token=refresh,
-        user=_user_to_dict(user),
+        user=await _user_to_dict(user, db),
     )
 
 
@@ -259,7 +300,7 @@ async def google_auth(req: GoogleAuthRequest, db: AsyncSession = Depends(get_db)
         return AuthResponse(
             access_token=access,
             refresh_token=refresh,
-            user=_user_to_dict(user),
+            user=await _user_to_dict(user, db),
         )
     except HTTPException:
         raise
@@ -312,7 +353,7 @@ async def refresh_token(req: RefreshRequest, db: AsyncSession = Depends(get_db))
     return AuthResponse(
         access_token=access,
         refresh_token=refresh,
-        user=_user_to_dict(user),
+        user=await _user_to_dict(user, db),
     )
 
 
@@ -334,9 +375,9 @@ async def logout(req: RefreshRequest, db: AsyncSession = Depends(get_db)):
 # ── Get Current User ─────────────────────────────────────────────────────────
 
 @router.get("/me")
-async def get_me(user: User = Depends(get_current_user)):
+async def get_me(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     """Get the current authenticated user's profile."""
-    return _user_to_dict(user)
+    return await _user_to_dict(user, db)
 
 
 # ── Update Profile ───────────────────────────────────────────────────────────
@@ -353,7 +394,7 @@ async def update_profile(
     if req.avatar_url is not None:
         user.avatar_url = req.avatar_url
     await db.commit()
-    return _user_to_dict(user)
+    return await _user_to_dict(user, db)
 
 
 # ── Forgot Password ─────────────────────────────────────────────────────────

@@ -1,6 +1,14 @@
 "use client";
 import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from "react";
 
+interface OrgData {
+  org_id: string;
+  name: string;
+  slug: string;
+  plan: string;
+  role: string;  // OrgRole: SUPER_ADMIN, ADMIN, OPERATOR, VIEWER
+}
+
 interface UserData {
   user_id: string;
   email: string;
@@ -9,6 +17,7 @@ interface UserData {
   role: string;
   email_verified: boolean;
   created_at: string;
+  org: OrgData | null;
 }
 
 interface AuthContextType {

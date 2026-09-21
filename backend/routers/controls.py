@@ -8,6 +8,7 @@ from models import Agent, AgentStatus, Violation, RiskLevel, User, UserRole
 from engines.alert_engine import dispatch_alert
 from models import AlertType
 from auth import get_current_user, require_role
+from routers.user_scope import get_user_org_id
 
 router = APIRouter(prefix="/api/agents", tags=["agent-control"])
 
@@ -26,11 +27,16 @@ class ControlResponse(BaseModel):
 
 
 async def _get_user_agent(agent_id: str, user: User, db: AsyncSession) -> Agent:
-    """Fetch an agent and verify it belongs to the current user."""
+    """Fetch an agent and verify it belongs to the current user's org."""
     agent = await db.get(Agent, agent_id)
-    if not agent or agent.owner_id != user.user_id:
+    if not agent:
         raise HTTPException(404, f"Agent not found")
-    return agent
+    org_id = await get_user_org_id(user, db)
+    if org_id and agent.org_id == org_id:
+        return agent
+    if agent.owner_id == user.user_id:
+        return agent
+    raise HTTPException(404, f"Agent not found")
 
 
 # ── Kill Agent (Emergency Termination) ───────────────────────────────────

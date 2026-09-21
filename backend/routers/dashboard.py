@@ -11,16 +11,9 @@ from models import (
 )
 from schemas import DashboardStats, AgentHealthScore, AgentCostData
 from auth import get_current_user
+from routers.user_scope import get_org_agent_ids, get_user_org_id
 
 router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
-
-
-async def _user_agent_ids(user: User, db: AsyncSession) -> list[str]:
-    """Get all agent_ids owned by the current user."""
-    result = await db.execute(
-        select(Agent.agent_id).where(Agent.owner_id == user.user_id)
-    )
-    return [row[0] for row in result.all()]
 
 
 @router.get("/stats", response_model=DashboardStats)
@@ -28,12 +21,18 @@ async def get_dashboard_stats(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    agent_ids = await _user_agent_ids(user, db)
+    agent_ids = await get_org_agent_ids(user, db)
+    org_id = await get_user_org_id(user, db)
 
-    # Agent counts (user's only)
-    agents_result = await db.execute(
-        select(Agent).where(Agent.owner_id == user.user_id)
-    )
+    # Agent counts (org-scoped)
+    if org_id:
+        agents_result = await db.execute(
+            select(Agent).where(Agent.org_id == org_id)
+        )
+    else:
+        agents_result = await db.execute(
+            select(Agent).where(Agent.owner_id == user.user_id)
+        )
     agents = agents_result.scalars().all()
 
     total_agents = len(agents)

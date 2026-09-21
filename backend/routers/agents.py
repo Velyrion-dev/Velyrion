@@ -8,6 +8,7 @@ from models import Agent, AgentStatus, User
 from schemas import AgentCreate, AgentUpdate, AgentResponse
 from auth import get_current_user, require_role
 from models import UserRole
+from routers.user_scope import get_user_org_id
 
 router = APIRouter(prefix="/api/agents", tags=["agents"])
 
@@ -15,11 +16,17 @@ router = APIRouter(prefix="/api/agents", tags=["agents"])
 # ── Helper: verify agent belongs to current user ─────────────────────────────
 
 async def _get_user_agent(agent_id: str, user: User, db: AsyncSession) -> Agent:
-    """Fetch an agent and verify it belongs to the current user."""
+    """Fetch an agent and verify it belongs to the current user's org."""
     agent = await db.get(Agent, agent_id)
-    if not agent or agent.owner_id != user.user_id:
+    if not agent:
         raise HTTPException(status_code=404, detail="Agent not found")
-    return agent
+    # Check org membership OR direct ownership
+    org_id = await get_user_org_id(user, db)
+    if org_id and agent.org_id == org_id:
+        return agent
+    if agent.owner_id == user.user_id:
+        return agent
+    raise HTTPException(status_code=404, detail="Agent not found")
 
 
 # ── CRUD ─────────────────────────────────────────────────────────────────────
@@ -30,10 +37,12 @@ async def register_agent(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    org_id = await get_user_org_id(user, db)
     agent = Agent(
         agent_name=data.agent_name,
         owner_id=user.user_id,
         owner_email=user.email,
+        org_id=org_id,
         department=data.department,
         allowed_tools=data.allowed_tools,
         allowed_data_sources=data.allowed_data_sources,
@@ -55,11 +64,11 @@ async def list_agents(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    stmt = (
-        select(Agent)
-        .where(Agent.owner_id == user.user_id)
-        .order_by(Agent.created_at.desc())
-    )
+    org_id = await get_user_org_id(user, db)
+    if org_id:
+        stmt = select(Agent).where(Agent.org_id == org_id).order_by(Agent.created_at.desc())
+    else:
+        stmt = select(Agent).where(Agent.owner_id == user.user_id).order_by(Agent.created_at.desc())
     if department:
         stmt = stmt.where(Agent.department == department)
     if status:

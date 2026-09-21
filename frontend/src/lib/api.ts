@@ -363,6 +363,77 @@ export const api = {
     fetchAPI<{ policy_id: string; name: string; rule: string; enforcement: string; created_at: string }[]>("/api/multi-agent/policies"),
 };
 
+// ── Organization API ──
+
+export interface OrgDetails {
+  org_id: string;
+  name: string;
+  slug: string;
+  plan: string;
+  max_agents: number;
+  max_members: number;
+  member_count: number;
+  agent_count: number;
+  created_by: string;
+  created_at: string;
+  your_role: string | null;
+}
+
+export interface OrgMember {
+  user_id: string;
+  email: string;
+  name: string;
+  avatar_url: string;
+  role: string;
+  joined_at: string;
+}
+
+export interface OrgInvitation {
+  invite_id: string;
+  email: string;
+  role: string;
+  token: string;
+  expires_at: string;
+  created_at: string;
+}
+
+export const orgApi = {
+  getOrg: () => fetchAPI<OrgDetails>("/api/org"),
+  createOrg: (name: string, slug?: string) =>
+    fetchAPI<{ org_id: string; name: string; slug: string; plan: string; message: string }>("/api/org", {
+      method: "POST",
+      body: JSON.stringify({ name, slug }),
+    }),
+  updateOrg: (data: { name?: string; plan?: string; max_agents?: number; max_members?: number }) =>
+    fetchAPI<{ message: string }>("/api/org", {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+  getMembers: () => fetchAPI<OrgMember[]>("/api/org/members"),
+  inviteMember: (email: string, role: string = "VIEWER") =>
+    fetchAPI<{ invite_id: string; email: string; role: string; token: string; expires_at: string; message: string }>("/api/org/invite", {
+      method: "POST",
+      body: JSON.stringify({ email, role }),
+    }),
+  getInvitations: () => fetchAPI<OrgInvitation[]>("/api/org/invitations"),
+  acceptInvite: (token: string) =>
+    fetchAPI<{ message: string; org_id: string; role: string }>("/api/org/invite/accept", {
+      method: "POST",
+      body: JSON.stringify({ token }),
+    }),
+  changeMemberRole: (userId: string, role: string) =>
+    fetchAPI<{ message: string }>(`/api/org/members/${userId}/role`, {
+      method: "PUT",
+      body: JSON.stringify({ role }),
+    }),
+  removeMember: (userId: string) =>
+    fetchAPI<{ message: string }>(`/api/org/members/${userId}`, {
+      method: "DELETE",
+    }),
+  leaveOrg: () =>
+    fetchAPI<{ message: string }>("/api/org/leave", { method: "POST" }),
+};
+
 // ── WebSocket URL ──
 const WS_BASE = API_BASE.replace("https://", "wss://").replace("http://", "ws://") + "/ws/events";
 export const WS_URL = WS_BASE;
