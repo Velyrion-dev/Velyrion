@@ -434,6 +434,56 @@ export const orgApi = {
     fetchAPI<{ message: string }>("/api/org/leave", { method: "POST" }),
 };
 
+// ── Agent Groups API ──
+
+export interface AgentGroupSummary {
+  group_id: string;
+  name: string;
+  description: string;
+  agent_count: number;
+  member_count: number;
+  created_at: string;
+}
+
+export interface AgentGroupDetail {
+  group_id: string;
+  name: string;
+  description: string;
+  agents: { agent_id: string; agent_name: string; status: string }[];
+  members: { user_id: string; name: string; email: string; avatar_url: string }[];
+  created_at: string;
+}
+
+export const groupApi = {
+  listGroups: () => fetchAPI<AgentGroupSummary[]>("/api/org/groups"),
+  getGroup: (groupId: string) => fetchAPI<AgentGroupDetail>(`/api/org/groups/${groupId}`),
+  createGroup: (name: string, description: string = "") =>
+    fetchAPI<{ group_id: string; name: string; message: string }>("/api/org/groups", {
+      method: "POST",
+      body: JSON.stringify({ name, description }),
+    }),
+  updateGroup: (groupId: string, data: { name?: string; description?: string }) =>
+    fetchAPI<{ message: string }>(`/api/org/groups/${groupId}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+  deleteGroup: (groupId: string) =>
+    fetchAPI<{ message: string }>(`/api/org/groups/${groupId}`, { method: "DELETE" }),
+  assignAgent: (groupId: string, agentId: string) =>
+    fetchAPI<{ message: string }>(`/api/org/groups/${groupId}/agents`, {
+      method: "POST",
+      body: JSON.stringify({ agent_id: agentId }),
+    }),
+  removeAgent: (groupId: string, agentId: string) =>
+    fetchAPI<{ message: string }>(`/api/org/groups/${groupId}/agents/${agentId}`, { method: "DELETE" }),
+  addMember: (groupId: string, userId: string) =>
+    fetchAPI<{ message: string }>(`/api/org/groups/${groupId}/members`, {
+      method: "POST",
+      body: JSON.stringify({ user_id: userId }),
+    }),
+  removeMember: (groupId: string, userId: string) =>
+    fetchAPI<{ message: string }>(`/api/org/groups/${groupId}/members/${userId}`, { method: "DELETE" }),
+};
 // ── WebSocket URL ──
 const WS_BASE = API_BASE.replace("https://", "wss://").replace("http://", "ws://") + "/ws/events";
 export const WS_URL = WS_BASE;

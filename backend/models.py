@@ -141,6 +141,39 @@ class Invitation(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
 
 
+# ── Agent Groups (visibility scoping) ─────────────────────────────────────────
+
+class AgentGroup(Base):
+    __tablename__ = "agent_groups"
+
+    group_id: Mapped[str] = mapped_column(String(64), primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[str] = mapped_column(Text, default="")
+    created_by: Mapped[str] = mapped_column(String(64), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
+class AgentGroupMember(Base):
+    """Links a user to a group — the user can see all agents in this group."""
+    __tablename__ = "agent_group_members"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True, default=_uuid)
+    group_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    user_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    added_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
+class AgentGroupAssignment(Base):
+    """Links an agent to a group — makes it visible to group members."""
+    __tablename__ = "agent_group_assignments"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True, default=_uuid)
+    group_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    agent_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    assigned_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
 # ── Agent Registry ─────────────────────────────────────────────────────────────
 
 class Agent(Base):

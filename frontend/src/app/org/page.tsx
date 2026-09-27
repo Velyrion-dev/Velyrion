@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/lib/auth";
-import { orgApi, OrgMember, OrgInvitation } from "@/lib/api";
+import { orgApi, groupApi, OrgMember, OrgInvitation, AgentGroupSummary, AgentGroupDetail } from "@/lib/api";
 
 const ORG_ROLES = ["SUPER_ADMIN", "ADMIN", "OPERATOR", "VIEWER"];
 
@@ -380,6 +380,320 @@ export default function OrgPage() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* ═══ Agent Groups Section ═══ */}
+      <div style={{
+        background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
+        borderRadius: 12, padding: "1.5rem", marginBottom: "2rem",
+      }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+          <h2 style={{ fontSize: "1.125rem", fontWeight: 600, color: "#e5e7eb", margin: 0 }}>
+            📁 Agent Groups
+          </h2>
+          <span style={{ color: "#6b7280", fontSize: "0.8rem" }}>
+            {isSuperAdmin || isAdmin ? "ADMIN+ sees all agents • OPERATOR/VIEWER see only their groups" : "You see agents from your assigned groups only"}
+          </span>
+        </div>
+
+        <GroupsManager
+          isAdmin={isAdmin}
+          isSuperAdmin={isSuperAdmin}
+          members={members}
+          onSuccess={(msg: string) => { setSuccess(msg); loadData(); }}
+          onError={(msg: string) => setError(msg)}
+        />
+      </div>
+    </div>
+  );
+}
+
+/* ── Groups Manager Component ── */
+function GroupsManager({ isAdmin, isSuperAdmin, members, onSuccess, onError }: {
+  isAdmin: boolean;
+  isSuperAdmin: boolean;
+  members: OrgMember[];
+  onSuccess: (msg: string) => void;
+  onError: (msg: string) => void;
+}) {
+  const [groups, setGroups] = useState<AgentGroupSummary[]>([]);
+  const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
+  const [groupDetail, setGroupDetail] = useState<AgentGroupDetail | null>(null);
+  const [newGroupName, setNewGroupName] = useState("");
+  const [newGroupDesc, setNewGroupDesc] = useState("");
+  const [creating, setCreating] = useState(false);
+
+  const loadGroups = useCallback(async () => {
+    try {
+      const data = await groupApi.listGroups();
+      setGroups(data);
+    } catch { /* ignore if no groups */ }
+  }, []);
+
+  useEffect(() => { loadGroups(); }, [loadGroups]);
+
+  const handleCreate = async () => {
+    if (!newGroupName.trim()) return;
+    setCreating(true);
+    try {
+      await groupApi.createGroup(newGroupName.trim(), newGroupDesc.trim());
+      setNewGroupName("");
+      setNewGroupDesc("");
+      onSuccess("Group created");
+      loadGroups();
+    } catch (e: any) {
+      onError(e.message || "Failed to create group");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const toggleExpand = async (groupId: string) => {
+    if (expandedGroup === groupId) {
+      setExpandedGroup(null);
+      setGroupDetail(null);
+      return;
+    }
+    try {
+      const detail = await groupApi.getGroup(groupId);
+      setGroupDetail(detail);
+      setExpandedGroup(groupId);
+    } catch (e: any) {
+      onError(e.message || "Failed to load group");
+    }
+  };
+
+  const handleDeleteGroup = async (groupId: string, name: string) => {
+    if (!confirm(`Delete group "${name}"? Agents won't be deleted, just unlinked.`)) return;
+    try {
+      await groupApi.deleteGroup(groupId);
+      onSuccess(`Group "${name}" deleted`);
+      setExpandedGroup(null);
+      loadGroups();
+    } catch (e: any) {
+      onError(e.message || "Failed to delete group");
+    }
+  };
+
+  const handleRemoveAgent = async (groupId: string, agentId: string) => {
+    try {
+      await groupApi.removeAgent(groupId, agentId);
+      const detail = await groupApi.getGroup(groupId);
+      setGroupDetail(detail);
+      loadGroups();
+    } catch (e: any) {
+      onError(e.message || "Failed to remove agent");
+    }
+  };
+
+  const handleAddMember = async (groupId: string, userId: string) => {
+    try {
+      await groupApi.addMember(groupId, userId);
+      const detail = await groupApi.getGroup(groupId);
+      setGroupDetail(detail);
+      loadGroups();
+    } catch (e: any) {
+      onError(e.message || "Failed to add member");
+    }
+  };
+
+  const handleRemoveMember = async (groupId: string, userId: string) => {
+    try {
+      await groupApi.removeMember(groupId, userId);
+      const detail = await groupApi.getGroup(groupId);
+      setGroupDetail(detail);
+      loadGroups();
+    } catch (e: any) {
+      onError(e.message || "Failed to remove member");
+    }
+  };
+
+  const ROLE_COLORS: Record<string, string> = {
+    SUPER_ADMIN: "#f59e0b", ADMIN: "#8b5cf6", OPERATOR: "#3b82f6", VIEWER: "#6b7280",
+  };
+
+  return (
+    <div>
+      {/* Create Group Form */}
+      {isAdmin && (
+        <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.25rem", flexWrap: "wrap" }}>
+          <input
+            placeholder="Group name"
+            value={newGroupName}
+            onChange={(e) => setNewGroupName(e.target.value)}
+            style={{
+              flex: "1 1 200px", padding: "0.5rem 0.75rem", borderRadius: 8,
+              background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.15)",
+              color: "#e5e7eb", fontSize: "0.85rem", outline: "none",
+            }}
+          />
+          <input
+            placeholder="Description (optional)"
+            value={newGroupDesc}
+            onChange={(e) => setNewGroupDesc(e.target.value)}
+            style={{
+              flex: "2 1 250px", padding: "0.5rem 0.75rem", borderRadius: 8,
+              background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.15)",
+              color: "#e5e7eb", fontSize: "0.85rem", outline: "none",
+            }}
+          />
+          <button
+            onClick={handleCreate}
+            disabled={creating || !newGroupName.trim()}
+            style={{
+              padding: "0.5rem 1.25rem", borderRadius: 8, border: "none",
+              background: creating ? "#4b5563" : "linear-gradient(135deg, #3b82f6, #6366f1)",
+              color: "#fff", fontWeight: 600, cursor: creating ? "default" : "pointer",
+              fontSize: "0.85rem",
+            }}
+          >
+            {creating ? "Creating..." : "+ Create Group"}
+          </button>
+        </div>
+      )}
+
+      {/* Groups List */}
+      {groups.length === 0 ? (
+        <div style={{ textAlign: "center", color: "#6b7280", padding: "2rem", fontSize: "0.9rem" }}>
+          No groups yet. {isAdmin ? "Create one to control agent visibility." : "Ask an admin to add you to a group."}
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+          {groups.map((g) => (
+            <div key={g.group_id}>
+              {/* Group Card */}
+              <div
+                onClick={() => toggleExpand(g.group_id)}
+                style={{
+                  display: "flex", justifyContent: "space-between", alignItems: "center",
+                  padding: "1rem 1.25rem", borderRadius: 10, cursor: "pointer",
+                  background: expandedGroup === g.group_id ? "rgba(59,130,246,0.08)" : "rgba(255,255,255,0.02)",
+                  border: expandedGroup === g.group_id ? "1px solid rgba(59,130,246,0.3)" : "1px solid rgba(255,255,255,0.06)",
+                  transition: "all 0.2s",
+                }}
+              >
+                <div>
+                  <div style={{ fontWeight: 600, color: "#e5e7eb", fontSize: "0.95rem" }}>
+                    📁 {g.name}
+                  </div>
+                  {g.description && (
+                    <div style={{ color: "#6b7280", fontSize: "0.8rem", marginTop: "0.2rem" }}>{g.description}</div>
+                  )}
+                </div>
+                <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+                  <span style={{ fontSize: "0.8rem", color: "#3b82f6" }}>🤖 {g.agent_count}</span>
+                  <span style={{ fontSize: "0.8rem", color: "#8b5cf6" }}>👥 {g.member_count}</span>
+                  <span style={{ color: "#6b7280", fontSize: "0.8rem" }}>{expandedGroup === g.group_id ? "▲" : "▼"}</span>
+                </div>
+              </div>
+
+              {/* Expanded Detail */}
+              {expandedGroup === g.group_id && groupDetail && (
+                <div style={{
+                  padding: "1rem 1.25rem", borderRadius: "0 0 10px 10px",
+                  background: "rgba(255,255,255,0.015)", borderTop: "none",
+                  border: "1px solid rgba(59,130,246,0.15)", borderTopWidth: 0,
+                }}>
+                  {/* Agents in Group */}
+                  <div style={{ marginBottom: "1rem" }}>
+                    <h4 style={{ fontSize: "0.85rem", color: "#3b82f6", marginBottom: "0.5rem" }}>🤖 Agents ({groupDetail.agents.length})</h4>
+                    {groupDetail.agents.length === 0 ? (
+                      <div style={{ color: "#6b7280", fontSize: "0.8rem" }}>No agents assigned</div>
+                    ) : (
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+                        {groupDetail.agents.map((a) => (
+                          <span key={a.agent_id} style={{
+                            display: "inline-flex", alignItems: "center", gap: "0.4rem",
+                            padding: "0.35rem 0.75rem", borderRadius: 6,
+                            background: "rgba(59,130,246,0.1)", border: "1px solid rgba(59,130,246,0.2)",
+                            color: "#60a5fa", fontSize: "0.8rem",
+                          }}>
+                            {a.agent_name}
+                            {isAdmin && (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleRemoveAgent(g.group_id, a.agent_id); }}
+                                style={{ background: "none", border: "none", color: "#f87171", cursor: "pointer", fontSize: "0.85rem", padding: 0 }}
+                                title="Remove agent from group"
+                              >✕</button>
+                            )}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Members in Group */}
+                  <div style={{ marginBottom: "1rem" }}>
+                    <h4 style={{ fontSize: "0.85rem", color: "#8b5cf6", marginBottom: "0.5rem" }}>👥 Members ({groupDetail.members.length})</h4>
+                    {groupDetail.members.length === 0 ? (
+                      <div style={{ color: "#6b7280", fontSize: "0.8rem" }}>No members — only ADMIN+ can see these agents</div>
+                    ) : (
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+                        {groupDetail.members.map((m) => (
+                          <span key={m.user_id} style={{
+                            display: "inline-flex", alignItems: "center", gap: "0.4rem",
+                            padding: "0.35rem 0.75rem", borderRadius: 6,
+                            background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.2)",
+                            color: "#a78bfa", fontSize: "0.8rem",
+                          }}>
+                            {m.name}
+                            {isAdmin && (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleRemoveMember(g.group_id, m.user_id); }}
+                                style={{ background: "none", border: "none", color: "#f87171", cursor: "pointer", fontSize: "0.85rem", padding: 0 }}
+                                title="Remove member from group"
+                              >✕</button>
+                            )}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Quick add member */}
+                    {isAdmin && (
+                      <div style={{ marginTop: "0.75rem" }}>
+                        <select
+                          onChange={(e) => {
+                            if (e.target.value) {
+                              handleAddMember(g.group_id, e.target.value);
+                              e.target.value = "";
+                            }
+                          }}
+                          style={{
+                            padding: "0.35rem 0.5rem", borderRadius: 6,
+                            background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.15)",
+                            color: "#e5e7eb", fontSize: "0.8rem", cursor: "pointer",
+                          }}
+                        >
+                          <option value="">+ Add member...</option>
+                          {members
+                            .filter((m) => !groupDetail.members.find((gm) => gm.user_id === m.user_id))
+                            .map((m) => (
+                              <option key={m.user_id} value={m.user_id}>{m.name} ({m.role})</option>
+                            ))}
+                        </select>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Delete Button */}
+                  {isSuperAdmin && (
+                    <button
+                      onClick={() => handleDeleteGroup(g.group_id, g.name)}
+                      style={{
+                        padding: "0.4rem 1rem", borderRadius: 6, border: "1px solid rgba(239,68,68,0.3)",
+                        background: "rgba(239,68,68,0.08)", color: "#f87171",
+                        fontSize: "0.8rem", cursor: "pointer",
+                      }}
+                    >
+                      🗑 Delete Group
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       )}
     </div>

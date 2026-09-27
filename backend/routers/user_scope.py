@@ -3,7 +3,10 @@
 from fastapi import Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from models import Agent, User, Organization, OrgMembership, OrgRole
+from models import (
+    Agent, User, Organization, OrgMembership, OrgRole,
+    AgentGroup, AgentGroupMember, AgentGroupAssignment,
+)
 from database import get_db
 
 
@@ -35,11 +38,22 @@ async def get_user_org_role(user: User, db: AsyncSession) -> OrgRole | None:
     membership = await get_user_membership(user, db)
     if not membership:
         return None
-    return membership.role
+    # Normalize to OrgRole enum
+    role_val = membership.role.value if hasattr(membership.role, "value") else str(membership.role)
+    try:
+        return OrgRole(role_val)
+    except ValueError:
+        return None
 
 
 async def get_org_agent_ids(user: User, db: AsyncSession) -> list[str]:
-    """Get all agent_ids in the user's organization."""
+    """
+    Get agent_ids visible to this user based on org role + group membership.
+
+    - SUPER_ADMIN / ADMIN: see ALL org agents
+    - OPERATOR / VIEWER: see only agents in their assigned groups
+    - No org: fallback to user's own agents (backward compat)
+    """
     org_id = await get_user_org_id(user, db)
     if not org_id:
         # Fallback: return user's own agents (backward compat)
@@ -48,10 +62,46 @@ async def get_org_agent_ids(user: User, db: AsyncSession) -> list[str]:
         )
         return [row[0] for row in result.all()]
 
-    result = await db.execute(
-        select(Agent.agent_id).where(Agent.org_id == org_id)
+    org_role = await get_user_org_role(user, db)
+
+    # SUPER_ADMIN and ADMIN see ALL org agents
+    if org_role in (OrgRole.SUPER_ADMIN, OrgRole.ADMIN):
+        result = await db.execute(
+            select(Agent.agent_id).where(Agent.org_id == org_id)
+        )
+        return [row[0] for row in result.all()]
+
+    # OPERATOR and VIEWER: only agents in their assigned groups
+    # 1. Find groups the user belongs to
+    group_result = await db.execute(
+        select(AgentGroupMember.group_id).where(
+            AgentGroupMember.user_id == user.user_id
+        )
     )
-    return [row[0] for row in result.all()]
+    user_group_ids = [row[0] for row in group_result.all()]
+
+    if not user_group_ids:
+        return []  # Not in any group → sees nothing
+
+    # 2. Find agents assigned to those groups (within this org)
+    agent_result = await db.execute(
+        select(AgentGroupAssignment.agent_id).where(
+            AgentGroupAssignment.group_id.in_(user_group_ids)
+        )
+    )
+    group_agent_ids = list(set(row[0] for row in agent_result.all()))
+
+    # 3. Filter to only agents that actually belong to this org
+    if group_agent_ids:
+        valid_result = await db.execute(
+            select(Agent.agent_id).where(
+                Agent.agent_id.in_(group_agent_ids),
+                Agent.org_id == org_id,
+            )
+        )
+        return [row[0] for row in valid_result.all()]
+
+    return []
 
 
 # Backward compatibility alias

@@ -14,6 +14,7 @@ from typing import Optional
 from database import get_db
 from models import (
     User, Organization, OrgMembership, OrgRole, Invitation, Agent,
+    AgentGroup, AgentGroupMember, AgentGroupAssignment,
 )
 from auth import get_current_user
 from routers.user_scope import get_user_membership, get_user_org, require_org_role
@@ -528,3 +529,359 @@ async def leave_org(
 
     logger.info(f"Member left: {user.email} left {org.name if org else 'unknown'}")
     return {"message": "You have left the organization"}
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  AGENT GROUPS — Fine-grained visibility control
+# ══════════════════════════════════════════════════════════════════════════════
+
+class GroupCreateRequest(BaseModel):
+    name: str
+    description: str = ""
+
+class GroupUpdateRequest(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+
+class GroupAgentRequest(BaseModel):
+    agent_id: str
+
+class GroupMemberRequest(BaseModel):
+    user_id: str
+
+
+# ── Create Group ─────────────────────────────────────────────────────────────
+
+@router.post("/groups", status_code=201)
+async def create_group(
+    req: GroupCreateRequest,
+    user: User = Depends(require_org_role(OrgRole.SUPER_ADMIN, OrgRole.ADMIN)),
+    db: AsyncSession = Depends(get_db),
+):
+    """Create a new agent group within the organization. ADMIN+ only."""
+    org = await get_user_org(user, db)
+    if not org:
+        raise HTTPException(404, "Organization not found")
+
+    if not req.name or len(req.name.strip()) < 2:
+        raise HTTPException(400, "Group name must be at least 2 characters")
+
+    group = AgentGroup(
+        org_id=org.org_id,
+        name=req.name.strip(),
+        description=req.description.strip() if req.description else "",
+        created_by=user.user_id,
+    )
+    db.add(group)
+    await db.commit()
+
+    logger.info(f"Group created: '{group.name}' in {org.name} by {user.email}")
+    return {
+        "group_id": group.group_id,
+        "name": group.name,
+        "description": group.description,
+        "message": f"Group '{group.name}' created",
+    }
+
+
+# ── List Groups ──────────────────────────────────────────────────────────────
+
+@router.get("/groups")
+async def list_groups(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """List agent groups. ADMIN+ sees all, others see their own groups."""
+    from routers.user_scope import get_user_org_role
+    org = await get_user_org(user, db)
+    if not org:
+        raise HTTPException(404, "You don't belong to any organization")
+
+    org_role = await get_user_org_role(user, db)
+
+    # ADMIN+ sees all groups
+    if org_role in (OrgRole.SUPER_ADMIN, OrgRole.ADMIN):
+        result = await db.execute(
+            select(AgentGroup).where(AgentGroup.org_id == org.org_id)
+        )
+    else:
+        # Others see only groups they belong to
+        member_groups = await db.execute(
+            select(AgentGroupMember.group_id).where(AgentGroupMember.user_id == user.user_id)
+        )
+        group_ids = [row[0] for row in member_groups.all()]
+        if not group_ids:
+            return []
+        result = await db.execute(
+            select(AgentGroup).where(
+                AgentGroup.group_id.in_(group_ids),
+                AgentGroup.org_id == org.org_id,
+            )
+        )
+
+    groups = result.scalars().all()
+    response = []
+    for g in groups:
+        # Count agents and members in group
+        agent_count = (await db.execute(
+            select(func.count()).select_from(AgentGroupAssignment).where(AgentGroupAssignment.group_id == g.group_id)
+        )).scalar() or 0
+        member_count = (await db.execute(
+            select(func.count()).select_from(AgentGroupMember).where(AgentGroupMember.group_id == g.group_id)
+        )).scalar() or 0
+
+        response.append({
+            "group_id": g.group_id,
+            "name": g.name,
+            "description": g.description or "",
+            "agent_count": agent_count,
+            "member_count": member_count,
+            "created_at": g.created_at.isoformat() if g.created_at else "",
+        })
+
+    return response
+
+
+# ── Get Group Detail ─────────────────────────────────────────────────────────
+
+@router.get("/groups/{group_id}")
+async def get_group(
+    group_id: str,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get group detail with agents and members."""
+    org = await get_user_org(user, db)
+    if not org:
+        raise HTTPException(404, "Organization not found")
+
+    group = await db.get(AgentGroup, group_id)
+    if not group or group.org_id != org.org_id:
+        raise HTTPException(404, "Group not found")
+
+    # Get agents in group
+    agents_result = await db.execute(
+        select(AgentGroupAssignment.agent_id).where(AgentGroupAssignment.group_id == group_id)
+    )
+    agent_ids = [row[0] for row in agents_result.all()]
+    agents = []
+    for aid in agent_ids:
+        agent = await db.get(Agent, aid)
+        if agent:
+            agents.append({"agent_id": agent.agent_id, "agent_name": agent.agent_name, "status": agent.status.value if hasattr(agent.status, 'value') else str(agent.status)})
+
+    # Get members in group
+    members_result = await db.execute(
+        select(AgentGroupMember.user_id).where(AgentGroupMember.group_id == group_id)
+    )
+    member_ids = [row[0] for row in members_result.all()]
+    members = []
+    for uid in member_ids:
+        u = await db.get(User, uid)
+        if u:
+            members.append({"user_id": u.user_id, "name": u.name, "email": u.email, "avatar_url": u.avatar_url or ""})
+
+    return {
+        "group_id": group.group_id,
+        "name": group.name,
+        "description": group.description or "",
+        "agents": agents,
+        "members": members,
+        "created_at": group.created_at.isoformat() if group.created_at else "",
+    }
+
+
+# ── Update Group ─────────────────────────────────────────────────────────────
+
+@router.put("/groups/{group_id}")
+async def update_group(
+    group_id: str,
+    req: GroupUpdateRequest,
+    user: User = Depends(require_org_role(OrgRole.SUPER_ADMIN, OrgRole.ADMIN)),
+    db: AsyncSession = Depends(get_db),
+):
+    """Update a group's name or description. ADMIN+ only."""
+    org = await get_user_org(user, db)
+    group = await db.get(AgentGroup, group_id)
+    if not group or not org or group.org_id != org.org_id:
+        raise HTTPException(404, "Group not found")
+
+    if req.name is not None:
+        group.name = req.name.strip()
+    if req.description is not None:
+        group.description = req.description.strip()
+    await db.commit()
+
+    return {"message": "Group updated", "name": group.name}
+
+
+# ── Delete Group ─────────────────────────────────────────────────────────────
+
+@router.delete("/groups/{group_id}")
+async def delete_group(
+    group_id: str,
+    user: User = Depends(require_org_role(OrgRole.SUPER_ADMIN)),
+    db: AsyncSession = Depends(get_db),
+):
+    """Delete a group and all its assignments. SUPER_ADMIN only."""
+    org = await get_user_org(user, db)
+    group = await db.get(AgentGroup, group_id)
+    if not group or not org or group.org_id != org.org_id:
+        raise HTTPException(404, "Group not found")
+
+    # Delete all agent assignments and member assignments
+    agent_assigns = await db.execute(
+        select(AgentGroupAssignment).where(AgentGroupAssignment.group_id == group_id)
+    )
+    for a in agent_assigns.scalars().all():
+        await db.delete(a)
+
+    member_assigns = await db.execute(
+        select(AgentGroupMember).where(AgentGroupMember.group_id == group_id)
+    )
+    for m in member_assigns.scalars().all():
+        await db.delete(m)
+
+    group_name = group.name
+    await db.delete(group)
+    await db.commit()
+
+    logger.info(f"Group deleted: '{group_name}' in {org.name} by {user.email}")
+    return {"message": f"Group '{group_name}' deleted"}
+
+
+# ── Assign Agent to Group ────────────────────────────────────────────────────
+
+@router.post("/groups/{group_id}/agents")
+async def assign_agent_to_group(
+    group_id: str,
+    req: GroupAgentRequest,
+    user: User = Depends(require_org_role(OrgRole.SUPER_ADMIN, OrgRole.ADMIN)),
+    db: AsyncSession = Depends(get_db),
+):
+    """Assign an agent to a group. ADMIN+ only."""
+    org = await get_user_org(user, db)
+    group = await db.get(AgentGroup, group_id)
+    if not group or not org or group.org_id != org.org_id:
+        raise HTTPException(404, "Group not found")
+
+    agent = await db.get(Agent, req.agent_id)
+    if not agent or agent.org_id != org.org_id:
+        raise HTTPException(404, "Agent not found in this organization")
+
+    # Check if already assigned
+    existing = (await db.execute(
+        select(AgentGroupAssignment).where(
+            AgentGroupAssignment.group_id == group_id,
+            AgentGroupAssignment.agent_id == req.agent_id,
+        )
+    )).scalar_one_or_none()
+    if existing:
+        raise HTTPException(400, "Agent already assigned to this group")
+
+    db.add(AgentGroupAssignment(group_id=group_id, agent_id=req.agent_id))
+    await db.commit()
+
+    return {"message": f"Agent '{agent.agent_name}' added to group '{group.name}'"}
+
+
+# ── Remove Agent from Group ──────────────────────────────────────────────────
+
+@router.delete("/groups/{group_id}/agents/{agent_id}")
+async def remove_agent_from_group(
+    group_id: str,
+    agent_id: str,
+    user: User = Depends(require_org_role(OrgRole.SUPER_ADMIN, OrgRole.ADMIN)),
+    db: AsyncSession = Depends(get_db),
+):
+    """Remove an agent from a group. ADMIN+ only."""
+    org = await get_user_org(user, db)
+    group = await db.get(AgentGroup, group_id)
+    if not group or not org or group.org_id != org.org_id:
+        raise HTTPException(404, "Group not found")
+
+    assignment = (await db.execute(
+        select(AgentGroupAssignment).where(
+            AgentGroupAssignment.group_id == group_id,
+            AgentGroupAssignment.agent_id == agent_id,
+        )
+    )).scalar_one_or_none()
+    if not assignment:
+        raise HTTPException(404, "Agent not assigned to this group")
+
+    await db.delete(assignment)
+    await db.commit()
+
+    return {"message": "Agent removed from group"}
+
+
+# ── Add Member to Group ──────────────────────────────────────────────────────
+
+@router.post("/groups/{group_id}/members")
+async def add_member_to_group(
+    group_id: str,
+    req: GroupMemberRequest,
+    user: User = Depends(require_org_role(OrgRole.SUPER_ADMIN, OrgRole.ADMIN)),
+    db: AsyncSession = Depends(get_db),
+):
+    """Add a user to a group. ADMIN+ only."""
+    org = await get_user_org(user, db)
+    group = await db.get(AgentGroup, group_id)
+    if not group or not org or group.org_id != org.org_id:
+        raise HTTPException(404, "Group not found")
+
+    # Verify user is org member
+    target_membership = (await db.execute(
+        select(OrgMembership).where(
+            OrgMembership.org_id == org.org_id,
+            OrgMembership.user_id == req.user_id,
+        )
+    )).scalar_one_or_none()
+    if not target_membership:
+        raise HTTPException(404, "User is not a member of this organization")
+
+    # Check if already in group
+    existing = (await db.execute(
+        select(AgentGroupMember).where(
+            AgentGroupMember.group_id == group_id,
+            AgentGroupMember.user_id == req.user_id,
+        )
+    )).scalar_one_or_none()
+    if existing:
+        raise HTTPException(400, "User already in this group")
+
+    db.add(AgentGroupMember(group_id=group_id, user_id=req.user_id))
+    await db.commit()
+
+    target_user = await db.get(User, req.user_id)
+    return {"message": f"{target_user.name if target_user else 'User'} added to group '{group.name}'"}
+
+
+# ── Remove Member from Group ────────────────────────────────────────────────
+
+@router.delete("/groups/{group_id}/members/{member_user_id}")
+async def remove_member_from_group(
+    group_id: str,
+    member_user_id: str,
+    user: User = Depends(require_org_role(OrgRole.SUPER_ADMIN, OrgRole.ADMIN)),
+    db: AsyncSession = Depends(get_db),
+):
+    """Remove a user from a group. ADMIN+ only."""
+    org = await get_user_org(user, db)
+    group = await db.get(AgentGroup, group_id)
+    if not group or not org or group.org_id != org.org_id:
+        raise HTTPException(404, "Group not found")
+
+    membership = (await db.execute(
+        select(AgentGroupMember).where(
+            AgentGroupMember.group_id == group_id,
+            AgentGroupMember.user_id == member_user_id,
+        )
+    )).scalar_one_or_none()
+    if not membership:
+        raise HTTPException(404, "User not in this group")
+
+    await db.delete(membership)
+    await db.commit()
+
+    return {"message": "Member removed from group"}

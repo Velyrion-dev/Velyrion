@@ -8,6 +8,7 @@ from database import engine, async_session, Base
 from models import (
     Agent, AuditLog, Violation, Anomaly, Incident, ApprovalRequest, Alert,
     User, UserRole, Organization, OrgMembership, OrgRole,
+    AgentGroup, AgentGroupMember, AgentGroupAssignment,
     RiskLevel, AnomalyType, AlertType, AgentStatus, ApprovalStatus,
     ResolutionStatus,
 )
@@ -460,6 +461,29 @@ async def seed():
                 role=org_role,
             ))
         print("  → Added demo users to org with roles")
+
+        # ── Create Demo Agent Groups ──
+        DEMO_GROUPS = [
+            ("group-prod", "Production Agents", "Engineering & production-critical agents",
+             ["agent-001", "agent-003", "agent-006"],      # DataSync, CodeReview, SecurityScanner
+             ["user-operator", "user-viewer"]),              # Both operator & viewer can see these
+            ("group-finance", "Finance & Compliance", "Financial reporting and compliance agents",
+             ["agent-002", "agent-008"],                     # ReportGen, RogueTrader
+             ["user-operator"]),                              # Only operator sees these
+            ("group-security", "Security Operations", "Security monitoring and threat hunting agents",
+             ["agent-006", "stress-cyber-005"],              # SecurityScanner, ThreatHunter
+             []),                                             # No OPERATOR/VIEWER — admin-only
+        ]
+        for gid, gname, gdesc, agent_ids, member_ids in DEMO_GROUPS:
+            db.add(AgentGroup(
+                group_id=gid, org_id="org-demo", name=gname,
+                description=gdesc, created_by="user-admin",
+            ))
+            for aid in agent_ids:
+                db.add(AgentGroupAssignment(group_id=gid, agent_id=aid))
+            for uid in member_ids:
+                db.add(AgentGroupMember(group_id=gid, user_id=uid))
+        print("  → Created 3 demo agent groups with assignments")
 
         await db.commit()
 
