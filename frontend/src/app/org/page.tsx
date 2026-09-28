@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/lib/auth";
-import { orgApi, groupApi, OrgMember, OrgInvitation, AgentGroupSummary, AgentGroupDetail } from "@/lib/api";
+import { orgApi, groupApi, OrgMember, OrgInvitation, AgentGroupSummary, AgentGroupDetail, api } from "@/lib/api";
 
 const ORG_ROLES = ["SUPER_ADMIN", "ADMIN", "OPERATOR", "VIEWER"];
 
@@ -405,6 +405,181 @@ export default function OrgPage() {
           onError={(msg: string) => setError(msg)}
         />
       </div>
+
+      {/* ═══ Ownership Transfer (SUPER_ADMIN only) ═══ */}
+      {isSuperAdmin && members.length > 1 && (
+        <div style={{
+          background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
+          borderRadius: 12, padding: "1.5rem", marginBottom: "2rem",
+        }}>
+          <h2 style={{ fontSize: "1.125rem", fontWeight: 600, color: "#e5e7eb", marginBottom: "1rem" }}>
+            👑 Transfer Ownership
+          </h2>
+          <p style={{ color: "#9ca3af", fontSize: "0.85rem", marginBottom: "1rem" }}>
+            Transfer the SUPER_ADMIN role to another member. You will be demoted to ADMIN.
+          </p>
+          <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+            <select
+              id="transfer-select"
+              defaultValue=""
+              style={{
+                padding: "0.5rem 0.75rem", borderRadius: 8,
+                background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.15)",
+                color: "#e5e7eb", fontSize: "0.85rem", cursor: "pointer",
+              }}
+            >
+              <option value="">Select new owner...</option>
+              {members
+                .filter((m) => m.user_id !== user?.user_id && m.role !== "SUPER_ADMIN")
+                .map((m) => (
+                  <option key={m.user_id} value={m.user_id}>{m.name} ({m.role})</option>
+                ))}
+            </select>
+            <button
+              onClick={async () => {
+                const sel = (document.getElementById("transfer-select") as HTMLSelectElement)?.value;
+                if (!sel) return;
+                const target = members.find(m => m.user_id === sel);
+                if (!confirm(`Transfer ownership to ${target?.name}? You will become ADMIN.`)) return;
+                try {
+                  await orgApi.transferOwnership(sel);
+                  setSuccess("Ownership transferred successfully");
+                  loadData();
+                } catch (e: any) { setError(e.message); }
+              }}
+              style={{
+                padding: "0.5rem 1.25rem", borderRadius: 8, border: "none",
+                background: "linear-gradient(135deg, #f59e0b, #d97706)",
+                color: "#fff", fontWeight: 600, cursor: "pointer", fontSize: "0.85rem",
+              }}
+            >
+              Transfer
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ Multi-Org Switcher ═══ */}
+      <OrgSwitcher onSwitch={() => { loadData(); window.location.reload(); }} onError={(msg: string) => setError(msg)} />
+
+      {/* ═══ Audit Log (ADMIN+ only) ═══ */}
+      {isAdmin && <AuditLogViewer />}
+    </div>
+  );
+}
+
+/* ── Org Switcher Component ── */
+function OrgSwitcher({ onSwitch, onError }: { onSwitch: () => void; onError: (msg: string) => void }) {
+  const [orgs, setOrgs] = useState<{ org_id: string; name: string; slug: string; plan: string; role: string; is_active: boolean }[]>([]);
+  const [switching, setSwitching] = useState(false);
+
+  useEffect(() => {
+    orgApi.listMyOrgs().then(setOrgs).catch(() => {});
+  }, []);
+
+  if (orgs.length <= 1) return null;
+
+  const handleSwitch = async (orgId: string) => {
+    setSwitching(true);
+    try {
+      await orgApi.switchOrg(orgId);
+      onSwitch();
+    } catch (e: any) {
+      onError(e.message || "Failed to switch");
+    } finally {
+      setSwitching(false);
+    }
+  };
+
+  return (
+    <div style={{
+      background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
+      borderRadius: 12, padding: "1.5rem", marginBottom: "2rem",
+    }}>
+      <h2 style={{ fontSize: "1.125rem", fontWeight: 600, color: "#e5e7eb", marginBottom: "1rem" }}>
+        🔀 Switch Organization
+      </h2>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem" }}>
+        {orgs.map((o) => (
+          <button
+            key={o.org_id}
+            onClick={() => !o.is_active && handleSwitch(o.org_id)}
+            disabled={switching || o.is_active}
+            style={{
+              padding: "0.75rem 1.25rem", borderRadius: 10,
+              border: o.is_active ? "2px solid #3b82f6" : "1px solid rgba(255,255,255,0.1)",
+              background: o.is_active ? "rgba(59,130,246,0.1)" : "rgba(255,255,255,0.02)",
+              color: o.is_active ? "#60a5fa" : "#e5e7eb",
+              cursor: o.is_active ? "default" : "pointer",
+              fontSize: "0.85rem", fontWeight: o.is_active ? 600 : 400,
+              transition: "all 0.2s",
+            }}
+          >
+            🏢 {o.name}
+            <span style={{ marginLeft: "0.5rem", fontSize: "0.7rem", color: "#9ca3af" }}>
+              {o.role} {o.is_active && "✓"}
+            </span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── Audit Log Viewer Component ── */
+function AuditLogViewer() {
+  const [logs, setLogs] = useState<{ log_id: string; action: string; actor_email: string; target_email: string; details: string; created_at: string }[]>([]);
+  const [expanded, setExpanded] = useState(false);
+
+  useEffect(() => {
+    orgApi.getAuditLog(30).then(setLogs).catch(() => {});
+  }, []);
+
+  const ACTION_ICONS: Record<string, string> = {
+    INVITE_SENT: "✉️", ROLE_CHANGE: "🔄", MEMBER_REMOVED: "❌",
+    TRANSFER_OWNERSHIP: "👑", GROUP_CREATED: "📁", GROUP_DELETED: "🗑",
+  };
+
+  if (logs.length === 0) return null;
+
+  return (
+    <div style={{
+      background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
+      borderRadius: 12, padding: "1.5rem", marginBottom: "2rem",
+    }}>
+      <div
+        onClick={() => setExpanded(!expanded)}
+        style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}
+      >
+        <h2 style={{ fontSize: "1.125rem", fontWeight: 600, color: "#e5e7eb", margin: 0 }}>
+          📋 Audit Log ({logs.length})
+        </h2>
+        <span style={{ color: "#6b7280" }}>{expanded ? "▲" : "▼"}</span>
+      </div>
+
+      {expanded && (
+        <div style={{ marginTop: "1rem", maxHeight: 400, overflowY: "auto" }}>
+          {logs.map((l) => (
+            <div key={l.log_id} style={{
+              display: "flex", gap: "0.75rem", alignItems: "flex-start",
+              padding: "0.6rem 0", borderBottom: "1px solid rgba(255,255,255,0.04)",
+            }}>
+              <span style={{ fontSize: "1rem", flexShrink: 0 }}>{ACTION_ICONS[l.action] || "📝"}</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: "0.85rem", color: "#e5e7eb" }}>
+                  <strong>{l.actor_email}</strong> — {l.details || l.action}
+                </div>
+                {l.target_email && (
+                  <div style={{ fontSize: "0.75rem", color: "#6b7280" }}>Target: {l.target_email}</div>
+                )}
+              </div>
+              <span style={{ fontSize: "0.7rem", color: "#6b7280", whiteSpace: "nowrap" }}>
+                {l.created_at ? new Date(l.created_at).toLocaleString() : ""}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -423,6 +598,7 @@ function GroupsManager({ isAdmin, isSuperAdmin, members, onSuccess, onError }: {
   const [newGroupName, setNewGroupName] = useState("");
   const [newGroupDesc, setNewGroupDesc] = useState("");
   const [creating, setCreating] = useState(false);
+  const [allAgents, setAllAgents] = useState<{ agent_id: string; agent_name: string }[]>([]);
 
   const loadGroups = useCallback(async () => {
     try {
@@ -432,6 +608,12 @@ function GroupsManager({ isAdmin, isSuperAdmin, members, onSuccess, onError }: {
   }, []);
 
   useEffect(() => { loadGroups(); }, [loadGroups]);
+
+  useEffect(() => {
+    if (isAdmin) {
+      api.getAgents().then((agents) => setAllAgents(agents.map(a => ({ agent_id: a.agent_id, agent_name: a.agent_name })))).catch(() => {});
+    }
+  }, [isAdmin]);
 
   const handleCreate = async () => {
     if (!newGroupName.trim()) return;
@@ -619,6 +801,39 @@ function GroupsManager({ isAdmin, isSuperAdmin, members, onSuccess, onError }: {
                             )}
                           </span>
                         ))}
+                      </div>
+                    )}
+
+                    {/* Add agent dropdown */}
+                    {isAdmin && (
+                      <div style={{ marginTop: "0.75rem" }}>
+                        <select
+                          onChange={async (e) => {
+                            if (e.target.value) {
+                              try {
+                                await groupApi.assignAgent(g.group_id, e.target.value);
+                                const detail = await groupApi.getGroup(g.group_id);
+                                setGroupDetail(detail);
+                                loadGroups();
+                              } catch (err: any) {
+                                onError(err.message || "Failed to add agent");
+                              }
+                              e.target.value = "";
+                            }
+                          }}
+                          style={{
+                            padding: "0.35rem 0.5rem", borderRadius: 6,
+                            background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.15)",
+                            color: "#e5e7eb", fontSize: "0.8rem", cursor: "pointer",
+                          }}
+                        >
+                          <option value="">+ Add agent...</option>
+                          {allAgents
+                            .filter((a) => !groupDetail.agents.find((ga) => ga.agent_id === a.agent_id))
+                            .map((a) => (
+                              <option key={a.agent_id} value={a.agent_id}>{a.agent_name}</option>
+                            ))}
+                        </select>
                       </div>
                     )}
                   </div>

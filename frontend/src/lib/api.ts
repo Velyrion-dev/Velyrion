@@ -432,6 +432,20 @@ export const orgApi = {
     }),
   leaveOrg: () =>
     fetchAPI<{ message: string }>("/api/org/leave", { method: "POST" }),
+  transferOwnership: (newOwnerUserId: string) =>
+    fetchAPI<{ message: string; new_owner: { user_id: string; email: string; name: string } }>("/api/org/transfer-ownership", {
+      method: "POST",
+      body: JSON.stringify({ new_owner_user_id: newOwnerUserId }),
+    }),
+  listMyOrgs: () =>
+    fetchAPI<{ org_id: string; name: string; slug: string; plan: string; role: string; is_active: boolean }[]>("/api/org/my-orgs"),
+  switchOrg: (orgId: string) =>
+    fetchAPI<{ message: string; org: { org_id: string; name: string; slug: string; plan: string; role: string } }>("/api/org/switch", {
+      method: "POST",
+      body: JSON.stringify({ org_id: orgId }),
+    }),
+  getAuditLog: (limit: number = 50) =>
+    fetchAPI<{ log_id: string; action: string; actor_email: string; target_email: string; details: string; created_at: string }[]>(`/api/org/audit-log?limit=${limit}`),
 };
 
 // ── Agent Groups API ──

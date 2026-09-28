@@ -14,7 +14,7 @@ from typing import Optional
 from database import get_db
 from models import (
     User, Organization, OrgMembership, OrgRole, Invitation, Agent,
-    AgentGroup, AgentGroupMember, AgentGroupAssignment,
+    AgentGroup, AgentGroupMember, AgentGroupAssignment, OrgAuditLog,
 )
 from auth import get_current_user
 from routers.user_scope import get_user_membership, get_user_org, require_org_role
@@ -304,6 +304,10 @@ async def invite_member(
         expires_at=datetime.utcnow() + timedelta(days=7),
     )
     db.add(invitation)
+    await _log_org_action(
+        db, org.org_id, user, "INVITE_SENT",
+        target_email=req.email, details=f"Invited {req.email} as {invite_role.value}",
+    )
     await db.commit()
 
     logger.info(f"Invitation sent: {req.email} → {org.name} as {invite_role.value} (by {user.email})")
@@ -453,6 +457,11 @@ async def change_member_role(
 
     old_role = membership.role.value if hasattr(membership.role, "value") else str(membership.role)
     membership.role = new_role
+    await _log_org_action(
+        db, org.org_id, user, "ROLE_CHANGE",
+        target_id=member_user_id,
+        details=f"Role changed from {old_role} to {new_role.value}",
+    )
     await db.commit()
 
     member_user = await db.get(User, member_user_id)
@@ -499,9 +508,15 @@ async def remove_member(
         raise HTTPException(400, "Cannot remove the organization owner")
 
     await db.delete(membership)
+    member_user = await db.get(User, member_user_id)
+    await _log_org_action(
+        db, org.org_id, user, "MEMBER_REMOVED",
+        target_id=member_user_id,
+        target_email=member_user.email if member_user else None,
+        details=f"Removed {member_user.email if member_user else member_user_id} from org",
+    )
     await db.commit()
 
-    member_user = await db.get(User, member_user_id)
     logger.info(f"Member removed: {member_user.email if member_user else member_user_id} from {org.name}")
 
     return {"message": f"Member removed from organization"}
@@ -529,6 +544,185 @@ async def leave_org(
 
     logger.info(f"Member left: {user.email} left {org.name if org else 'unknown'}")
     return {"message": "You have left the organization"}
+
+
+# ── Audit Helper ─────────────────────────────────────────────────────────────
+
+async def _log_org_action(
+    db: AsyncSession, org_id: str, actor: User,
+    action: str, target_id: str = None, target_email: str = None, details: str = "",
+):
+    """Record an org action to the audit log."""
+    db.add(OrgAuditLog(
+        org_id=org_id,
+        actor_id=actor.user_id,
+        actor_email=actor.email,
+        action=action,
+        target_id=target_id,
+        target_email=target_email,
+        details=details,
+    ))
+
+
+# ── Ownership Transfer ──────────────────────────────────────────────────────
+
+class TransferOwnershipRequest(BaseModel):
+    new_owner_user_id: str
+
+@router.post("/transfer-ownership")
+async def transfer_ownership(
+    req: TransferOwnershipRequest,
+    user: User = Depends(require_org_role(OrgRole.SUPER_ADMIN)),
+    db: AsyncSession = Depends(get_db),
+):
+    """Transfer organization ownership to another member. SUPER_ADMIN only."""
+    org = await get_user_org(user, db)
+    if not org:
+        raise HTTPException(404, "Organization not found")
+
+    if req.new_owner_user_id == user.user_id:
+        raise HTTPException(400, "You are already the owner")
+
+    # Verify target is an org member
+    target_membership = (await db.execute(
+        select(OrgMembership).where(
+            OrgMembership.org_id == org.org_id,
+            OrgMembership.user_id == req.new_owner_user_id,
+        )
+    )).scalar_one_or_none()
+    if not target_membership:
+        raise HTTPException(404, "Target user is not a member of this organization")
+
+    target_user = await db.get(User, req.new_owner_user_id)
+    if not target_user:
+        raise HTTPException(404, "Target user not found")
+
+    # Promote target to SUPER_ADMIN
+    target_membership.role = OrgRole.SUPER_ADMIN
+
+    # Demote current owner to ADMIN
+    current_membership = await get_user_membership(user, db)
+    current_membership.role = OrgRole.ADMIN
+
+    # Update org created_by
+    org.created_by = req.new_owner_user_id
+
+    await _log_org_action(
+        db, org.org_id, user, "TRANSFER_OWNERSHIP",
+        target_id=req.new_owner_user_id, target_email=target_user.email,
+        details=f"Ownership transferred from {user.email} to {target_user.email}",
+    )
+    await db.commit()
+
+    logger.info(f"Ownership transferred: {org.name} from {user.email} to {target_user.email}")
+    return {
+        "message": f"Ownership transferred to {target_user.name}",
+        "new_owner": {"user_id": target_user.user_id, "email": target_user.email, "name": target_user.name},
+    }
+
+
+# ── Multi-Org: List user's orgs ─────────────────────────────────────────────
+
+@router.get("/my-orgs")
+async def list_my_orgs(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """List all organizations the user belongs to."""
+    memberships_result = await db.execute(
+        select(OrgMembership).where(OrgMembership.user_id == user.user_id)
+    )
+    memberships = memberships_result.scalars().all()
+
+    orgs = []
+    for m in memberships:
+        org = await db.get(Organization, m.org_id)
+        if org:
+            role_val = m.role.value if hasattr(m.role, "value") else str(m.role)
+            orgs.append({
+                "org_id": org.org_id,
+                "name": org.name,
+                "slug": org.slug,
+                "plan": org.plan,
+                "role": role_val,
+                "is_active": user.active_org_id == org.org_id or (user.active_org_id is None and orgs == []),
+            })
+
+    return orgs
+
+
+# ── Multi-Org: Switch active org ────────────────────────────────────────────
+
+class SwitchOrgRequest(BaseModel):
+    org_id: str
+
+@router.post("/switch")
+async def switch_org(
+    req: SwitchOrgRequest,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Switch the user's active organization."""
+    # Verify user is a member of the target org
+    membership = (await db.execute(
+        select(OrgMembership).where(
+            OrgMembership.user_id == user.user_id,
+            OrgMembership.org_id == req.org_id,
+        )
+    )).scalar_one_or_none()
+    if not membership:
+        raise HTTPException(403, "You are not a member of this organization")
+
+    user.active_org_id = req.org_id
+    await db.commit()
+
+    org = await db.get(Organization, req.org_id)
+    role_val = membership.role.value if hasattr(membership.role, "value") else str(membership.role)
+    logger.info(f"Org switched: {user.email} → {org.name if org else req.org_id}")
+    return {
+        "message": f"Switched to {org.name if org else 'organization'}",
+        "org": {
+            "org_id": org.org_id if org else req.org_id,
+            "name": org.name if org else "",
+            "slug": org.slug if org else "",
+            "plan": org.plan if org else "free",
+            "role": role_val,
+        },
+    }
+
+
+# ── Org Audit Log ───────────────────────────────────────────────────────────
+
+@router.get("/audit-log")
+async def get_org_audit_log(
+    limit: int = 50,
+    user: User = Depends(require_org_role(OrgRole.SUPER_ADMIN, OrgRole.ADMIN)),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get the organization's audit log. ADMIN+ only."""
+    org = await get_user_org(user, db)
+    if not org:
+        raise HTTPException(404, "Organization not found")
+
+    result = await db.execute(
+        select(OrgAuditLog)
+        .where(OrgAuditLog.org_id == org.org_id)
+        .order_by(OrgAuditLog.created_at.desc())
+        .limit(min(limit, 200))
+    )
+    logs = result.scalars().all()
+
+    return [
+        {
+            "log_id": l.log_id,
+            "action": l.action,
+            "actor_email": l.actor_email,
+            "target_email": l.target_email or "",
+            "details": l.details or "",
+            "created_at": l.created_at.isoformat() if l.created_at else "",
+        }
+        for l in logs
+    ]
 
 
 # ══════════════════════════════════════════════════════════════════════════════

@@ -11,7 +11,20 @@ from database import get_db
 
 
 async def get_user_membership(user: User, db: AsyncSession) -> OrgMembership | None:
-    """Get the user's active organization membership."""
+    """Get the user's active organization membership (supports multi-org via active_org_id)."""
+    # If user has an active org set, use that
+    if user.active_org_id:
+        result = await db.execute(
+            select(OrgMembership).where(
+                OrgMembership.user_id == user.user_id,
+                OrgMembership.org_id == user.active_org_id,
+            )
+        )
+        membership = result.scalars().first()
+        if membership:
+            return membership
+
+    # Fallback: return first membership
     result = await db.execute(
         select(OrgMembership).where(OrgMembership.user_id == user.user_id)
     )

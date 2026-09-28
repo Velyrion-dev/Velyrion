@@ -86,6 +86,7 @@ class User(Base):
     role: Mapped[str] = mapped_column(SAEnum(UserRole), default=UserRole.VIEWER)
     google_id: Mapped[str] = mapped_column(String(255), nullable=True, unique=True)
     email_verified: Mapped[bool] = mapped_column(Boolean, default=False)
+    active_org_id: Mapped[str] = mapped_column(String(64), nullable=True)  # current active org for multi-org
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
     last_login: Mapped[datetime] = mapped_column(DateTime, nullable=True)
 
@@ -138,6 +139,21 @@ class Invitation(Base):
     invited_by: Mapped[str] = mapped_column(String(64), nullable=False)
     expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     accepted: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
+class OrgAuditLog(Base):
+    """Tracks all organization-level actions for accountability."""
+    __tablename__ = "org_audit_logs"
+
+    log_id: Mapped[str] = mapped_column(String(64), primary_key=True, default=_uuid)
+    org_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    actor_id: Mapped[str] = mapped_column(String(64), nullable=False)  # who did it
+    actor_email: Mapped[str] = mapped_column(String(255), nullable=False)
+    action: Mapped[str] = mapped_column(String(64), nullable=False)  # e.g. INVITE, ROLE_CHANGE, TRANSFER_OWNERSHIP
+    target_id: Mapped[str] = mapped_column(String(64), nullable=True)  # target user/group/agent
+    target_email: Mapped[str] = mapped_column(String(255), nullable=True)
+    details: Mapped[str] = mapped_column(Text, default="")  # JSON or human-readable detail
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
 
 
