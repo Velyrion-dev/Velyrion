@@ -30,6 +30,7 @@ from routers import agents, events, violations, anomalies, incidents, approvals,
 from routers import governance_score, threat_intel, behavioral_dna, regulatory, trust_registry, trust_mesh, insurance_scoring, sandbox, war_room, multi_agent, copilot
 from routers import auth as auth_router
 from routers import org as org_router
+from routers import platform_admin
 from ws_manager import ws_manager
 
 # ── Structured Logging ──────────────────────────────────────────────────────────
@@ -242,6 +243,7 @@ app.include_router(war_room.router)
 app.include_router(multi_agent.router)
 app.include_router(copilot.router)
 app.include_router(org_router.router)
+app.include_router(platform_admin.router)
 
 
 # ── System Endpoints ───────────────────────────────────────────────────────────

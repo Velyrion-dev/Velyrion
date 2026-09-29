@@ -34,6 +34,7 @@ const NAV_ITEMS = [
   { href: "/webhooks", label: "Webhooks", icon: "🔗" },
   { href: "/reports", label: "Reports", icon: "📋" },
   { href: "/org", label: "Organization", icon: "🏢" },
+  { href: "/admin", label: "Platform Admin", icon: "⚡" },
   { href: "/docs", label: "API Docs", icon: "📖" },
   { href: "/status", label: "System Status", icon: "🟢" },
   { href: "/settings", label: "Settings", icon: "⚙️" },

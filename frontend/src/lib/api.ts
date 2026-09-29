@@ -498,6 +498,30 @@ export const groupApi = {
   removeMember: (groupId: string, userId: string) =>
     fetchAPI<{ message: string }>(`/api/org/groups/${groupId}/members/${userId}`, { method: "DELETE" }),
 };
+
+// ── Platform Admin API ──
+
+export const platformAdmin = {
+  getStats: () => fetchAPI<{
+    total_users: number; total_orgs: number; total_agents: number;
+    active_agents: number; locked_agents: number; total_groups: number;
+    pending_invitations: number;
+  }>("/api/admin/stats"),
+  getUsers: () => fetchAPI<any[]>("/api/admin/users"),
+  getOrgs: () => fetchAPI<any[]>("/api/admin/orgs"),
+  getOrgDetail: (orgId: string) => fetchAPI<any>(`/api/admin/orgs/${orgId}`),
+  updateOrg: (orgId: string, data: { plan?: string; max_agents?: number; max_members?: number }) =>
+    fetchAPI<any>(`/api/admin/orgs/${orgId}`, { method: "PATCH", body: JSON.stringify(data) }),
+  deleteOrg: (orgId: string) =>
+    fetchAPI<{ message: string }>(`/api/admin/orgs/${orgId}`, { method: "DELETE" }),
+  changeUserRole: (userId: string, role: string) =>
+    fetchAPI<{ message: string }>(`/api/admin/users/${userId}/role?role=${role}`, { method: "PATCH" }),
+  deleteUser: (userId: string) =>
+    fetchAPI<{ message: string }>(`/api/admin/users/${userId}`, { method: "DELETE" }),
+  getAuditLog: (limit: number = 100) =>
+    fetchAPI<any[]>(`/api/admin/audit-log?limit=${limit}`),
+};
+
 // ── WebSocket URL ──
 const WS_BASE = API_BASE.replace("https://", "wss://").replace("http://", "ws://") + "/ws/events";
 export const WS_URL = WS_BASE;
