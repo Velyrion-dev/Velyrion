@@ -16,8 +16,14 @@ from abc import ABC, abstractmethod
 import google.generativeai as genai
 import requests
 from dotenv import load_dotenv
+from pathlib import Path
 
-load_dotenv()
+# Load .env from agents directory first, fallback to current dir
+_agent_env = Path(__file__).resolve().parent / ".env"
+if _agent_env.exists():
+    load_dotenv(dotenv_path=_agent_env)
+else:
+    load_dotenv()
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(message)s")
 
@@ -96,7 +102,7 @@ class BaseAgent(ABC):
         else:
             genai.configure(api_key=api_key)
             self.model = genai.GenerativeModel(
-                model_name="gemini-2.0-flash",
+                model_name="gemini-3.8-flash",
                 system_instruction=self.get_system_prompt(),
             )
             self.chat = self.model.start_chat(history=[])
