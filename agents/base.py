@@ -36,7 +36,8 @@ class VelyrionReporter:
         self.agent_name = agent_name
         self.api_url = os.getenv("VELYRION_API_URL", "")
         self.token = os.getenv("VELYRION_API_TOKEN", "")
-        self.enabled = bool(self.api_url and self.token)
+        is_placeholder = "your-" in self.api_url or "your-" in self.token or "example.com" in self.api_url
+        self.enabled = bool(self.api_url and self.token and not is_placeholder)
 
     def _headers(self):
         return {"Authorization": f"Bearer {self.token}", "Content-Type": "application/json"}
