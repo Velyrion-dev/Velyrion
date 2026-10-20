@@ -104,6 +104,22 @@ def run():
         print("  → Start it: cd backend && python -m uvicorn main:app --port 8000")
         sys.exit(1)
     print(f"  ✅ Backend: {data.get('status')} (v{data.get('version')})")
+
+    # ── Authenticate ─────────────────────────────────────────────────────
+    print("🔐 Authenticating...")
+    token = None
+    for pw in ["V3lyr!0n@Adm1n", "admin123"]:
+        try:
+            r = client.post(f"{API}/api/auth/login", json={"email": "admin@velyrion.com", "password": pw})
+            if r.status_code == 200:
+                token = r.json().get("access_token")
+                client.headers["Authorization"] = f"Bearer {token}"
+                print("  ✅ Authenticated as admin (Bearer token attached)")
+                break
+        except Exception:
+            pass
+    if not token:
+        print("  ⚠ Could not authenticate as admin — some tests may fail")
     print()
 
     # Use agent-001 (DataSync Pro) for most tests
@@ -181,7 +197,7 @@ def run():
 
     # Test approval action
     if pending_approvals:
-        approval_id = pending_approvals[0].get("approval_id", "")
+        approval_id = pending_approvals[0].get("request_id") or pending_approvals[0].get("approval_id", "")
         code2, resp = api_post(f"/api/approvals/{approval_id}/approve", {"reviewed_by": "E2E-Bot"})
         test("Approval can be approved/rejected", code2 == 200,
              f"response={resp}")

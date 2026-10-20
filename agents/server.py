@@ -8,6 +8,7 @@ Each agent gets:
 Start: uvicorn server:app --port 8100
 """
 
+import asyncio
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -85,7 +86,7 @@ async def list_agents():
 async def chat(name: str, req: ChatRequest):
     """Send a message to an agent and get a response."""
     agent = _get_agent(name)
-    response = agent.think(req.message)
+    response = await asyncio.to_thread(agent.think, req.message)
     return {
         "agent": agent.agent_name,
         "agent_id": agent.agent_id,
