@@ -6,11 +6,17 @@ from sqlalchemy.orm import DeclarativeBase
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./velyrion.db")
 
-# Railway provides postgres:// but SQLAlchemy needs postgresql+asyncpg://
+# Neon, Supabase & Railway provide postgres:// or postgresql:// but SQLAlchemy needs postgresql+asyncpg://
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+asyncpg://", 1)
-elif DATABASE_URL.startswith("postgresql://"):
+elif DATABASE_URL.startswith("postgresql://") and not DATABASE_URL.startswith("postgresql+asyncpg://"):
     DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
+
+# Neon connection strings include ?sslmode=require, which asyncpg rejects in favor of ?ssl=require
+if "postgresql+asyncpg://" in DATABASE_URL:
+    DATABASE_URL = DATABASE_URL.replace("sslmode=require", "ssl=require")
+    DATABASE_URL = DATABASE_URL.replace("sslmode=verify-ca", "ssl=verify-ca")
+    DATABASE_URL = DATABASE_URL.replace("sslmode=verify-full", "ssl=verify-full")
 
 engine = create_async_engine(DATABASE_URL, echo=False)
 async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
