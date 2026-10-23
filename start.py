@@ -129,7 +129,7 @@ def main():
     print()
 
     # ── Kill any existing processes on our ports ──
-    for port in [8000, 3000]:
+    for port in [8000, 3000, 8100]:
         if check_port(port):
             print(f"   ⚠️  Port {port} in use — attempting to free it...")
             if sys.platform == "win32":
@@ -172,28 +172,21 @@ def main():
 
     # ── Start Agents ──
     if not no_agents:
-        # Check if Ollama is available
-        ollama_available = check_port(11434)
-
-        if ollama_available:
-            print("🤖 Starting Real AI Agents (Ollama)...")
+        agent_server = os.path.join(ROOT, "agents", "server.py")
+        if os.path.exists(agent_server):
+            print("🤖 Starting Gemini AI Agent Fleet (10 agents on port 8100)...")
             agents = start_process(
-                "AGENTS",
-                f'{sys.executable} backend/agents.py',
-                ROOT,
-                env={"VELYRION_API_KEY": ""},
+                "AGENT_FLEET",
+                f'{sys.executable} -m uvicorn server:app --host 127.0.0.1 --port 8100',
+                os.path.join(ROOT, "agents"),
             )
-            print("   ✅ 8 agents running — sending events every 10-30s")
+            if wait_for_port(8100, timeout=15):
+                print("   ✅ Agent Fleet ready → http://localhost:8100")
+                print("   📚 Fleet API Docs   → http://localhost:8100/docs")
+            else:
+                print("   ⚠️  Agent fleet may still be starting...")
         else:
-            print("🤖 Ollama not running — starting Simulator instead...")
-            print("   (Run 'ollama serve' separately to use real AI agents)")
-            agents = start_process(
-                "SIMULATOR",
-                f'{sys.executable} backend/simulate.py',
-                ROOT,
-                env={"VELYRION_API_KEY": ""},
-            )
-            print("   ✅ Simulator running — sending fake events")
+            print("🤖 agents/server.py not found — skipping agent fleet")
     else:
         print("⏭️  Skipping agents (--no-agents flag)")
 
@@ -203,7 +196,8 @@ def main():
     print()
     print("  🌐 Landing Page:  http://localhost:3000")
     print("  📊 Dashboard:     http://localhost:3000/dashboard")
-    print("  📚 API Docs:      http://localhost:8000/docs")
+    print("  📚 Backend Docs:  http://localhost:8000/docs")
+    print("  🤖 Agent Fleet:   http://localhost:8100/docs")
     print()
     print("  Press Ctrl+C to stop all services")
     print("=" * 60)
