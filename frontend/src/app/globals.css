@@ -1,12 +1,13 @@
 @import "tailwindcss";
 
 :root {
-  --bg-primary: #0a0e1a;
-  --bg-secondary: #111827;
-  --bg-card: #1a1f35;
-  --bg-card-hover: #1f2545;
-  --border-subtle: #2a3050;
-  --text-primary: #e2e8f0;
+  --bg-primary: #090a0f;
+  --bg-secondary: #0f1118;
+  --bg-card: #141722;
+  --bg-card-hover: #191d2c;
+  --border-subtle: #1e2335;
+  --border-active: #2f3650;
+  --text-primary: #f8fafc;
   --text-secondary: #94a3b8;
   --text-muted: #64748b;
   --accent-blue: #3b82f6;
@@ -17,13 +18,13 @@
   --accent-orange: #f97316;
   --accent-red: #ef4444;
   --accent-pink: #ec4899;
-  --gradient-blue-purple: linear-gradient(135deg, #3b82f6, #8b5cf6);
-  --gradient-cyan-blue: linear-gradient(135deg, #06b6d4, #3b82f6);
-  --gradient-green-cyan: linear-gradient(135deg, #10b981, #06b6d4);
-  --gradient-danger: linear-gradient(135deg, #ef4444, #f97316);
-  --shadow-glow-blue: 0 0 20px rgba(59, 130, 246, 0.15);
-  --shadow-glow-purple: 0 0 20px rgba(139, 92, 246, 0.15);
-  --shadow-glow-red: 0 0 20px rgba(239, 68, 68, 0.15);
+  --gradient-blue-purple: linear-gradient(135deg, #3b82f6, #6366f1);
+  --gradient-cyan-blue: linear-gradient(135deg, #0284c7, #2563eb);
+  --gradient-green-cyan: linear-gradient(135deg, #059669, #0d9488);
+  --gradient-danger: linear-gradient(135deg, #dc2626, #ea580c);
+  --shadow-glow-blue: 0 0 0 1px rgba(59, 130, 246, 0.25), 0 4px 16px rgba(0, 0, 0, 0.3);
+  --shadow-glow-purple: 0 0 0 1px rgba(139, 92, 246, 0.25), 0 4px 16px rgba(0, 0, 0, 0.3);
+  --shadow-glow-red: 0 0 0 1px rgba(239, 68, 68, 0.25), 0 4px 16px rgba(0, 0, 0, 0.3);
 }
 
 [data-theme="light"] {
@@ -32,12 +33,13 @@
   --bg-card: #ffffff;
   --bg-card-hover: #f1f5f9;
   --border-subtle: #e2e8f0;
+  --border-active: #cbd5e1;
   --text-primary: #0f172a;
   --text-secondary: #475569;
   --text-muted: #94a3b8;
-  --shadow-glow-blue: 0 0 20px rgba(59, 130, 246, 0.08);
-  --shadow-glow-purple: 0 0 20px rgba(139, 92, 246, 0.08);
-  --shadow-glow-red: 0 0 20px rgba(239, 68, 68, 0.08);
+  --shadow-glow-blue: 0 0 0 1px rgba(59, 130, 246, 0.2), 0 2px 8px rgba(59, 130, 246, 0.06);
+  --shadow-glow-purple: 0 0 0 1px rgba(139, 92, 246, 0.2), 0 2px 8px rgba(139, 92, 246, 0.06);
+  --shadow-glow-red: 0 0 0 1px rgba(239, 68, 68, 0.2), 0 2px 8px rgba(239, 68, 68, 0.06);
 }
 
 * {
@@ -70,80 +72,145 @@ body {
 }
 
 .sidebar-logo {
-  padding: 24px 20px;
+  padding: 18px 16px;
   border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sidebar-logo-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #1e293b, #0f172a);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #38bdf8;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  flex-shrink: 0;
+}
+
+.sidebar-logo-text {
+  display: flex;
+  flex-direction: column;
 }
 
 .sidebar-logo h1 {
-  font-size: 22px;
-  font-weight: 800;
-  letter-spacing: 3px;
-  background: var(--gradient-blue-purple);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--text-primary);
   margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sidebar-logo-badge {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(56, 189, 248, 0.12);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.25);
 }
 
 .sidebar-logo p {
   font-size: 11px;
   color: var(--text-muted);
-  margin: 4px 0 0;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
+  margin: 2px 0 0;
+  letter-spacing: 0.2px;
 }
 
 .sidebar-nav {
   flex: 1;
-  padding: 16px 12px;
+  padding: 12px 10px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
   overflow-y: auto;
 }
 
 .nav-section-label {
   font-size: 10px;
   text-transform: uppercase;
-  letter-spacing: 1.5px;
+  letter-spacing: 1.2px;
   color: var(--text-muted);
-  padding: 16px 12px 6px;
+  padding: 14px 10px 6px;
   font-weight: 600;
 }
 
 .nav-link {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-  border-radius: 8px;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: 6px;
   color: var(--text-secondary);
   text-decoration: none;
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 500;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
+  position: relative;
 }
 
 .nav-link:hover {
-  background: var(--bg-card);
+  background: rgba(255, 255, 255, 0.04);
   color: var(--text-primary);
 }
 
 .nav-link.active {
-  background: rgba(59, 130, 246, 0.12);
-  color: var(--accent-blue);
+  background: rgba(59, 130, 246, 0.08);
+  color: #60a5fa;
+  font-weight: 600;
+  border: 1px solid rgba(59, 130, 246, 0.2);
 }
 
 .nav-icon {
-  width: 18px;
-  height: 18px;
-  opacity: 0.7;
+  width: 16px;
+  height: 16px;
+  color: var(--text-muted);
   flex-shrink: 0;
+  transition: color 0.15s ease;
 }
 
-.nav-link.active .nav-icon,
 .nav-link:hover .nav-icon {
-  opacity: 1;
+  color: var(--text-primary);
+}
+
+.nav-link.active .nav-icon {
+  color: #60a5fa;
+}
+
+.nav-special-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 10px;
+  margin-top: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.nav-special-toggle:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary);
+  border-color: var(--border-active);
 }
 
 .nav-badge {

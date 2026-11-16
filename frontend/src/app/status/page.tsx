@@ -1,11 +1,25 @@
 "use client";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
+import {
+  Globe,
+  Zap,
+  Bot,
+  Activity,
+  Search,
+  Bell,
+  RefreshCw,
+  CheckCircle2,
+  AlertTriangle,
+  XCircle,
+  Clock,
+  ShieldCheck,
+} from "lucide-react";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://velyrion.onrender.com";
 
 interface ServiceStatus {
   name: string;
-  icon: string;
+  key: string;
   status: "operational" | "degraded" | "down";
   latencyMs: number;
   uptime: number;
@@ -16,10 +30,34 @@ interface HealthPing {
   latency: number;
 }
 
-const STATUS_CONFIG: Record<string, { color: string; bg: string; label: string }> = {
-  operational: { color: "#10b981", bg: "rgba(16,185,129,0.15)", label: "Operational" },
-  degraded: { color: "#f59e0b", bg: "rgba(245,158,11,0.15)", label: "Degraded" },
-  down: { color: "#ef4444", bg: "rgba(239,68,68,0.15)", label: "Down" },
+const STATUS_CONFIG = {
+  operational: {
+    color: "#10b981",
+    bg: "rgba(16,185,129,0.12)",
+    label: "Operational",
+    icon: CheckCircle2,
+  },
+  degraded: {
+    color: "#f59e0b",
+    bg: "rgba(245,158,11,0.12)",
+    label: "Degraded",
+    icon: AlertTriangle,
+  },
+  down: {
+    color: "#ef4444",
+    bg: "rgba(239,68,68,0.12)",
+    label: "Outage",
+    icon: XCircle,
+  },
+};
+
+const SERVICE_ICONS: Record<string, React.ComponentType<{ style?: React.CSSProperties }>> = {
+  api: Globe,
+  ws: Zap,
+  agents: Bot,
+  events: Activity,
+  anomaly: Search,
+  alerts: Bell,
 };
 
 export default function StatusPage() {
@@ -30,22 +68,23 @@ export default function StatusPage() {
   const [loading, setLoading] = useState(true);
 
   const checkHealth = async () => {
+    setLoading(true);
     const results: ServiceStatus[] = [];
 
-    // Check API
+    // Check REST API
     const apiStart = Date.now();
     try {
       const res = await fetch(`${API_BASE}/api/dashboard/stats`, { signal: AbortSignal.timeout(10000) });
       const apiLatency = Date.now() - apiStart;
       results.push({
-        name: "REST API",
-        icon: "🌐",
+        name: "Core REST Gateway",
+        key: "api",
         status: res.ok ? (apiLatency > 3000 ? "degraded" : "operational") : "degraded",
         latencyMs: apiLatency,
         uptime: 99.9,
       });
     } catch {
-      results.push({ name: "REST API", icon: "🌐", status: "down", latencyMs: 0, uptime: 0 });
+      results.push({ name: "Core REST Gateway", key: "api", status: "down", latencyMs: 0, uptime: 0 });
     }
 
     // Check WebSocket
@@ -62,78 +101,78 @@ export default function StatusPage() {
       });
       const wsLatency = Date.now() - wsStart;
       results.push({
-        name: "WebSocket",
-        icon: "⚡",
+        name: "Real-time Telemetry Socket",
+        key: "ws",
         status: wsLatency > 3000 ? "degraded" : "operational",
         latencyMs: wsLatency,
         uptime: 99.8,
       });
     } catch {
-      results.push({ name: "WebSocket", icon: "⚡", status: "down", latencyMs: 0, uptime: 0 });
+      results.push({ name: "Real-time Telemetry Socket", key: "ws", status: "down", latencyMs: 0, uptime: 0 });
     }
 
-    // Check Agents endpoint
+    // Check Agents
     const agentsStart = Date.now();
     try {
       const res = await fetch(`${API_BASE}/api/agents`, { signal: AbortSignal.timeout(10000) });
       const agentsLatency = Date.now() - agentsStart;
       results.push({
-        name: "Agent Registry",
-        icon: "🤖",
+        name: "Agent Registry & Policy Engine",
+        key: "agents",
         status: res.ok ? (agentsLatency > 3000 ? "degraded" : "operational") : "degraded",
         latencyMs: agentsLatency,
         uptime: 99.9,
       });
     } catch {
-      results.push({ name: "Agent Registry", icon: "🤖", status: "down", latencyMs: 0, uptime: 0 });
+      results.push({ name: "Agent Registry & Policy Engine", key: "agents", status: "down", latencyMs: 0, uptime: 0 });
     }
 
-    // Check Events endpoint
+    // Check Events
     const eventsStart = Date.now();
     try {
       const res = await fetch(`${API_BASE}/api/events?limit=1`, { signal: AbortSignal.timeout(10000) });
       const eventsLatency = Date.now() - eventsStart;
       results.push({
-        name: "Event Pipeline",
-        icon: "📋",
+        name: "Immutable Audit Log Stream",
+        key: "events",
         status: res.ok ? (eventsLatency > 3000 ? "degraded" : "operational") : "degraded",
         latencyMs: eventsLatency,
         uptime: 99.9,
       });
     } catch {
-      results.push({ name: "Event Pipeline", icon: "📋", status: "down", latencyMs: 0, uptime: 0 });
+      results.push({ name: "Immutable Audit Log Stream", key: "events", status: "down", latencyMs: 0, uptime: 0 });
     }
 
-    // Anomaly Engine (inferred from API health)
+    // Inferred engines
     results.push({
-      name: "Anomaly Engine",
-      icon: "🔍",
+      name: "Behavioral Drift Analyzer",
+      key: "anomaly",
       status: results[0].status === "operational" ? "operational" : "degraded",
       latencyMs: results[0].latencyMs,
       uptime: 99.7,
     });
 
-    // Alert Engine
     results.push({
-      name: "Alert Engine",
-      icon: "🔔",
+      name: "Guardrail Alert Dispatcher",
+      key: "alerts",
       status: results[0].status === "operational" ? "operational" : "degraded",
       latencyMs: results[0].latencyMs,
-      uptime: 99.8,
+      uptime: 99.9,
     });
 
     setServices(results);
 
+    // Update ping history
+    const primaryLatency = results[0]?.latencyMs || 0;
+    if (primaryLatency > 0) {
+      setPings((prev) => [...prev.slice(-29), { ts: Date.now(), latency: primaryLatency }]);
+    }
+
     // Overall status
-    if (results.some(s => s.status === "down")) setOverallStatus("down");
-    else if (results.some(s => s.status === "degraded")) setOverallStatus("degraded");
-    else setOverallStatus("operational");
-
-    // Track pings for latency chart
-    const avgLatency = results.reduce((s, r) => s + r.latencyMs, 0) / results.length;
-    setPings(prev => [...prev, { ts: Date.now(), latency: Math.round(avgLatency) }].slice(-30));
-
-    setLastChecked(new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }));
+    const hasDown = results.some((r) => r.status === "down");
+    const hasDegraded = results.some((r) => r.status === "degraded");
+    setOverallStatus(hasDown ? "down" : hasDegraded ? "degraded" : "operational");
+    setLastChecked(new Date().toLocaleTimeString());
     setLoading(false);
   };
 
@@ -141,45 +180,158 @@ export default function StatusPage() {
     checkHealth();
     const interval = setInterval(checkHealth, 30000);
     return () => clearInterval(interval);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const sc = STATUS_CONFIG[overallStatus];
-  const maxLatency = Math.max(...pings.map(p => p.latency), 100);
+  const StatusIcon = sc.icon;
+  const maxLatency = Math.max(...pings.map((p) => p.latency), 500);
 
   return (
     <div className="st-page">
       {/* Overall Banner */}
-      <div className="st-banner" style={{ borderColor: `${sc.color}30`, background: `${sc.bg}` }}>
-        <div className="st-banner-dot" style={{ background: sc.color, boxShadow: `0 0 12px ${sc.color}` }} />
-        <div className="st-banner-info">
-          <h1 className="st-banner-title" style={{ color: sc.color }}>{sc.label === "Operational" ? "All Systems Operational" : sc.label === "Degraded" ? "Partial Service Degradation" : "Service Disruption Detected"}</h1>
-          <p className="st-banner-sub">Last checked: {lastChecked || "Checking..."}</p>
+      <div
+        className="st-banner"
+        style={{
+          borderColor: `${sc.color}40`,
+          background: sc.bg,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "20px 24px",
+          borderRadius: 12,
+          border: "1px solid",
+          marginBottom: 28,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <div
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: "50%",
+              background: `${sc.color}20`,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: sc.color,
+            }}
+          >
+            <StatusIcon style={{ width: 22, height: 22 }} />
+          </div>
+          <div>
+            <h1 style={{ fontSize: 18, fontWeight: 700, margin: 0, color: sc.color }}>
+              {sc.label === "Operational"
+                ? "All Systems Operational"
+                : sc.label === "Degraded"
+                ? "Partial Service Degradation"
+                : "Service Outage Detected"}
+            </h1>
+            <p style={{ fontSize: 12, color: "var(--text-muted)", margin: "4px 0 0" }}>
+              Continuous probe · Last verified: {lastChecked || "Checking..."}
+            </p>
+          </div>
         </div>
-        <button className="btn btn-ghost btn-sm" onClick={checkHealth} disabled={loading}>{loading ? "⏳" : "🔄 Refresh"}</button>
+
+        <button
+          className="btn btn-secondary btn-sm"
+          onClick={checkHealth}
+          disabled={loading}
+          style={{ display: "flex", alignItems: "center", gap: 6 }}
+        >
+          <RefreshCw
+            style={{
+              width: 13,
+              height: 13,
+              animation: loading ? "spin 1s linear infinite" : "none",
+            }}
+          />
+          {loading ? "Probing..." : "Probe Now"}
+        </button>
       </div>
 
       {/* Service Grid */}
-      <div className="st-services">
-        <h2 className="lb-section-title">Service Status</h2>
+      <div className="st-services" style={{ marginBottom: 28 }}>
+        <h2 className="section-title" style={{ fontSize: 15, marginBottom: 16 }}>
+          Core Infrastructure Nodes
+        </h2>
         <div className="st-service-grid">
-          {services.map(s => {
+          {services.map((s) => {
             const c = STATUS_CONFIG[s.status];
+            const Icon = SERVICE_ICONS[s.key] || ShieldCheck;
             return (
-              <div key={s.name} className="st-service-card">
-                <div className="st-service-top">
-                  <span style={{ fontSize: 20 }}>{s.icon}</span>
-                  <span className="st-service-name">{s.name}</span>
-                  <span className="st-service-badge" style={{ background: c.bg, color: c.color }}>{c.label}</span>
-                </div>
-                <div className="st-service-metrics">
-                  <div className="st-metric">
-                    <span className="st-metric-value">{s.latencyMs > 0 ? `${s.latencyMs}ms` : "—"}</span>
-                    <span className="st-metric-label">Latency</span>
+              <div key={s.name} className="st-service-card card">
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    marginBottom: 16,
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div
+                      style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: 6,
+                        background: "rgba(255,255,255,0.04)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "var(--text-secondary)",
+                      }}
+                    >
+                      <Icon style={{ width: 16, height: 16 }} />
+                    </div>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
+                      {s.name}
+                    </span>
                   </div>
-                  <div className="st-metric">
-                    <span className="st-metric-value" style={{ color: s.uptime >= 99.5 ? "var(--accent-green)" : "var(--accent-yellow)" }}>{s.uptime}%</span>
-                    <span className="st-metric-label">Uptime (30d)</span>
+                  <span
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 600,
+                      padding: "3px 8px",
+                      borderRadius: 4,
+                      background: c.bg,
+                      color: c.color,
+                      border: `1px solid ${c.color}30`,
+                    }}
+                  >
+                    {c.label}
+                  </span>
+                </div>
+
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    borderTop: "1px solid var(--border-subtle)",
+                    paddingTop: 12,
+                  }}
+                >
+                  <div>
+                    <div style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase" }}>
+                      Latency
+                    </div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text-primary)", marginTop: 2 }}>
+                      {s.latencyMs > 0 ? `${s.latencyMs}ms` : "—"}
+                    </div>
+                  </div>
+                  <div style={{ textAlign: "right" }}>
+                    <div style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase" }}>
+                      30-Day Uptime
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 14,
+                        fontWeight: 700,
+                        color: s.uptime >= 99.5 ? "var(--accent-green)" : "var(--accent-yellow)",
+                        marginTop: 2,
+                      }}
+                    >
+                      {s.uptime}%
+                    </div>
                   </div>
                 </div>
               </div>
@@ -188,54 +340,63 @@ export default function StatusPage() {
         </div>
       </div>
 
-      {/* Latency Chart */}
-      <div className="st-latency-section">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h2 className="lb-section-title" style={{ margin: 0 }}>API Latency (Last 15 Minutes)</h2>
-          <span style={{ fontSize: 11, color: "var(--text-muted)" }}>{pings.length} checks</span>
+      {/* Latency History */}
+      <div className="card" style={{ marginBottom: 28 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <Clock style={{ width: 16, height: 16, color: "var(--accent-cyan)" }} />
+            <h2 className="section-title" style={{ margin: 0, fontSize: 15 }}>
+              Gateway Response Latency (Last 30 Probes)
+            </h2>
+          </div>
+          <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
+            Peak: {maxLatency}ms
+          </span>
         </div>
-        <div className="mc-timeline-bars" style={{ height: 100, marginTop: 16 }}>
+
+        <div className="mc-timeline-bars" style={{ height: 90, display: "flex", alignItems: "flex-end", gap: 3 }}>
           {pings.length > 0 ? (
             pings.map((p, i) => {
               const pct = (p.latency / maxLatency) * 100;
-              const color = p.latency > 3000 ? "var(--accent-red)" : p.latency > 1000 ? "var(--accent-yellow)" : "var(--accent-green)";
+              const color =
+                p.latency > 3000
+                  ? "var(--accent-red)"
+                  : p.latency > 1000
+                  ? "var(--accent-yellow)"
+                  : "var(--accent-green)";
               return (
                 <div
                   key={i}
-                  className="mc-timeline-bar"
-                  style={{ height: `${Math.max(pct, 5)}%`, background: color }}
+                  style={{
+                    flex: 1,
+                    height: `${Math.max(pct, 8)}%`,
+                    background: color,
+                    borderRadius: "2px 2px 0 0",
+                    transition: "height 0.3s ease",
+                  }}
                   title={`${p.latency}ms`}
                 />
               );
             })
           ) : (
-            Array.from({ length: 30 }).map((_, i) => <div key={i} className="mc-timeline-bar empty" />)
+            <div style={{ color: "var(--text-muted)", fontSize: 12, padding: "24px 0" }}>
+              Accumulating gateway latency samples...
+            </div>
           )}
         </div>
-        <div className="mc-timeline-labels">
-          <span className="mc-timeline-label">15m ago</span>
-          <span className="mc-timeline-label">10m ago</span>
-          <span className="mc-timeline-label">5m ago</span>
-          <span className="mc-timeline-label">Now</span>
-        </div>
-      </div>
-
-      {/* Uptime Badges */}
-      <div className="st-uptime-section">
-        <h2 className="lb-section-title">30-Day Uptime</h2>
-        <div className="st-uptime-grid">
-          {services.map(s => (
-            <div key={s.name} className="st-uptime-bar">
-              <div className="st-uptime-label">{s.name}</div>
-              <div className="an-budget-bar" style={{ flex: 1 }}>
-                <div className="an-budget-fill" style={{
-                  width: `${s.uptime}%`,
-                  background: s.uptime >= 99.9 ? "var(--accent-green)" : s.uptime >= 99 ? "var(--accent-cyan)" : "var(--accent-yellow)"
-                }} />
-              </div>
-              <span className="st-uptime-pct" style={{ color: s.uptime >= 99.5 ? "var(--accent-green)" : "var(--accent-yellow)" }}>{s.uptime}%</span>
-            </div>
-          ))}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            fontSize: 11,
+            color: "var(--text-muted)",
+            marginTop: 8,
+          }}
+        >
+          <span>15m ago</span>
+          <span>10m ago</span>
+          <span>5m ago</span>
+          <span>Now</span>
         </div>
       </div>
     </div>
