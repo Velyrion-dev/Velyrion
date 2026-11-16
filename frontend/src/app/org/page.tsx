@@ -180,7 +180,7 @@ export default function OrgPage() {
           background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171",
         }}>
           <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><AlertCircle style={{ width: 14, height: 14 }} /> {error}</span>
-          <button onClick={() => setError("")} style={{ float: "right", background: "none", border: "none", color: "#f87171", cursor: "pointer" }}></button>
+          <button onClick={() => setError("")} style={{ float: "right", background: "none", border: "none", color: "#f87171", cursor: "pointer", display: "inline-flex", alignItems: "center" }}><X style={{ width: 14, height: 14 }} /></button>
         </div>
       )}
       {success && (
@@ -189,7 +189,7 @@ export default function OrgPage() {
           background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)", color: "#4ade80",
         }}>
           <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Check style={{ width: 14, height: 14 }} /> {success}</span>
-          <button onClick={() => setSuccess("")} style={{ float: "right", background: "none", border: "none", color: "#4ade80", cursor: "pointer" }}></button>
+          <button onClick={() => setSuccess("")} style={{ float: "right", background: "none", border: "none", color: "#4ade80", cursor: "pointer", display: "inline-flex", alignItems: "center" }}><X style={{ width: 14, height: 14 }} /></button>
         </div>
       )}
 
@@ -814,9 +814,11 @@ function GroupsManager({ isAdmin, isSuperAdmin, members, onSuccess, onError }: {
                             {isAdmin && (
                               <button
                                 onClick={(e) => { e.stopPropagation(); handleRemoveAgent(g.group_id, a.agent_id); }}
-                                style={{ background: "none", border: "none", color: "#f87171", cursor: "pointer", fontSize: "0.85rem", padding: 0 }}
+                                style={{ background: "none", border: "none", color: "#f87171", cursor: "pointer", fontSize: "0.85rem", padding: 0, display: "inline-flex", alignItems: "center" }}
                                 title="Remove agent from group"
-                              ></button>
+                              >
+                                <X style={{ width: 12, height: 12 }} />
+                              </button>
                             )}
                           </span>
                         ))}
@@ -875,9 +877,11 @@ function GroupsManager({ isAdmin, isSuperAdmin, members, onSuccess, onError }: {
                             {isAdmin && (
                               <button
                                 onClick={(e) => { e.stopPropagation(); handleRemoveMember(g.group_id, m.user_id); }}
-                                style={{ background: "none", border: "none", color: "#f87171", cursor: "pointer", fontSize: "0.85rem", padding: 0 }}
+                                style={{ background: "none", border: "none", color: "#f87171", cursor: "pointer", fontSize: "0.85rem", padding: 0, display: "inline-flex", alignItems: "center" }}
                                 title="Remove member from group"
-                              ></button>
+                              >
+                                <X style={{ width: 12, height: 12 }} />
+                              </button>
                             )}
                           </span>
                         ))}

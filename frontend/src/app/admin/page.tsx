@@ -249,7 +249,8 @@ export default function PlatformAdminPage() {
                             color: "#f87171", fontSize: "0.75rem", cursor: "pointer",
                           }}
                         >
-                          </button>
+                          Delete
+                        </button>
                       )}
                     </td>
                   </tr>

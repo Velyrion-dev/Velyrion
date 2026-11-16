@@ -2,6 +2,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { api, Incident } from "@/lib/api";
 import { useToast } from "@/components/ToastProvider";
+import { usePermissions } from "@/lib/auth";
 
 function formatTime(ts: string) {
   return new Date(ts).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
@@ -12,6 +13,7 @@ export default function IncidentsPage() {
   const [loading, setLoading] = useState(true);
   const [resolving, setResolving] = useState<string | null>(null);
   const { toast } = useToast();
+  const { isAdmin, isOperator } = usePermissions();
 
   const reload = useCallback(() => {
     api.getIncidents().then(setIncidents).finally(() => setLoading(false));
@@ -64,10 +66,16 @@ export default function IncidentsPage() {
               <div className="timestamp">{formatTime(inc.timestamp)}</div>
             </div>
             {inc.resolution_status !== "RESOLVED" && (
-              <button className="btn btn-success" onClick={() => handleResolve(inc.incident_id)}
-                disabled={resolving === inc.incident_id}>
-                {resolving === inc.incident_id ? "Resolving..." : "Resolve & Unlock Agent"}
-              </button>
+              isAdmin || isOperator ? (
+                <button className="btn btn-success" onClick={() => handleResolve(inc.incident_id)}
+                  disabled={resolving === inc.incident_id}>
+                  {resolving === inc.incident_id ? "Resolving..." : "Resolve & Unlock Agent"}
+                </button>
+              ) : (
+                <span className="badge badge-pending" style={{ fontSize: 11, fontStyle: "italic" }}>
+                  Resolution Restricted (Viewer)
+                </span>
+              )
             )}
           </div>
 

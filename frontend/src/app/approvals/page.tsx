@@ -2,6 +2,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { api, ApprovalRequest } from "@/lib/api";
 import { useToast } from "@/components/ToastProvider";
+import { usePermissions } from "@/lib/auth";
 
 function formatTime(ts: string) {
   return new Date(ts).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
@@ -20,6 +21,8 @@ export default function ApprovalsPage() {
     const interval = setInterval(reload, 10000);
     return () => clearInterval(interval);
   }, [reload]);
+
+  const { canApprove } = usePermissions();
 
   const handle = async (id: string, action: "approve" | "reject") => {
     setProcessing(id);
@@ -72,13 +75,21 @@ export default function ApprovalsPage() {
                   </div>
                   <div style={{ fontSize: 12, color: "var(--accent-yellow)" }}>Reason: {a.reason}</div>
                 </div>
-                <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
-                  <button className="btn btn-success btn-sm" onClick={() => handle(a.request_id, "approve")} disabled={processing === a.request_id}>
-                    {processing === a.request_id ? "..." : "Approve"}
-                  </button>
-                  <button className="btn btn-danger btn-sm" onClick={() => handle(a.request_id, "reject")} disabled={processing === a.request_id}>
-                    {processing === a.request_id ? "..." : "Reject"}
-                  </button>
+                <div style={{ display: "flex", gap: 8, flexShrink: 0, alignItems: "center" }}>
+                  {canApprove ? (
+                    <>
+                      <button className="btn btn-success btn-sm" onClick={() => handle(a.request_id, "approve")} disabled={processing === a.request_id}>
+                        {processing === a.request_id ? "..." : "Approve"}
+                      </button>
+                      <button className="btn btn-danger btn-sm" onClick={() => handle(a.request_id, "reject")} disabled={processing === a.request_id}>
+                        {processing === a.request_id ? "..." : "Reject"}
+                      </button>
+                    </>
+                  ) : (
+                    <span className="badge badge-pending" style={{ fontSize: 11, fontStyle: "italic" }}>
+                      Read-Only (Viewer)
+                    </span>
+                  )}
                 </div>
               </div>
             </div>

@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { api, Agent, DashboardStats } from "@/lib/api";
+import { usePermissions } from "@/lib/auth";
 import {
   FileText,
   ShieldAlert,
@@ -72,6 +73,7 @@ function getMostCommonRisk(risks: string[]): string {
 }
 
 export default function MissionControlPage() {
+  const { canKillAgents } = usePermissions();
   // ── State ──
   const [agents, setAgents] = useState<Agent[]>([]);
   const [, setStats] = useState<DashboardStats | null>(null);
@@ -331,9 +333,11 @@ export default function MissionControlPage() {
             </span>
           </div>
           <div className="mc-alert-banner-actions">
-            <button className="mc-alert-banner-btn" onClick={() => handleKill(alertBanner.agentId)}>
-              Kill Agent
-            </button>
+            {canKillAgents && (
+              <button className="mc-alert-banner-btn" onClick={() => handleKill(alertBanner.agentId)}>
+                Kill Agent
+              </button>
+            )}
             <button className="mc-alert-banner-btn dismiss" onClick={() => setAlertBanner(null)}>
               <X style={{ width: 14, height: 14 }} />
             </button>
@@ -460,35 +464,41 @@ export default function MissionControlPage() {
                     />
                   </div>
                   <div className="mc-agent-controls">
-                    {agent.status === "ACTIVE" ? (
-                      <>
+                    {canKillAgents ? (
+                      agent.status === "ACTIVE" ? (
+                        <>
+                          <button
+                            className="mc-agent-btn kill"
+                            onClick={() => handleKill(agent.agent_id)}
+                            style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
+                          >
+                            <PowerOff style={{ width: 10, height: 10 }} /> Kill
+                          </button>
+                          <button
+                            className="mc-agent-btn pause"
+                            onClick={() => handlePause(agent.agent_id)}
+                            style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
+                          >
+                            <Pause style={{ width: 10, height: 10 }} /> Pause
+                          </button>
+                        </>
+                      ) : agent.status === "LOCKED" ? (
                         <button
-                          className="mc-agent-btn kill"
-                          onClick={() => handleKill(agent.agent_id)}
+                          className="mc-agent-btn resume"
+                          onClick={() => handleResume(agent.agent_id)}
                           style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
                         >
-                          <PowerOff style={{ width: 10, height: 10 }} /> Kill
+                          <Play style={{ width: 10, height: 10 }} /> Resume
                         </button>
-                        <button
-                          className="mc-agent-btn pause"
-                          onClick={() => handlePause(agent.agent_id)}
-                          style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
-                        >
-                          <Pause style={{ width: 10, height: 10 }} /> Pause
+                      ) : (
+                        <button className="mc-agent-btn" disabled>
+                          Deactivated
                         </button>
-                      </>
-                    ) : agent.status === "LOCKED" ? (
-                      <button
-                        className="mc-agent-btn resume"
-                        onClick={() => handleResume(agent.agent_id)}
-                        style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
-                      >
-                        <Play style={{ width: 10, height: 10 }} /> Resume
-                      </button>
+                      )
                     ) : (
-                      <button className="mc-agent-btn" disabled>
-                        Deactivated
-                      </button>
+                      <span style={{ fontSize: 11, color: "var(--text-muted)", fontStyle: "italic" }}>
+                        Controls Restricted (Viewer)
+                      </span>
                     )}
                   </div>
                 </div>

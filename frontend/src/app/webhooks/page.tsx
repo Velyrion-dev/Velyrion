@@ -120,20 +120,25 @@ export default function WebhooksPage() {
                     </div>
                   </div>
                   <div style={{ display: "flex", gap: 6 }}>
-                    <button onClick={() => handleTest(wh.id)}
-                      style={{ fontSize: 10, padding: "4px 10px", background: "rgba(99,102,241,0.15)", color: "var(--accent-purple)", border: "1px solid rgba(99,102,241,0.3)", cursor: "pointer", borderRadius: 4 }}>
-                      Test
-                    </button>
-                    {canManageWebhooks && (
+                    {canManageWebhooks ? (
                       <>
+                        <button onClick={() => handleTest(wh.id)}
+                          style={{ fontSize: 10, padding: "4px 10px", background: "rgba(99,102,241,0.15)", color: "var(--accent-purple)", border: "1px solid rgba(99,102,241,0.3)", cursor: "pointer", borderRadius: 4 }}>
+                          Test
+                        </button>
                         <button onClick={() => handleToggle(wh.id)}
                           style={{ fontSize: 10, padding: "4px 10px", background: "rgba(251,191,36,0.15)", color: "var(--accent-yellow)", border: "1px solid rgba(251,191,36,0.3)", cursor: "pointer", borderRadius: 4 }}>
                           {wh.enabled ? "Disable" : "Enable"}
                         </button>
                         <button onClick={() => handleDelete(wh.id)}
                           style={{ fontSize: 10, padding: "4px 10px", background: "rgba(239,68,68,0.1)", color: "var(--accent-red)", border: "1px solid rgba(239,68,68,0.2)", cursor: "pointer", borderRadius: 4 }}>
-                          </button>
+                          Delete
+                        </button>
                       </>
+                    ) : (
+                      <span style={{ fontSize: 10, color: "var(--text-muted)", fontStyle: "italic", alignSelf: "center" }}>
+                        Read-only
+                      </span>
                     )}
                   </div>
                 </div>
