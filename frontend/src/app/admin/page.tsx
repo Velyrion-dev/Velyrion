@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
+import { Lock, BarChart3, Users, Building2, FileText, AlertCircle, Check, Shield, Bot, Trash2 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { platformAdmin } from "@/lib/api";
 
@@ -46,27 +47,27 @@ export default function PlatformAdminPage() {
   if (!isAdmin) {
     return (
       <div style={{ padding: "3rem", textAlign: "center" }}>
-        <h1 style={{ color: "#ef4444", fontSize: "1.5rem", marginBottom: "1rem" }}>🔒 Access Denied</h1>
+        <h1 style={{ color: "#ef4444", fontSize: "1.5rem", marginBottom: "1rem" }}>Access Denied</h1>
         <p style={{ color: "#9ca3af" }}>Platform admin privileges required. Your role: <strong>{user?.role}</strong></p>
       </div>
     );
   }
 
   const TABS: { key: Tab; label: string; icon: string }[] = [
-    { key: "overview", label: "Overview", icon: "📊" },
-    { key: "users", label: "Users", icon: "👥" },
-    { key: "orgs", label: "Organizations", icon: "🏢" },
-    { key: "audit", label: "Audit Log", icon: "📋" },
+    { key: "overview", label: "Overview", icon: "" },
+    { key: "users", label: "Users", icon: "" },
+    { key: "orgs", label: "Organizations", icon: "" },
+    { key: "audit", label: "Audit Log", icon: "" },
   ];
 
   const STAT_CARDS = stats ? [
-    { label: "Total Users", value: stats.total_users, icon: "👥", color: "#3b82f6" },
-    { label: "Organizations", value: stats.total_orgs, icon: "🏢", color: "#8b5cf6" },
-    { label: "Total Agents", value: stats.total_agents, icon: "🤖", color: "#10b981" },
-    { label: "Active Agents", value: stats.active_agents, icon: "✅", color: "#22c55e" },
-    { label: "Locked Agents", value: stats.locked_agents, icon: "🔒", color: "#ef4444" },
-    { label: "Agent Groups", value: stats.total_groups, icon: "📁", color: "#f59e0b" },
-    { label: "Pending Invites", value: stats.pending_invitations, icon: "✉️", color: "#06b6d4" },
+    { label: "Total Users", value: stats.total_users, icon: "", color: "#3b82f6" },
+    { label: "Organizations", value: stats.total_orgs, icon: "", color: "#8b5cf6" },
+    { label: "Total Agents", value: stats.total_agents, icon: "", color: "#10b981" },
+    { label: "Active Agents", value: stats.active_agents, icon: "", color: "#22c55e" },
+    { label: "Locked Agents", value: stats.locked_agents, icon: "", color: "#ef4444" },
+    { label: "Agent Groups", value: stats.total_groups, icon: "", color: "#f59e0b" },
+    { label: "Pending Invites", value: stats.pending_invitations, icon: "", color: "#06b6d4" },
   ] : [];
 
   return (
@@ -74,7 +75,7 @@ export default function PlatformAdminPage() {
       {/* Header */}
       <div style={{ marginBottom: "2rem" }}>
         <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "#e5e7eb", marginBottom: "0.5rem" }}>
-          ⚡ Platform Admin Console
+          Platform Admin Console
         </h1>
         <p style={{ color: "#6b7280", fontSize: "0.9rem" }}>
           God-view over all users, organizations, groups, and agents
@@ -85,7 +86,7 @@ export default function PlatformAdminPage() {
       {error && (
         <div style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8, padding: "0.75rem 1rem", color: "#f87171", marginBottom: "1rem" }}>
           {error}
-          <button onClick={() => setError("")} style={{ float: "right", background: "none", border: "none", color: "#f87171", cursor: "pointer" }}>✕</button>
+          <button onClick={() => setError("")} style={{ float: "right", background: "none", border: "none", color: "#f87171", cursor: "pointer" }}></button>
         </div>
       )}
       {success && (
@@ -137,14 +138,14 @@ export default function PlatformAdminPage() {
               background: "rgba(59,130,246,0.05)", color: "#60a5fa", cursor: "pointer",
               fontSize: "1rem", fontWeight: 600, textAlign: "center",
             }}>
-              👥 Manage Users →
+              Manage Users →
             </button>
             <button onClick={() => setTab("orgs")} style={{
               padding: "1.5rem", borderRadius: 12, border: "1px solid rgba(139,92,246,0.2)",
               background: "rgba(139,92,246,0.05)", color: "#a78bfa", cursor: "pointer",
               fontSize: "1rem", fontWeight: 600, textAlign: "center",
             }}>
-              🏢 Manage Organizations →
+              Manage Organizations →
             </button>
           </div>
         </div>
@@ -154,7 +155,7 @@ export default function PlatformAdminPage() {
       {!loading && tab === "users" && (
         <div>
           <h2 style={{ fontSize: "1.125rem", fontWeight: 600, color: "#e5e7eb", marginBottom: "1rem" }}>
-            👥 All Platform Users ({users.length})
+            All Platform Users ({users.length})
           </h2>
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
@@ -223,10 +224,10 @@ export default function PlatformAdminPage() {
                       )}
                     </td>
                     <td style={{ padding: "0.6rem 0.75rem", color: u.google_id ? "#22c55e" : "#6b7280", fontSize: "0.8rem" }}>
-                      {u.google_id ? "✓" : "—"}
+                      {u.google_id ? "" : "—"}
                     </td>
                     <td style={{ padding: "0.6rem 0.75rem", color: u.email_verified ? "#22c55e" : "#ef4444", fontSize: "0.8rem" }}>
-                      {u.email_verified ? "✓" : "✗"}
+                      {u.email_verified ? "" : ""}
                     </td>
                     <td style={{ padding: "0.6rem 0.75rem", color: "#6b7280", fontSize: "0.75rem" }}>
                       {u.created_at ? new Date(u.created_at).toLocaleDateString() : "—"}
@@ -248,8 +249,7 @@ export default function PlatformAdminPage() {
                             color: "#f87171", fontSize: "0.75rem", cursor: "pointer",
                           }}
                         >
-                          🗑
-                        </button>
+                          </button>
                       )}
                     </td>
                   </tr>
@@ -264,7 +264,7 @@ export default function PlatformAdminPage() {
       {!loading && tab === "orgs" && (
         <div>
           <h2 style={{ fontSize: "1.125rem", fontWeight: 600, color: "#e5e7eb", marginBottom: "1rem" }}>
-            🏢 All Organizations ({orgs.length})
+            All Organizations ({orgs.length})
           </h2>
           <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
             {orgs.map((o) => (
@@ -275,7 +275,7 @@ export default function PlatformAdminPage() {
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                   <div>
                     <h3 style={{ fontSize: "1rem", fontWeight: 600, color: "#e5e7eb", margin: 0 }}>
-                      🏢 {o.name}
+                      {o.name}
                     </h3>
                     <div style={{ color: "#6b7280", fontSize: "0.8rem", marginTop: "0.25rem" }}>
                       Slug: {o.slug} · Owner: {o.owner_email} · Created: {o.created_at ? new Date(o.created_at).toLocaleDateString() : "—"}
@@ -305,16 +305,16 @@ export default function PlatformAdminPage() {
                         color: "#f87171", fontSize: "0.75rem", cursor: "pointer",
                       }}
                     >
-                      🗑 Delete
+                      Delete
                     </button>
                   </div>
                 </div>
 
                 {/* Org stats */}
                 <div style={{ display: "flex", gap: "1.5rem", marginTop: "0.75rem" }}>
-                  <span style={{ fontSize: "0.8rem", color: "#3b82f6" }}>👥 {o.member_count}/{o.max_members} members</span>
-                  <span style={{ fontSize: "0.8rem", color: "#10b981" }}>🤖 {o.agent_count}/{o.max_agents} agents</span>
-                  <span style={{ fontSize: "0.8rem", color: "#f59e0b" }}>📁 {o.group_count} groups</span>
+                  <span style={{ fontSize: "0.8rem", color: "#3b82f6" }}>{o.member_count}/{o.max_members} members</span>
+                  <span style={{ fontSize: "0.8rem", color: "#10b981" }}>{o.agent_count}/{o.max_agents} agents</span>
+                  <span style={{ fontSize: "0.8rem", color: "#f59e0b" }}>{o.group_count} groups</span>
                 </div>
 
                 {/* Plan controls */}
@@ -351,7 +351,7 @@ export default function PlatformAdminPage() {
       {!loading && tab === "audit" && (
         <div>
           <h2 style={{ fontSize: "1.125rem", fontWeight: 600, color: "#e5e7eb", marginBottom: "1rem" }}>
-            📋 Platform-Wide Audit Log ({auditLogs.length})
+            Platform-Wide Audit Log ({auditLogs.length})
           </h2>
           {auditLogs.length === 0 ? (
             <div style={{ textAlign: "center", color: "#6b7280", padding: "2rem" }}>No audit events yet</div>
@@ -363,7 +363,7 @@ export default function PlatformAdminPage() {
                   padding: "0.75rem 0", borderBottom: "1px solid rgba(255,255,255,0.04)",
                 }}>
                   <span style={{ fontSize: "1rem", flexShrink: 0 }}>
-                    {l.action === "INVITE_SENT" ? "✉️" : l.action === "ROLE_CHANGE" ? "🔄" : l.action === "MEMBER_REMOVED" ? "❌" : l.action === "TRANSFER_OWNERSHIP" ? "👑" : "📝"}
+                    {l.action === "INVITE_SENT" ? "" : l.action === "ROLE_CHANGE" ? "" : l.action === "MEMBER_REMOVED" ? "" : l.action === "TRANSFER_OWNERSHIP" ? "" : ""}
                   </span>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: "0.85rem", color: "#e5e7eb" }}>

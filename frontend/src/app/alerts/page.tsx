@@ -7,7 +7,7 @@ function formatTime(ts: string) {
 }
 
 const TYPE_ICONS: Record<string, string> = {
-  VIOLATION: "🛡️", ANOMALY: "⚠️", HITL_REQUIRED: "✋", INCIDENT: "🚨",
+  VIOLATION: "", ANOMALY: "", HITL_REQUIRED: "", INCIDENT: "",
 };
 
 export default function AlertsPage() {
@@ -55,7 +55,7 @@ export default function AlertsPage() {
                   {a.human_action_required && (
                     <>
                       <span style={{ margin: "0 8px" }}>·</span>
-                      <span style={{ color: "var(--accent-yellow)" }}>🔔 {a.human_action_required}</span>
+                      <span style={{ color: "var(--accent-yellow)" }}>{a.human_action_required}</span>
                     </>
                   )}
                 </div>

@@ -35,7 +35,7 @@ export default function RegulatoryAutopilotPage() {
 
   const regulations: Regulation[] = [
     {
-      id: "eu_ai_act", name: "EU AI Act 2025", icon: "🇪🇺",
+      id: "eu_ai_act", name: "EU AI Act 2025", icon: "",
       description: "European Union regulation on artificial intelligence systems — risk classification, transparency, and documentation requirements.",
       requirements: [
         { name: "Risk Classification System", status: "compliant", detail: "All agents classified by risk level (LOW/MEDIUM/HIGH/CRITICAL) with automatic categorization." },
@@ -47,7 +47,7 @@ export default function RegulatoryAutopilotPage() {
       ],
     },
     {
-      id: "soc2", name: "SOC 2 Type II", icon: "🔒",
+      id: "soc2", name: "SOC 2 Type II", icon: "",
       description: "Service Organization Control 2 — security, availability, processing integrity, confidentiality, and privacy.",
       requirements: [
         { name: "Access Controls", status: "compliant", detail: "Permission engine validates every agent action against defined access policies." },
@@ -59,7 +59,7 @@ export default function RegulatoryAutopilotPage() {
       ],
     },
     {
-      id: "hipaa", name: "HIPAA", icon: "🏥",
+      id: "hipaa", name: "HIPAA", icon: "",
       description: "Health Insurance Portability and Accountability Act — protecting sensitive patient health information.",
       requirements: [
         { name: "Access Audit Trail", status: "compliant", detail: "Every data access by AI agents logged with full context." },
@@ -70,7 +70,7 @@ export default function RegulatoryAutopilotPage() {
       ],
     },
     {
-      id: "gdpr", name: "GDPR", icon: "🇪🇺",
+      id: "gdpr", name: "GDPR", icon: "",
       description: "General Data Protection Regulation — data protection and privacy for EU citizens.",
       requirements: [
         { name: "Data Processing Records", status: "compliant", detail: "Complete records of all AI agent data processing activities." },
@@ -81,7 +81,7 @@ export default function RegulatoryAutopilotPage() {
       ],
     },
     {
-      id: "sec_ai", name: "SEC AI Oversight", icon: "📊",
+      id: "sec_ai", name: "SEC AI Oversight", icon: "",
       description: "Securities and Exchange Commission guidelines for AI in financial services.",
       requirements: [
         { name: "Algorithmic Accountability", status: "compliant", detail: "Every AI action audited with confidence scores and cost tracking." },
@@ -97,9 +97,9 @@ export default function RegulatoryAutopilotPage() {
   const complianceRate = Math.round((selected.requirements.filter(r => r.status === "compliant").length / selected.requirements.length) * 100);
 
   const STATUS_MAP = {
-    compliant: { color: "#10b981", bg: "rgba(16,185,129,0.1)", label: "✓ Compliant", icon: "✅" },
-    partial: { color: "#f59e0b", bg: "rgba(245,158,11,0.1)", label: "◐ Partial", icon: "⚠️" },
-    non_compliant: { color: "#ef4444", bg: "rgba(239,68,68,0.1)", label: "✗ Non-Compliant", icon: "❌" },
+    compliant: { color: "#10b981", bg: "rgba(16,185,129,0.1)", label: "Compliant", icon: "" },
+    partial: { color: "#f59e0b", bg: "rgba(245,158,11,0.1)", label: "◐ Partial", icon: "" },
+    non_compliant: { color: "#ef4444", bg: "rgba(239,68,68,0.1)", label: "Non-Compliant", icon: "" },
   };
 
   const exportReport = (regId: string) => {
@@ -131,11 +131,11 @@ export default function RegulatoryAutopilotPage() {
     <div className="ra-page">
       <div className="ra-header">
         <div>
-          <h1 className="lb-title">🏛️ Regulatory Autopilot</h1>
+          <h1 className="lb-title">️ Regulatory Autopilot</h1>
           <p className="lb-subtitle">One-click compliance documentation for every major AI regulation</p>
         </div>
         <button className="btn btn-primary" onClick={() => exportReport(selectedReg)} disabled={exporting !== null}>
-          {exporting ? "⏳ Exporting..." : "📥 Export Report"}
+          {exporting ? "Exporting..." : "Export Report"}
         </button>
       </div>
 

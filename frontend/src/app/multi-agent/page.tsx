@@ -17,9 +17,9 @@ interface MessageFlow {
 }
 
 const FLOW_STATUS = {
-  governed: { color: "#10b981", bg: "rgba(16,185,129,0.1)", label: "Governed", icon: "✅" },
-  blocked: { color: "#ef4444", bg: "rgba(239,68,68,0.1)", label: "Blocked", icon: "🚫" },
-  pending: { color: "#f59e0b", bg: "rgba(245,158,11,0.1)", label: "Pending", icon: "⏳" },
+  governed: { color: "#10b981", bg: "rgba(16,185,129,0.1)", label: "Governed", icon: "" },
+  blocked: { color: "#ef4444", bg: "rgba(239,68,68,0.1)", label: "Blocked", icon: "" },
+  pending: { color: "#f59e0b", bg: "rgba(245,158,11,0.1)", label: "Pending", icon: "" },
 };
 
 export default function MultiAgentProtocolPage() {
@@ -58,21 +58,21 @@ export default function MultiAgentProtocolPage() {
   return (
     <div className="ma-page">
       <div className="lb-header">
-        <h1 className="lb-title">🔗 Multi-Agent Governance Protocol</h1>
+        <h1 className="lb-title">Multi-Agent Governance Protocol</h1>
         <p className="lb-subtitle">Runtime governance layer for inter-agent communication</p>
       </div>
 
       <div className="an-kpi-row" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
-        <div className="an-kpi blue"><div className="an-kpi-icon">🤖</div><div className="an-kpi-data"><div className="an-kpi-value">{agents.length}</div><div className="an-kpi-label">Agents in Mesh</div></div></div>
-        <div className="an-kpi green"><div className="an-kpi-icon">✅</div><div className="an-kpi-data"><div className="an-kpi-value">{governedCount}</div><div className="an-kpi-label">Governed Flows</div></div></div>
-        <div className="an-kpi red"><div className="an-kpi-icon">🚫</div><div className="an-kpi-data"><div className="an-kpi-value">{blockedCount}</div><div className="an-kpi-label">Blocked</div></div></div>
-        <div className="an-kpi yellow"><div className="an-kpi-icon">⏳</div><div className="an-kpi-data"><div className="an-kpi-value">{pendingCount}</div><div className="an-kpi-label">Pending Review</div></div></div>
+        <div className="an-kpi blue"><div className="an-kpi-icon"></div><div className="an-kpi-data"><div className="an-kpi-value">{agents.length}</div><div className="an-kpi-label">Agents in Mesh</div></div></div>
+        <div className="an-kpi green"><div className="an-kpi-icon"></div><div className="an-kpi-data"><div className="an-kpi-value">{governedCount}</div><div className="an-kpi-label">Governed Flows</div></div></div>
+        <div className="an-kpi red"><div className="an-kpi-icon"></div><div className="an-kpi-data"><div className="an-kpi-value">{blockedCount}</div><div className="an-kpi-label">Blocked</div></div></div>
+        <div className="an-kpi yellow"><div className="an-kpi-icon"></div><div className="an-kpi-data"><div className="an-kpi-value">{pendingCount}</div><div className="an-kpi-label">Pending Review</div></div></div>
       </div>
 
       <div className="an-bottom-grid">
         {/* Message Flows */}
         <div className="an-chart-card">
-          <div className="an-chart-title">📡 Inter-Agent Message Flows</div>
+          <div className="an-chart-title">Inter-Agent Message Flows</div>
           <div className="ma-flow-list">
             {flows.map((f, i) => {
               const sc = FLOW_STATUS[f.status];
@@ -108,13 +108,13 @@ export default function MultiAgentProtocolPage() {
 
         {/* Governance Policies */}
         <div className="an-chart-card">
-          <div className="an-chart-title">📜 Inter-Agent Policies</div>
+          <div className="an-chart-title">Inter-Agent Policies</div>
           <div className="ma-policy-list">
             {policies.map((p, i) => (
               <div key={i} className="ma-policy-card">
                 <div className="ma-policy-top">
                   <span className="ma-policy-name">{p.name}</span>
-                  <span className="ra-req-badge" style={{ background: p.status === "enforced" ? "rgba(16,185,129,0.1)" : "rgba(59,130,246,0.1)", color: p.status === "enforced" ? "#10b981" : "#3b82f6" }}>{p.status === "enforced" ? "✓ Enforced" : "👁 Monitoring"}</span>
+                  <span className="ra-req-badge" style={{ background: p.status === "enforced" ? "rgba(16,185,129,0.1)" : "rgba(59,130,246,0.1)", color: p.status === "enforced" ? "#10b981" : "#3b82f6" }}>{p.status === "enforced" ? "Enforced" : "Monitoring"}</span>
                 </div>
                 <p className="ma-policy-rule">{p.rule}</p>
               </div>

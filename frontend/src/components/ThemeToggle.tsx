@@ -36,7 +36,7 @@ export default function ThemeToggle() {
         transform: theme === "dark" ? "rotate(0deg)" : "rotate(360deg)",
         fontSize: 14,
       }}>
-        {theme === "dark" ? "☀️" : "🌙"}
+        {theme === "dark" ? "️" : ""}
       </span>
       {theme === "dark" ? "Light Mode" : "Dark Mode"}
     </button>

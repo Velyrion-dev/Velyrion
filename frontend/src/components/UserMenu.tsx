@@ -62,14 +62,14 @@ export default function UserMenu() {
           </div>
           <div className="user-menu-dropdown-divider" />
           <button className="user-menu-dropdown-item" onClick={() => { setOpen(false); }}>
-            👤 Profile Settings
+            Profile Settings
           </button>
           <button className="user-menu-dropdown-item" onClick={() => { setOpen(false); }}>
-            🔑 API Keys
+            API Keys
           </button>
           <div className="user-menu-dropdown-divider" />
           <button className="user-menu-dropdown-item user-menu-logout" onClick={handleLogout}>
-            🚪 Sign Out
+            Sign Out
           </button>
         </div>
       )}

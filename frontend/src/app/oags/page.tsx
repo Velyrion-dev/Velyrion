@@ -13,11 +13,11 @@ interface SpecSection {
 
 const SECTIONS: SpecSection[] = [
   {
-    id: "overview", title: "Overview", icon: "📐",
+    id: "overview", title: "Overview", icon: "",
     content: `The Open Agent Governance Standard (OAGS) defines a universal framework for governing AI agents across platforms, vendors, and organizations. It provides a common language for agent registration, event logging, policy enforcement, and compliance reporting.\n\nVersion: ${SPEC_VERSION}\nStatus: Draft Specification\nMaintainer: Velyrion Governance Council`,
   },
   {
-    id: "agent_registration", title: "Agent Registration", icon: "🤖",
+    id: "agent_registration", title: "Agent Registration", icon: "",
     content: "Every AI agent MUST be registered with a governance platform before deployment. Registration captures identity, capabilities, constraints, and ownership.",
     fields: [
       { name: "agent_id", type: "string (UUID)", required: true, desc: "Globally unique agent identifier" },
@@ -31,7 +31,7 @@ const SECTIONS: SpecSection[] = [
     ],
   },
   {
-    id: "event_logging", title: "Event Logging", icon: "📋",
+    id: "event_logging", title: "Event Logging", icon: "",
     content: "Every agent action MUST emit a standardized event. Events form an immutable audit trail for compliance, forensics, and analytics.",
     fields: [
       { name: "event_id", type: "string (UUID)", required: true, desc: "Unique event identifier" },
@@ -47,7 +47,7 @@ const SECTIONS: SpecSection[] = [
     ],
   },
   {
-    id: "policy_engine", title: "Policy Engine", icon: "📜",
+    id: "policy_engine", title: "Policy Engine", icon: "",
     content: "Governance policies MUST be declarative, versioned, and machine-enforceable. Policies define what agents can and cannot do.",
     fields: [
       { name: "policy_id", type: "string", required: true, desc: "Unique policy identifier" },
@@ -58,7 +58,7 @@ const SECTIONS: SpecSection[] = [
     ],
   },
   {
-    id: "violation_handling", title: "Violation Handling", icon: "🚨",
+    id: "violation_handling", title: "Violation Handling", icon: "",
     content: "When a policy is violated, the platform MUST create a violation record, execute the response action, and notify relevant stakeholders.",
     fields: [
       { name: "violation_id", type: "string", required: true, desc: "Unique violation identifier" },
@@ -70,11 +70,11 @@ const SECTIONS: SpecSection[] = [
     ],
   },
   {
-    id: "governance_score", title: "Governance Score", icon: "📊",
+    id: "governance_score", title: "Governance Score", icon: "",
     content: "Every agent MUST have a computed Governance Score between 0-100 based on compliance, cost efficiency, reliability, risk profile, and track record. Scores enable certification, insurance, and trust decisions.",
   },
   {
-    id: "interop", title: "Interoperability", icon: "🔗",
+    id: "interop", title: "Interoperability", icon: "",
     content: "OAGS-compliant platforms MUST expose standard REST APIs for agent registration, event ingestion, and policy management. WebSocket support is RECOMMENDED for real-time event streaming.\n\nEndpoints:\n• POST /oags/v1/agents — Register agent\n• POST /oags/v1/events — Log event\n• GET /oags/v1/agents/{id}/score — Get governance score\n• GET /oags/v1/violations — List violations\n• WS /oags/v1/stream — Real-time event stream",
   },
 ];
@@ -87,7 +87,7 @@ export default function OAGSPage() {
     <div className="oags-page">
       <div className="oags-header">
         <div>
-          <h1 className="lb-title">📐 Open Agent Governance Standard</h1>
+          <h1 className="lb-title">Open Agent Governance Standard</h1>
           <p className="lb-subtitle">OAGS v{SPEC_VERSION} — The universal specification for AI agent governance</p>
         </div>
         <div className="oags-version-badge">v{SPEC_VERSION} Draft</div>

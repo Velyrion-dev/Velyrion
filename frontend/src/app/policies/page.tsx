@@ -47,7 +47,7 @@ export default function PoliciesPage() {
     <div>
       <div className="page-header">
         <div>
-          <h1>📜 Policy-as-Code Engine</h1>
+          <h1>Policy-as-Code Engine</h1>
           <p>Define, version, and enforce governance policies in YAML — no code changes required</p>
         </div>
         <span className="timestamp">{policies.length} policies loaded</span>
@@ -83,7 +83,7 @@ export default function PoliciesPage() {
 
           {/* Policy Evaluator */}
           <div className="card" style={{ padding: 20, marginTop: 20 }}>
-            <h3 style={{ fontSize: 14, marginBottom: 12 }}>🧪 Policy Tester</h3>
+            <h3 style={{ fontSize: 14, marginBottom: 12 }}>Policy Tester</h3>
             <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 12 }}>
               Test how policies would evaluate an action
             </p>
@@ -98,7 +98,7 @@ export default function PoliciesPage() {
               <div style={{ marginTop: 12 }}>
                 {evalResult.length === 0 ? (
                   <div style={{ padding: 12, textAlign: "center", color: "var(--accent-green)", fontSize: 13 }}>
-                    ✅ No violations — action allowed
+                    No violations — action allowed
                   </div>
                 ) : (
                   evalResult.map((v, i) => (
@@ -158,7 +158,7 @@ export default function PoliciesPage() {
             </div>
           ) : (
             <div className="card" style={{ padding: 60, textAlign: "center", color: "var(--text-muted)" }}>
-              <div style={{ fontSize: 48, marginBottom: 16 }}>📜</div>
+              <div style={{ fontSize: 48, marginBottom: 16 }}></div>
               <h3>Select a policy to view its rules</h3>
               <p>Policies are defined in YAML files in the <code>policies/</code> directory</p>
             </div>

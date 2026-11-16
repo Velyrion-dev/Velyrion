@@ -20,11 +20,11 @@ interface SimResult {
 }
 
 const SCENARIOS: SimScenario[] = [
-  { id: "normal", name: "Normal Operations", icon: "🟢", description: "Standard workload — 500 actions, normal tools, low risk tasks", params: [{ name: "Actions", value: "500" }, { name: "Risk Level", value: "LOW" }, { name: "Budget", value: "50,000 tokens" }] },
-  { id: "high_volume", name: "High Volume Burst", icon: "📈", description: "10x normal traffic — stress test budget and rate limits", params: [{ name: "Actions", value: "5,000" }, { name: "Risk Level", value: "MEDIUM" }, { name: "Budget", value: "50,000 tokens" }] },
-  { id: "adversarial", name: "Adversarial Attack", icon: "🔴", description: "Agent attempts unauthorized tools and restricted data access", params: [{ name: "Actions", value: "200" }, { name: "Risk Level", value: "CRITICAL" }, { name: "Budget", value: "50,000 tokens" }] },
-  { id: "budget_drain", name: "Budget Exhaustion", icon: "💸", description: "Agent consumes tokens rapidly — tests budget enforcement", params: [{ name: "Actions", value: "1,000" }, { name: "Token Cost/Action", value: "500" }, { name: "Budget", value: "50,000 tokens" }] },
-  { id: "compliance", name: "Compliance Audit", icon: "📋", description: "Simulate regulatory audit — checks all governance requirements", params: [{ name: "Regulations", value: "EU AI Act, SOC2" }, { name: "Depth", value: "Full" }, { name: "Budget", value: "50,000 tokens" }] },
+  { id: "normal", name: "Normal Operations", icon: "", description: "Standard workload — 500 actions, normal tools, low risk tasks", params: [{ name: "Actions", value: "500" }, { name: "Risk Level", value: "LOW" }, { name: "Budget", value: "50,000 tokens" }] },
+  { id: "high_volume", name: "High Volume Burst", icon: "", description: "10x normal traffic — stress test budget and rate limits", params: [{ name: "Actions", value: "5,000" }, { name: "Risk Level", value: "MEDIUM" }, { name: "Budget", value: "50,000 tokens" }] },
+  { id: "adversarial", name: "Adversarial Attack", icon: "", description: "Agent attempts unauthorized tools and restricted data access", params: [{ name: "Actions", value: "200" }, { name: "Risk Level", value: "CRITICAL" }, { name: "Budget", value: "50,000 tokens" }] },
+  { id: "budget_drain", name: "Budget Exhaustion", icon: "", description: "Agent consumes tokens rapidly — tests budget enforcement", params: [{ name: "Actions", value: "1,000" }, { name: "Token Cost/Action", value: "500" }, { name: "Budget", value: "50,000 tokens" }] },
+  { id: "compliance", name: "Compliance Audit", icon: "", description: "Simulate regulatory audit — checks all governance requirements", params: [{ name: "Regulations", value: "EU AI Act, SOC2" }, { name: "Depth", value: "Full" }, { name: "Budget", value: "50,000 tokens" }] },
 ];
 
 function runSimulation(scenarioId: string): SimResult {
@@ -58,7 +58,7 @@ export default function SandboxPage() {
 
   return (
     <div className="sb-page">
-      <div className="lb-header"><h1 className="lb-title">🧪 Agent Simulation Sandbox</h1><p className="lb-subtitle">Test agents in sandboxed scenarios before production deployment</p></div>
+      <div className="lb-header"><h1 className="lb-title">Agent Simulation Sandbox</h1><p className="lb-subtitle">Test agents in sandboxed scenarios before production deployment</p></div>
 
       <div className="sb-main">
         {/* Scenarios */}
@@ -79,7 +79,7 @@ export default function SandboxPage() {
           <div className="sb-config">
             <h3 className="an-chart-title">Configuration — {scenario.name}</h3>
             <div className="sb-params">{scenario.params.map(p => <div key={p.name} className="sb-param"><span className="fr-state-label">{p.name}</span><span className="fr-state-value">{p.value}</span></div>)}</div>
-            <button className="btn btn-primary" onClick={runSim} disabled={running} style={{ marginTop: 16 }}>{running ? "⏳ Simulating..." : "▶ Run Simulation"}</button>
+            <button className="btn btn-primary" onClick={runSim} disabled={running} style={{ marginTop: 16 }}>{running ? "Simulating..." : "Run Simulation"}</button>
             {running && <div className="an-budget-bar" style={{ marginTop: 12 }}><div className="an-budget-fill" style={{ width: `${Math.min(progress, 100)}%`, transition: "width 0.2s" }} /></div>}
           </div>
 
@@ -103,7 +103,7 @@ export default function SandboxPage() {
                 <div className="sb-violations"><div className="an-chart-title">Violations Triggered</div>{result.violations.map((v, i) => <div key={i} className="sb-vio-item"><span className="ti-pattern-severity" style={{ background: `${SEVERITY_COLORS[v.severity]}20`, color: SEVERITY_COLORS[v.severity] }}>{v.severity}</span><span style={{ fontSize: 13, color: "var(--text-primary)" }}>{v.type.replace(/_/g, " ")}</span></div>)}</div>
               )}
 
-              <div className="sb-recs"><div className="an-chart-title">💡 Recommendations</div>{result.recommendations.map((r, i) => <div key={i} className="co-rec-card" style={{ borderLeftColor: "var(--accent-blue)" }}><p className="co-rec-msg">{r}</p></div>)}</div>
+              <div className="sb-recs"><div className="an-chart-title">Recommendations</div>{result.recommendations.map((r, i) => <div key={i} className="co-rec-card" style={{ borderLeftColor: "var(--accent-blue)" }}><p className="co-rec-msg">{r}</p></div>)}</div>
             </div>
           )}
         </div>

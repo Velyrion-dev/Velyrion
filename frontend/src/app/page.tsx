@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useState, useRef } from "react";
+import { FileText, Shield, Activity, CheckCircle2, AlertOctagon, Crosshair, ShieldCheck } from "lucide-react";
 
 /* ── Animated Counter ── */
 function Counter({ end, duration = 2000, suffix = "" }: { end: number; duration?: number; suffix?: string }) {
@@ -22,32 +23,32 @@ function Counter({ end, duration = 2000, suffix = "" }: { end: number; duration?
 /* ── Feature card data ── */
 const FEATURES = [
   {
-    icon: "📋", title: "Immutable Audit Trail",
+    icon: FileText, title: "Immutable Audit Trail",
     desc: "Every agent action is logged with full context — timestamp, tool, input, output, cost, and confidence. Append-only. Zero data loss.",
     gradient: "linear-gradient(135deg, #3b82f6, #8b5cf6)",
   },
   {
-    icon: "🛡️", title: "Permission Engine",
+    icon: Shield, title: "Permission Engine",
     desc: "Real-time validation against each agent's permission profile. Unauthorized tools, data sources, or budget overruns? Blocked instantly.",
     gradient: "linear-gradient(135deg, #06b6d4, #3b82f6)",
   },
   {
-    icon: "⚡", title: "Anomaly Detection",
+    icon: Activity, title: "Anomaly Detection",
     desc: "Five detection algorithms monitor duration spikes, API failures, data boundary violations, confidence drops, and cost anomalies.",
     gradient: "linear-gradient(135deg, #f59e0b, #f97316)",
   },
   {
-    icon: "✋", title: "Human-in-the-Loop",
+    icon: CheckCircle2, title: "Human-in-the-Loop",
     desc: "Sensitive actions pause automatically for human approval. Deletions, financial transactions, publishing — you stay in control.",
     gradient: "linear-gradient(135deg, #8b5cf6, #ec4899)",
   },
   {
-    icon: "🚨", title: "Incident Response",
+    icon: AlertOctagon, title: "Incident Response",
     desc: "CRITICAL violations trigger an automated 5-step response: kill process → snapshot state → lock agent → alert security → log immutably.",
     gradient: "linear-gradient(135deg, #ef4444, #f97316)",
   },
   {
-    icon: "🎯", title: "Mission Control",
+    icon: Crosshair, title: "Mission Control",
     desc: "Real-time NASA-style dashboard with live WebSocket feeds, agent heartbeat monitoring, one-click kill switches, and activity timelines.",
     gradient: "linear-gradient(135deg, #10b981, #06b6d4)",
   },
@@ -162,7 +163,7 @@ export default function LandingPage() {
         <div className="hero-glow" />
         <div className="hero-grid-bg" />
         <div className="hero-content">
-          <div className="hero-badge">🛡️ AI Agent Governance Platform</div>
+          <div className="hero-badge" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Shield style={{ width: 14, height: 14 }} /> AI Agent Governance Platform</div>
           <h1 className="hero-title">
             Monitor. Govern.<br />
             <span className="hero-gradient-text">Trust Every Agent.</span>
@@ -206,10 +207,10 @@ export default function LandingPage() {
         </div>
         {/* ── Trust Badges — Security & Compliance Social Proof ── */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 20, marginTop: 28, flexWrap: "wrap" }}>
-          <div className="trust-shield">🔒 End-to-End Encrypted</div>
-          <div className="trust-shield">🛡️ SOC2 Compliant</div>
-          <div className="trust-shield">📋 GDPR Ready</div>
-          <div className="trust-shield">✓ ISO 27001 Aligned</div>
+          <div className="trust-shield">End-to-End Encrypted</div>
+          <div className="trust-shield">SOC2 Compliant</div>
+          <div className="trust-shield">GDPR Ready</div>
+          <div className="trust-shield">ISO 27001 Aligned</div>
         </div>
       </section>
 
@@ -223,7 +224,20 @@ export default function LandingPage() {
         <div className="features-grid">
           {FEATURES.map((f, i) => (
             <div key={i} className="feature-card" style={{ animationDelay: `${i * 0.1}s` }}>
-              <div className="feature-icon-wrap" style={{ background: f.gradient }}>{f.icon}</div>
+              <div
+                className="feature-icon-wrap"
+                style={{
+                  background: f.gradient,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {(() => {
+                  const Icon = f.icon;
+                  return <Icon style={{ width: 20, height: 20, color: "#ffffff" }} />;
+                })()}
+              </div>
               <h3>{f.title}</h3>
               <p>{f.desc}</p>
             </div>
@@ -285,7 +299,7 @@ export default function LandingPage() {
         <div className="regulation-grid">
           {REGULATIONS.map(r => (
             <div key={r} className="regulation-card">
-              <div className="regulation-check">✓</div>
+              <div className="regulation-check"></div>
               <span>{r}</span>
             </div>
           ))}
@@ -310,7 +324,7 @@ export default function LandingPage() {
               </div>
               <div className="pricing-agents">{p.agents}</div>
               <ul className="pricing-features">
-                {p.features.map((f, j) => <li key={j}>✓ {f}</li>)}
+                {p.features.map((f, j) => <li key={j}>{f}</li>)}
               </ul>
               <Link href={p.name === "Enterprise" ? "mailto:contact@velyrion.com" : "/signup"} className={`btn ${p.popular ? "btn-primary" : "btn-ghost"} btn-lg`} style={{ width: "100%", textAlign: "center" }}>
                 {p.cta}

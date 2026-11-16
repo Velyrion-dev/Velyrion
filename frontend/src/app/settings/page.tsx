@@ -39,16 +39,16 @@ export default function SettingsPage() {
   };
 
   const TABS = [
-    { id: "general", label: "General", icon: "⚙️" },
-    { id: "api", label: "API Keys", icon: "🔑" },
-    { id: "notifications", label: "Notifications", icon: "🔔" },
-    { id: "team", label: "Team", icon: "👥" },
+    { id: "general", label: "General", icon: "" },
+    { id: "api", label: "API Keys", icon: "" },
+    { id: "notifications", label: "Notifications", icon: "" },
+    { id: "team", label: "Team", icon: "" },
   ];
 
   return (
     <div className="set-page">
       <div className="lb-header">
-        <h1 className="lb-title">⚙️ Settings</h1>
+        <h1 className="lb-title">Settings</h1>
         <p className="lb-subtitle">Platform configuration and preferences</p>
       </div>
 
@@ -81,7 +81,7 @@ export default function SettingsPage() {
                 <div className="set-radio-group">
                   {["dark", "light", "system"].map(t => (
                     <button key={t} className={`set-radio ${theme === t ? "active" : ""}`} onClick={() => setTheme(t)}>
-                      {t === "dark" ? "🌙" : t === "light" ? "☀️" : "💻"} {t.charAt(0).toUpperCase() + t.slice(1)}
+                      {t === "dark" ? "" : t === "light" ? "️" : ""} {t.charAt(0).toUpperCase() + t.slice(1)}
                     </button>
                   ))}
                 </div>
@@ -97,7 +97,7 @@ export default function SettingsPage() {
                   <option value="Asia/Tokyo">Tokyo (JST)</option>
                 </select>
               </div>
-              <button className="btn btn-primary" onClick={saveSettings}>{saved ? "✓ Saved!" : "Save Changes"}</button>
+              <button className="btn btn-primary" onClick={saveSettings}>{saved ? "Saved!" : "Save Changes"}</button>
             </div>
           )}
 
@@ -117,8 +117,8 @@ export default function SettingsPage() {
                 </div>
                 <div className="set-api-key-row">
                   <code className="set-api-key">{apiKeyVisible ? mockApiKey : "vlr_sk_" + "•".repeat(32)}</code>
-                  <button className="btn btn-ghost btn-sm" onClick={() => setApiKeyVisible(!apiKeyVisible)}>{apiKeyVisible ? "🙈 Hide" : "👁️ Show"}</button>
-                  <button className="btn btn-primary btn-sm" onClick={copyApiKey}>{copied ? "✓ Copied" : "📋 Copy"}</button>
+                  <button className="btn btn-ghost btn-sm" onClick={() => setApiKeyVisible(!apiKeyVisible)}>{apiKeyVisible ? "Hide" : "Show"}</button>
+                  <button className="btn btn-primary btn-sm" onClick={copyApiKey}>{copied ? "Copied" : "Copy"}</button>
                 </div>
               </div>
 
@@ -152,7 +152,7 @@ export default function SettingsPage() {
                   </div>
                 ))}
               </div>
-              <button className="btn btn-primary" onClick={saveSettings} style={{ marginTop: 16 }}>{saved ? "✓ Saved!" : "Save Preferences"}</button>
+              <button className="btn btn-primary" onClick={saveSettings} style={{ marginTop: 16 }}>{saved ? "Saved!" : "Save Preferences"}</button>
             </div>
           )}
 

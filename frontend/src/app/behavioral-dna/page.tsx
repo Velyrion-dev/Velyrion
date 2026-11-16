@@ -101,15 +101,15 @@ export default function BehavioralDNAPage() {
   return (
     <div className="dna-page">
       <div className="lb-header">
-        <h1 className="lb-title">🧠 Behavioral DNA Fingerprinting</h1>
+        <h1 className="lb-title">Behavioral DNA Fingerprinting</h1>
         <p className="lb-subtitle">Unique behavioral signatures — detect drift, compromise, and anomalies</p>
       </div>
 
       <div className="an-kpi-row" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
-        <div className="an-kpi blue"><div className="an-kpi-icon">🧬</div><div className="an-kpi-data"><div className="an-kpi-value">{agents.length}</div><div className="an-kpi-label">Profiles</div></div></div>
-        <div className="an-kpi green"><div className="an-kpi-icon">✅</div><div className="an-kpi-data"><div className="an-kpi-value">{agents.length - anomalyCount}</div><div className="an-kpi-label">Normal</div></div></div>
-        <div className="an-kpi red"><div className="an-kpi-icon">⚠️</div><div className="an-kpi-data"><div className="an-kpi-value">{anomalyCount}</div><div className="an-kpi-label">Drifting</div></div></div>
-        <div className="an-kpi purple"><div className="an-kpi-icon">📊</div><div className="an-kpi-data"><div className="an-kpi-value">{avgDrift}%</div><div className="an-kpi-label">Avg Drift</div></div></div>
+        <div className="an-kpi blue"><div className="an-kpi-icon"></div><div className="an-kpi-data"><div className="an-kpi-value">{agents.length}</div><div className="an-kpi-label">Profiles</div></div></div>
+        <div className="an-kpi green"><div className="an-kpi-icon"></div><div className="an-kpi-data"><div className="an-kpi-value">{agents.length - anomalyCount}</div><div className="an-kpi-label">Normal</div></div></div>
+        <div className="an-kpi red"><div className="an-kpi-icon"></div><div className="an-kpi-data"><div className="an-kpi-value">{anomalyCount}</div><div className="an-kpi-label">Drifting</div></div></div>
+        <div className="an-kpi purple"><div className="an-kpi-icon"></div><div className="an-kpi-data"><div className="an-kpi-value">{avgDrift}%</div><div className="an-kpi-label">Avg Drift</div></div></div>
       </div>
 
       <div className="gs-main">
@@ -121,7 +121,7 @@ export default function BehavioralDNAPage() {
               const driftColor = p.driftScore > 20 ? "#ef4444" : p.driftScore > 10 ? "#f59e0b" : "#10b981";
               return (
                 <button key={p.agent.agent_id} className={`gs-agent-card ${selectedId === p.agent.agent_id ? "active" : ""}`} onClick={() => setSelectedId(p.agent.agent_id)}>
-                  <span style={{ fontSize: 16 }}>🧬</span>
+                  <span style={{ fontSize: 16 }}></span>
                   <div className="gs-agent-info">
                     <span className="gs-agent-name">{p.agent.agent_name}</span>
                     <span className="gs-agent-dept" style={{ fontFamily: "monospace", letterSpacing: 1 }}>{p.fingerprint}</span>

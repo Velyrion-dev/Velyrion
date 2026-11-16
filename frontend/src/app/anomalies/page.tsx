@@ -7,7 +7,7 @@ function formatTime(ts: string) {
 }
 
 const TYPE_ICONS: Record<string, string> = {
-  DURATION: "⏱️", API_FAILURE: "🔌", DATA_BOUNDARY: "🔒", CONFIDENCE: "📉", COST: "💸",
+  DURATION: "⏱️", API_FAILURE: "", DATA_BOUNDARY: "", CONFIDENCE: "", COST: "",
 };
 
 export default function AnomaliesPage() {

@@ -68,7 +68,7 @@ export default function EventsPage() {
             className={`btn ${autoRefresh ? "btn-success" : "btn-ghost"} btn-sm`}
             onClick={() => setAutoRefresh(!autoRefresh)}
           >
-            {autoRefresh ? "⏸ Pause" : "▶ Resume"}
+            {autoRefresh ? "Pause" : "Resume"}
           </button>
         </div>
       </div>

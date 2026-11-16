@@ -15,9 +15,9 @@ interface Delivery {
 }
 
 const CHANNELS = [
-  { value: "slack", label: "Slack", icon: "💬", color: "#4A154B" },
-  { value: "pagerduty", label: "PagerDuty", icon: "🔔", color: "#06AC38" },
-  { value: "custom", label: "Custom URL", icon: "🔗", color: "#6366F1" },
+  { value: "slack", label: "Slack", icon: "", color: "#4A154B" },
+  { value: "pagerduty", label: "PagerDuty", icon: "", color: "#06AC38" },
+  { value: "custom", label: "Custom URL", icon: "", color: "#6366F1" },
 ];
 
 const EVENT_TYPES = ["VIOLATION", "INCIDENT", "ANOMALY", "HITL_REQUIRED"];
@@ -64,12 +64,12 @@ export default function WebhooksPage() {
     <div>
       <div className="page-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
         <div>
-          <h1>🔗 Webhook Integrations</h1>
+          <h1>Webhook Integrations</h1>
           <p>Route governance events to Slack, PagerDuty, or any HTTP endpoint</p>
         </div>
         {canManageWebhooks && (
           <button className="btn btn-primary" onClick={() => setShowForm(!showForm)}>
-            {showForm ? "✕ Close" : "+ Add Webhook"}
+            {showForm ? "Close" : "+ Add Webhook"}
           </button>
         )}
       </div>
@@ -83,7 +83,7 @@ export default function WebhooksPage() {
         </div>
       ) : webhooks.length === 0 ? (
         <div className="card" style={{ padding: 60, textAlign: "center", color: "var(--text-muted)" }}>
-          <div style={{ fontSize: 48, marginBottom: 16 }}>🔗</div>
+          <div style={{ fontSize: 48, marginBottom: 16 }}></div>
           <h3>No webhooks configured</h3>
           <p>Add a Slack, PagerDuty, or custom webhook to receive real-time governance alerts</p>
         </div>
@@ -122,18 +122,17 @@ export default function WebhooksPage() {
                   <div style={{ display: "flex", gap: 6 }}>
                     <button onClick={() => handleTest(wh.id)}
                       style={{ fontSize: 10, padding: "4px 10px", background: "rgba(99,102,241,0.15)", color: "var(--accent-purple)", border: "1px solid rgba(99,102,241,0.3)", cursor: "pointer", borderRadius: 4 }}>
-                      🧪 Test
+                      Test
                     </button>
                     {canManageWebhooks && (
                       <>
                         <button onClick={() => handleToggle(wh.id)}
                           style={{ fontSize: 10, padding: "4px 10px", background: "rgba(251,191,36,0.15)", color: "var(--accent-yellow)", border: "1px solid rgba(251,191,36,0.3)", cursor: "pointer", borderRadius: 4 }}>
-                          {wh.enabled ? "⏸ Disable" : "▶ Enable"}
+                          {wh.enabled ? "Disable" : "Enable"}
                         </button>
                         <button onClick={() => handleDelete(wh.id)}
                           style={{ fontSize: 10, padding: "4px 10px", background: "rgba(239,68,68,0.1)", color: "var(--accent-red)", border: "1px solid rgba(239,68,68,0.2)", cursor: "pointer", borderRadius: 4 }}>
-                          🗑
-                        </button>
+                          </button>
                       </>
                     )}
                   </div>
@@ -147,7 +146,7 @@ export default function WebhooksPage() {
                     color: testResult.success ? "var(--accent-green)" : "var(--accent-red)",
                     border: `1px solid ${testResult.success ? "rgba(34,197,94,0.3)" : "rgba(239,68,68,0.3)"}`,
                   }}>
-                    {testResult.success ? "✅" : "❌"} {testResult.message}
+                    {testResult.success ? "" : ""} {testResult.message}
                   </div>
                 )}
 
@@ -189,7 +188,7 @@ export default function WebhooksPage() {
       {/* Delivery Log */}
       <div className="card" style={{ padding: 0 }}>
         <div style={{ padding: "14px 20px", borderBottom: "1px solid var(--border-color)" }}>
-          <h3 style={{ margin: 0, fontSize: 14 }}>📋 Recent Alert Deliveries</h3>
+          <h3 style={{ margin: 0, fontSize: 14 }}>Recent Alert Deliveries</h3>
         </div>
         {deliveries.length === 0 ? (
           <div style={{ padding: 30, textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>
@@ -203,7 +202,7 @@ export default function WebhooksPage() {
                 display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12,
               }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <span style={{ fontSize: 14 }}>{d.delivered ? "✅" : "❌"}</span>
+                  <span style={{ fontSize: 14 }}>{d.delivered ? "" : ""}</span>
                   <span className={`badge badge-${d.severity.toLowerCase()}`} style={{ fontSize: 9 }}>{d.severity}</span>
                   <code style={{ fontSize: 10, padding: "1px 5px", borderRadius: 3, background: "var(--bg-secondary)", color: "var(--accent-cyan)" }}>{d.type}</code>
                   <span style={{ maxWidth: 400, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -266,8 +265,8 @@ function WebhookForm({ onDone }: { onDone: () => void }) {
 
   return (
     <form onSubmit={handleSubmit} className="card" style={{ marginBottom: 20, padding: 24 }}>
-      <h3 style={{ margin: "0 0 16px", fontSize: 15 }}>➕ Register Webhook</h3>
-      {error && <div style={{ color: "var(--accent-red)", fontSize: 13, marginBottom: 12, padding: "8px 12px", borderRadius: 8, background: "rgba(239,68,68,0.1)" }}>✕ {error}</div>}
+      <h3 style={{ margin: "0 0 16px", fontSize: 15 }}>Register Webhook</h3>
+      {error && <div style={{ color: "var(--accent-red)", fontSize: 13, marginBottom: 12, padding: "8px 12px", borderRadius: 8, background: "rgba(239,68,68,0.1)" }}>{error}</div>}
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 16 }}>
         <div>

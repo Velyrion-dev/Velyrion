@@ -15,11 +15,11 @@ interface TrustEntry {
 }
 
 const TIER_CONFIG: Record<string, { color: string; bg: string; icon: string }> = {
-  platinum: { color: "#a78bfa", bg: "rgba(167,139,250,0.1)", icon: "💎" },
-  gold: { color: "#f59e0b", bg: "rgba(245,158,11,0.1)", icon: "🥇" },
-  silver: { color: "#94a3b8", bg: "rgba(148,163,184,0.1)", icon: "🥈" },
-  bronze: { color: "#d97706", bg: "rgba(217,119,6,0.1)", icon: "🥉" },
-  unverified: { color: "#64748b", bg: "rgba(100,116,139,0.1)", icon: "❓" },
+  platinum: { color: "#a78bfa", bg: "rgba(167,139,250,0.1)", icon: "" },
+  gold: { color: "#f59e0b", bg: "rgba(245,158,11,0.1)", icon: "" },
+  silver: { color: "#94a3b8", bg: "rgba(148,163,184,0.1)", icon: "" },
+  bronze: { color: "#d97706", bg: "rgba(217,119,6,0.1)", icon: "" },
+  unverified: { color: "#64748b", bg: "rgba(100,116,139,0.1)", icon: "" },
 };
 
 function getTier(score: number): TrustEntry["tier"] {
@@ -74,15 +74,15 @@ export default function TrustRegistryPage() {
   return (
     <div className="tr-page">
       <div className="lb-header">
-        <h1 className="lb-title">🏪 Agent Trust Registry</h1>
+        <h1 className="lb-title">Agent Trust Registry</h1>
         <p className="lb-subtitle">Public directory to discover, verify, and trust AI agents</p>
       </div>
 
       <div className="an-kpi-row" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
-        <div className="an-kpi blue"><div className="an-kpi-icon">📋</div><div className="an-kpi-data"><div className="an-kpi-value">{entries.length}</div><div className="an-kpi-label">Registered</div></div></div>
-        <div className="an-kpi green"><div className="an-kpi-icon">✅</div><div className="an-kpi-data"><div className="an-kpi-value">{verifiedCount}</div><div className="an-kpi-label">Verified</div></div></div>
-        <div className="an-kpi purple"><div className="an-kpi-icon">📊</div><div className="an-kpi-data"><div className="an-kpi-value">{avgScore}</div><div className="an-kpi-label">Avg Trust</div></div></div>
-        <div className="an-kpi yellow"><div className="an-kpi-icon">💎</div><div className="an-kpi-data"><div className="an-kpi-value">{entries.filter(e => e.tier === "platinum").length}</div><div className="an-kpi-label">Platinum</div></div></div>
+        <div className="an-kpi blue"><div className="an-kpi-icon"></div><div className="an-kpi-data"><div className="an-kpi-value">{entries.length}</div><div className="an-kpi-label">Registered</div></div></div>
+        <div className="an-kpi green"><div className="an-kpi-icon"></div><div className="an-kpi-data"><div className="an-kpi-value">{verifiedCount}</div><div className="an-kpi-label">Verified</div></div></div>
+        <div className="an-kpi purple"><div className="an-kpi-icon"></div><div className="an-kpi-data"><div className="an-kpi-value">{avgScore}</div><div className="an-kpi-label">Avg Trust</div></div></div>
+        <div className="an-kpi yellow"><div className="an-kpi-icon"></div><div className="an-kpi-data"><div className="an-kpi-value">{entries.filter(e => e.tier === "platinum").length}</div><div className="an-kpi-label">Platinum</div></div></div>
       </div>
 
       {/* Search & Filter */}
@@ -106,7 +106,7 @@ export default function TrustRegistryPage() {
               <div key={e.agent.agent_id} className={`tr-card ${selectedEntry?.agent.agent_id === e.agent.agent_id ? "active" : ""}`} onClick={() => setSelectedEntry(e)}>
                 <div className="tr-card-top">
                   <span className="tr-card-tier" style={{ background: tc.bg, color: tc.color }}>{tc.icon} {e.tier}</span>
-                  {e.verified && <span className="gs-cert-badge" title="Verified">✓</span>}
+                  {e.verified && <span className="gs-cert-badge" title="Verified"></span>}
                 </div>
                 <div className="tr-card-name">{e.agent.agent_name}</div>
                 <div className="tr-card-dept">{e.agent.department}</div>

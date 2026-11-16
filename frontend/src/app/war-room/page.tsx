@@ -14,9 +14,9 @@ interface WarRoomIncident {
 }
 
 const STATUS_CONFIG = {
-  investigating: { color: "#f59e0b", bg: "rgba(245,158,11,0.1)", label: "🔍 Investigating" },
-  mitigating: { color: "#3b82f6", bg: "rgba(59,130,246,0.1)", label: "🔧 Mitigating" },
-  resolved: { color: "#10b981", bg: "rgba(16,185,129,0.1)", label: "✅ Resolved" },
+  investigating: { color: "#f59e0b", bg: "rgba(245,158,11,0.1)", label: "Investigating" },
+  mitigating: { color: "#3b82f6", bg: "rgba(59,130,246,0.1)", label: "Mitigating" },
+  resolved: { color: "#10b981", bg: "rgba(16,185,129,0.1)", label: "Resolved" },
 };
 
 const TEAM = ["Security Lead", "DevOps Engineer", "ML Engineer", "Platform Admin"];
@@ -74,8 +74,8 @@ export default function WarRoomPage() {
   return (
     <div className="wr-page">
       <div className="wr-header">
-        <div><h1 className="lb-title">🎮 Incident War Room</h1><p className="lb-subtitle">Real-time collaborative incident response</p></div>
-        <div className="wr-active-badge">{activeCount > 0 ? `🔴 ${activeCount} Active Incident${activeCount > 1 ? "s" : ""}` : "🟢 All Clear"}</div>
+        <div><h1 className="lb-title">Incident War Room</h1><p className="lb-subtitle">Real-time collaborative incident response</p></div>
+        <div className="wr-active-badge">{activeCount > 0 ? `${activeCount} Active Incident${activeCount > 1 ? "s" : ""}` : "All Clear"}</div>
       </div>
 
       <div className="gs-main">
@@ -121,7 +121,7 @@ export default function WarRoomPage() {
             </div>
 
             <div className="an-chart-card">
-              <div className="an-chart-title">📋 Investigation Timeline</div>
+              <div className="an-chart-title">Investigation Timeline</div>
               <div className="fr-timeline" style={{ paddingLeft: 20 }}>
                 {selected.timeline.map((t, i) => (
                   <div key={i} className="fr-tl-node" style={{ cursor: "default" }}>
@@ -138,7 +138,7 @@ export default function WarRoomPage() {
             </div>
 
             <div className="an-chart-card">
-              <div className="an-chart-title">📝 Notes</div>
+              <div className="an-chart-title">Notes</div>
               {selected.notes.map((n, i) => <div key={i} className="co-rec-card" style={{ borderLeftColor: "var(--accent-cyan)" }}><p className="co-rec-msg">{n}</p></div>)}
               <div className="cp-input-row" style={{ marginTop: 8 }}>
                 <input className="cp-input" placeholder="Add investigation note..." value={noteInput} onChange={e => setNoteInput(e.target.value)} onKeyDown={e => e.key === "Enter" && addNote()} />

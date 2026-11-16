@@ -1,12 +1,13 @@
 "use client";
 import { useState } from "react";
+import { Terminal, Cpu, Bot, Zap, Code, ShieldCheck, Check, Copy } from "lucide-react";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://velyrion.onrender.com";
 
 const PLATFORMS = [
   {
     name: "Python SDK",
-    icon: "🐍",
+    icon: "",
     level: "Code",
     color: "#3776ab",
     description: "Full governance with kill switch, policy engine, and async support.",
@@ -21,7 +22,7 @@ v.wrap(agent, agent_id="my-agent")
   },
   {
     name: "OpenAI",
-    icon: "🤖",
+    icon: "",
     level: "Code",
     color: "#10a37f",
     description: "Wrap any OpenAI client to monitor completions, tokens, and costs.",
@@ -40,7 +41,7 @@ response = client.chat.completions.create(
   },
   {
     name: "Anthropic",
-    icon: "🧠",
+    icon: "",
     level: "Code",
     color: "#d4a574",
     description: "Monitor Claude API calls with token tracking and cost analysis.",
@@ -58,7 +59,7 @@ response = client.messages.create(
   },
   {
     name: "LangChain",
-    icon: "🦜",
+    icon: "",
     level: "Code",
     color: "#1c3c3c",
     description: "Governance for LangChain agents, chains, and tools.",
@@ -73,7 +74,7 @@ result = agent.invoke({"input": "Analyze data"})`,
   },
   {
     name: "n8n",
-    icon: "⚡",
+    icon: "",
     level: "No-Code",
     color: "#ea4b71",
     description: "Add an HTTP Request node to any n8n workflow for governance.",
@@ -93,7 +94,7 @@ result = agent.invoke({"input": "Analyze data"})`,
   },
   {
     name: "Make.com",
-    icon: "🔮",
+    icon: "",
     level: "No-Code",
     color: "#6d28d9",
     description: "Add an HTTP module in your Make scenario to report events.",
@@ -112,7 +113,7 @@ result = agent.invoke({"input": "Analyze data"})`,
   },
   {
     name: "REST API",
-    icon: "🌐",
+    icon: "",
     level: "Any",
     color: "#3b82f6",
     description: "Universal HTTP endpoint — works with any language or platform.",
@@ -129,7 +130,7 @@ result = agent.invoke({"input": "Analyze data"})`,
   },
   {
     name: "Webhook",
-    icon: "🔗",
+    icon: "",
     level: "Any",
     color: "#f59e0b",
     description: "Fire-and-forget POST from any system — Zapier, IFTTT, custom apps.",
@@ -177,7 +178,7 @@ export default function ConnectPage() {
       <div className="cn-filters">
         {["All", "Code", "No-Code", "Any"].map(f => (
           <button key={f} className={`cn-filter-btn ${filter === f ? "active" : ""}`} onClick={() => { setFilter(f); setSelected(0); }}>
-            {f === "All" ? "🌍 All" : f === "Code" ? "💻 Code" : f === "No-Code" ? "🎨 No-Code" : "🌐 Universal"}
+            {f === "All" ? "All" : f === "Code" ? "Code" : f === "No-Code" ? "No-Code" : "Universal"}
           </button>
         ))}
       </div>
@@ -212,7 +213,7 @@ export default function ConnectPage() {
               <p className="cn-code-desc">{PLATFORMS[selected].description}</p>
             </div>
             <button className="btn btn-primary btn-sm" onClick={copyCode} style={{ gap: 4, flexShrink: 0 }}>
-              {copied ? "✓ Copied!" : "📋 Copy"}
+              {copied ? "Copied!" : "Copy"}
             </button>
           </div>
           <div className="lp-code-block" style={{ borderRadius: 14 }}>

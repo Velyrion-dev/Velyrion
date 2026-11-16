@@ -76,20 +76,20 @@ export default function InsuranceScoringPage() {
   const totalSavings = profiles.reduce((s, p) => s + p.annualSavings, 0);
   const avgRisk = profiles.length > 0 ? Math.round(profiles.reduce((s, p) => s + p.riskScore, 0) / profiles.length) : 0;
 
-  const IMPACT_ICONS = { positive: "✅", negative: "❌", neutral: "➖" };
+  const IMPACT_ICONS = { positive: "", negative: "", neutral: "" };
 
   return (
     <div className="is-page">
       <div className="lb-header">
-        <h1 className="lb-title">🛡️ AI Risk Insurance Scoring</h1>
+        <h1 className="lb-title">AI Risk Insurance Scoring</h1>
         <p className="lb-subtitle">Risk assessment powering AI liability insurance premiums</p>
       </div>
 
       <div className="an-kpi-row" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
-        <div className="an-kpi blue"><div className="an-kpi-icon">📊</div><div className="an-kpi-data"><div className="an-kpi-value">{avgRisk}</div><div className="an-kpi-label">Avg Risk Score</div></div></div>
-        <div className="an-kpi yellow"><div className="an-kpi-icon">💰</div><div className="an-kpi-data"><div className="an-kpi-value">${fmt(totalPremiums)}</div><div className="an-kpi-label">Est. Premiums/yr</div></div></div>
-        <div className="an-kpi green"><div className="an-kpi-icon">💡</div><div className="an-kpi-data"><div className="an-kpi-value">${fmt(totalSavings)}</div><div className="an-kpi-label">Velyrion Savings</div></div></div>
-        <div className="an-kpi purple"><div className="an-kpi-icon">🛡️</div><div className="an-kpi-data"><div className="an-kpi-value">{profiles.filter(p => p.tier === "low").length}</div><div className="an-kpi-label">Low Risk Agents</div></div></div>
+        <div className="an-kpi blue"><div className="an-kpi-icon"></div><div className="an-kpi-data"><div className="an-kpi-value">{avgRisk}</div><div className="an-kpi-label">Avg Risk Score</div></div></div>
+        <div className="an-kpi yellow"><div className="an-kpi-icon"></div><div className="an-kpi-data"><div className="an-kpi-value">${fmt(totalPremiums)}</div><div className="an-kpi-label">Est. Premiums/yr</div></div></div>
+        <div className="an-kpi green"><div className="an-kpi-icon"></div><div className="an-kpi-data"><div className="an-kpi-value">${fmt(totalSavings)}</div><div className="an-kpi-label">Velyrion Savings</div></div></div>
+        <div className="an-kpi purple"><div className="an-kpi-icon"></div><div className="an-kpi-data"><div className="an-kpi-value">{profiles.filter(p => p.tier === "low").length}</div><div className="an-kpi-label">Low Risk Agents</div></div></div>
       </div>
 
       <div className="gs-main">
@@ -100,7 +100,7 @@ export default function InsuranceScoringPage() {
               const tc = TIER_CONFIG[p.tier];
               return (
                 <button key={p.agent.agent_id} className={`gs-agent-card ${selectedId === p.agent.agent_id ? "active" : ""}`} onClick={() => setSelectedId(p.agent.agent_id)}>
-                  <span style={{ fontSize: 14 }}>🛡️</span>
+                  <span style={{ fontSize: 14 }}></span>
                   <div className="gs-agent-info">
                     <span className="gs-agent-name">{p.agent.agent_name}</span>
                     <span className="gs-agent-dept">${p.premiumEstimate}/yr</span>

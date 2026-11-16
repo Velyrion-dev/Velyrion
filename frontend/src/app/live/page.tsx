@@ -1,5 +1,16 @@
 "use client";
-import { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
+import {
+  FileText,
+  ShieldAlert,
+  AlertTriangle,
+  Lock,
+  CheckCircle2,
+  Sparkles,
+  Link2,
+  ShieldCheck,
+  Radio,
+} from "lucide-react";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://velyrion.onrender.com";
 const WS_BASE = API_BASE.replace("https://", "wss://").replace("http://", "ws://") + "/ws/events";
@@ -41,12 +52,12 @@ const SEVERITY_COLORS: Record<string, string> = {
   LOW: "#00e5a0",
 };
 
-const EVENT_ICONS: Record<string, string> = {
-  AUDIT_EVENT: "📋",
-  VIOLATION: "🚫",
-  ANOMALY: "⚠️",
-  AGENT_LOCKED: "🔒",
-  CONNECTED: "🟢",
+const EVENT_ICONS: Record<string, React.ComponentType<{ style?: React.CSSProperties }>> = {
+  AUDIT_EVENT: FileText,
+  VIOLATION: ShieldAlert,
+  ANOMALY: AlertTriangle,
+  AGENT_LOCKED: Lock,
+  CONNECTED: CheckCircle2,
 };
 
 function getToken(): string | null {
@@ -141,7 +152,7 @@ export default function LiveFeedPage() {
   if (error) {
     return (
       <div>
-        <div className="page-header"><h1>🔴 Live Feed</h1><p>Error: {error}</p></div>
+        <div className="page-header"><h1>Live Feed</h1><p>Error: {error}</p></div>
       </div>
     );
   }
@@ -149,7 +160,7 @@ export default function LiveFeedPage() {
   return (
     <div>
       <div className="page-header">
-        <h1>🔴 Live Feed</h1>
+        <h1>Live Feed</h1>
         <p>Real-time WebSocket stream — events, violations, and anomalies as they happen</p>
       </div>
 
@@ -176,7 +187,7 @@ export default function LiveFeedPage() {
       <div className="grid-2">
         {/* Live Event Stream */}
         <div className="card" style={{ minHeight: 500 }}>
-          <h3 className="section-title">⚡ Real-Time Event Stream</h3>
+          <h3 className="section-title">Real-Time Event Stream</h3>
           <div
             ref={feedRef}
             style={{
@@ -189,7 +200,7 @@ export default function LiveFeedPage() {
           >
             {events.length === 0 ? (
               <div style={{ color: "var(--text-muted)", textAlign: "center", padding: 40 }}>
-                <div style={{ fontSize: 32, marginBottom: 10 }}>📡</div>
+                <div style={{ fontSize: 32, marginBottom: 10 }}></div>
                 <div>Waiting for events...</div>
                 <div style={{ fontSize: 11, marginTop: 6 }}>Run the live agent simulator to see real-time events</div>
               </div>
@@ -211,7 +222,14 @@ export default function LiveFeedPage() {
                     }}
                   >
                     <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                      <span>{EVENT_ICONS[e.type] || "📋"}</span>
+                      {(() => {
+                        const IconComp = EVENT_ICONS[e.type] || FileText;
+                        return (
+                          <span style={{ display: "inline-flex", alignItems: "center", color: "var(--text-muted)" }}>
+                            <IconComp style={{ width: 13, height: 13 }} />
+                          </span>
+                        );
+                      })()}
                       <span style={{ color: "var(--text-muted)", fontSize: 10 }}>
                         {new Date(e.timestamp).toLocaleTimeString()}
                       </span>
@@ -222,11 +240,11 @@ export default function LiveFeedPage() {
                         {String(e.data?.agent_name || e.data?.agent_id || "")}
                       </span>
                     </div>
-                    <div style={{ color: "var(--text-secondary)", marginLeft: 26, fontSize: 11 }}>
+                    <div style={{ color: "var(--text-secondary)", marginLeft: 21, fontSize: 11 }}>
                       {String(e.data?.task_description || e.data?.description || e.data?.violation_type || "")}
                       {e.data?.event_hash && (
-                        <span style={{ color: "var(--text-muted)", marginLeft: 8 }}>
-                          🔗 {String(e.data.event_hash)}
+                        <span style={{ color: "var(--text-muted)", marginLeft: 8, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                          <Link2 style={{ width: 11, height: 11 }} /> {String(e.data.event_hash)}
                         </span>
                       )}
                     </div>
@@ -241,7 +259,10 @@ export default function LiveFeedPage() {
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           {/* AI Risk Predictions */}
           <div className="card">
-            <h3 className="section-title">🧠 AI Risk Predictions</h3>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+              <Sparkles style={{ width: 16, height: 16, color: "var(--accent-purple)" }} />
+              <h3 className="section-title" style={{ margin: 0 }}>AI Risk Predictive Modeling</h3>
+            </div>
             {predictions.length === 0 ? (
               <div style={{ color: "var(--text-muted)", fontSize: 13, padding: 20, textAlign: "center" }}>Loading predictions...</div>
             ) : (
@@ -264,11 +285,14 @@ export default function LiveFeedPage() {
 
           {/* Cryptographic Audit Chain */}
           <div className="card">
-            <h3 className="section-title">🔗 Cryptographic Audit Chain</h3>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+              <ShieldCheck style={{ width: 16, height: 16, color: "var(--accent-green)" }} />
+              <h3 className="section-title" style={{ margin: 0 }}>Cryptographic Audit Chain</h3>
+            </div>
             {chainStatus && (
               <div style={{ display: "flex", gap: 12, marginBottom: 12, flexWrap: "wrap" }}>
-                <div style={{ padding: "6px 14px", background: chainStatus.chain_integrity === "VERIFIED" ? "rgba(0,229,160,0.1)" : "rgba(255,59,92,0.1)", borderRadius: 8, fontSize: 12, fontWeight: 700, color: chainStatus.chain_integrity === "VERIFIED" ? "var(--accent-green)" : "var(--accent-red)" }}>
-                  {chainStatus.chain_integrity === "VERIFIED" ? "✅" : "⚠️"} {chainStatus.chain_integrity}
+                <div style={{ padding: "6px 14px", background: chainStatus.chain_integrity === "VERIFIED" ? "rgba(0,229,160,0.1)" : "rgba(255,59,92,0.1)", borderRadius: 8, fontSize: 12, fontWeight: 700, color: chainStatus.chain_integrity === "VERIFIED" ? "var(--accent-green)" : "var(--accent-red)", display: "flex", alignItems: "center", gap: 6 }}>
+                  {chainStatus.chain_integrity === "VERIFIED" ? <CheckCircle2 style={{ width: 13, height: 13 }} /> : <AlertTriangle style={{ width: 13, height: 13 }} />} {chainStatus.chain_integrity}
                 </div>
                 <div style={{ padding: "6px 14px", background: "var(--bg-secondary)", borderRadius: 8, fontSize: 11 }}>
                   {chainStatus.total_events} events
@@ -284,7 +308,7 @@ export default function LiveFeedPage() {
               {chain.slice(0, 8).map((c) => (
                 <div key={c.event_id} style={{ display: "flex", gap: 8, padding: "4px 0", borderBottom: "1px solid var(--border-subtle)", alignItems: "center" }}>
                   <span style={{ color: c.hash_linked ? "var(--accent-green)" : "var(--text-muted)" }}>
-                    {c.hash_linked ? "🔗" : "⛓️"}
+                    {c.hash_linked ? "" : "️"}
                   </span>
                   <span style={{ color: "var(--accent-purple)", minWidth: 110 }}>{c.event_hash}</span>
                   <span style={{ color: "var(--text-muted)" }}>←</span>

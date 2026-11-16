@@ -47,7 +47,7 @@ export default function IncidentsPage() {
 
       {incidents.length === 0 && !loading && (
         <div className="card" style={{ textAlign: "center", padding: 48 }}>
-          <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
+          <div style={{ fontSize: 48, marginBottom: 16 }}></div>
           <h3 style={{ color: "var(--accent-green)", marginBottom: 8 }}>No Incidents</h3>
           <p style={{ color: "var(--text-muted)" }}>No critical incidents to report. System operating normally.</p>
         </div>
@@ -58,7 +58,7 @@ export default function IncidentsPage() {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
-                <span className="badge badge-critical">🚨 CRITICAL INCIDENT</span>
+                <span className="badge badge-critical">CRITICAL INCIDENT</span>
                 <span className={`badge badge-${inc.resolution_status === "RESOLVED" ? "approved" : "pending"}`}>{inc.resolution_status.replace(/_/g, " ")}</span>
               </div>
               <div className="timestamp">{formatTime(inc.timestamp)}</div>
@@ -66,7 +66,7 @@ export default function IncidentsPage() {
             {inc.resolution_status !== "RESOLVED" && (
               <button className="btn btn-success" onClick={() => handleResolve(inc.incident_id)}
                 disabled={resolving === inc.incident_id}>
-                {resolving === inc.incident_id ? "Resolving..." : "✓ Resolve & Unlock Agent"}
+                {resolving === inc.incident_id ? "Resolving..." : "Resolve & Unlock Agent"}
               </button>
             )}
           </div>

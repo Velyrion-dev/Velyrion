@@ -30,9 +30,9 @@ const STATUS_CONFIG = {
 };
 
 const EVENT_STATUS = {
-  allowed: { color: "#10b981", icon: "✅" },
-  blocked: { color: "#ef4444", icon: "🚫" },
-  flagged: { color: "#f59e0b", icon: "⚠️" },
+  allowed: { color: "#10b981", icon: "" },
+  blocked: { color: "#ef4444", icon: "" },
+  flagged: { color: "#f59e0b", icon: "" },
 };
 
 export default function TrustMeshPage() {
@@ -68,21 +68,21 @@ export default function TrustMeshPage() {
   return (
     <div className="tm-page">
       <div className="lb-header">
-        <h1 className="lb-title">🤝 Cross-Company Trust Mesh</h1>
+        <h1 className="lb-title">Cross-Company Trust Mesh</h1>
         <p className="lb-subtitle">Govern agent-to-agent communication across organizations</p>
       </div>
 
       <div className="an-kpi-row" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
-        <div className="an-kpi green"><div className="an-kpi-icon">🤝</div><div className="an-kpi-data"><div className="an-kpi-value">{activeAgreements}</div><div className="an-kpi-label">Active Agreements</div></div></div>
-        <div className="an-kpi blue"><div className="an-kpi-icon">🔗</div><div className="an-kpi-data"><div className="an-kpi-value">{agreements.reduce((s, a) => s + a.agentCount, 0)}</div><div className="an-kpi-label">Connected Agents</div></div></div>
-        <div className="an-kpi purple"><div className="an-kpi-icon">📡</div><div className="an-kpi-data"><div className="an-kpi-value">{totalCrossOrg}</div><div className="an-kpi-label">Cross-Org Events</div></div></div>
-        <div className="an-kpi red"><div className="an-kpi-icon">🚫</div><div className="an-kpi-data"><div className="an-kpi-value">{blockedCount}</div><div className="an-kpi-label">Blocked</div></div></div>
+        <div className="an-kpi green"><div className="an-kpi-icon"></div><div className="an-kpi-data"><div className="an-kpi-value">{activeAgreements}</div><div className="an-kpi-label">Active Agreements</div></div></div>
+        <div className="an-kpi blue"><div className="an-kpi-icon"></div><div className="an-kpi-data"><div className="an-kpi-value">{agreements.reduce((s, a) => s + a.agentCount, 0)}</div><div className="an-kpi-label">Connected Agents</div></div></div>
+        <div className="an-kpi purple"><div className="an-kpi-icon"></div><div className="an-kpi-data"><div className="an-kpi-value">{totalCrossOrg}</div><div className="an-kpi-label">Cross-Org Events</div></div></div>
+        <div className="an-kpi red"><div className="an-kpi-icon"></div><div className="an-kpi-data"><div className="an-kpi-value">{blockedCount}</div><div className="an-kpi-label">Blocked</div></div></div>
       </div>
 
       <div className="an-bottom-grid">
         {/* Trust Agreements */}
         <div className="an-chart-card">
-          <div className="an-chart-title">📋 Trust Agreements</div>
+          <div className="an-chart-title">Trust Agreements</div>
           <div className="tm-agreement-list">
             {agreements.map(a => {
               const sc = STATUS_CONFIG[a.status];
@@ -97,8 +97,8 @@ export default function TrustMeshPage() {
                     <span className="ra-req-badge" style={{ background: sc.bg, color: sc.color }}>{sc.label}</span>
                   </div>
                   <div className="tm-ag-meta">
-                    <span>🤖 {a.agentCount} agents</span>
-                    <span>📅 {a.createdAt} → {a.expiresAt}</span>
+                    <span>{a.agentCount} agents</span>
+                    <span>{a.createdAt} → {a.expiresAt}</span>
                   </div>
                   <div className="ti-agent-chips" style={{ marginTop: 6 }}>{a.sharedPolicies.map(p => <span key={p} className="ti-agent-chip">{p}</span>)}</div>
                 </div>
@@ -109,7 +109,7 @@ export default function TrustMeshPage() {
 
         {/* Cross-Org Event Log */}
         <div className="an-chart-card">
-          <div className="an-chart-title">📡 Cross-Organization Event Log</div>
+          <div className="an-chart-title">Cross-Organization Event Log</div>
           <div className="tm-event-list">
             {crossOrgEvents.map((e, i) => {
               const es = EVENT_STATUS[e.status];

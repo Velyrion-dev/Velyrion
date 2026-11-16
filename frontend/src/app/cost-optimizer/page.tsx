@@ -80,9 +80,9 @@ export default function CostOptimizerPage() {
   const potentialSavings = recommendations.filter(r => r.saving).reduce((s, r) => s + parseFloat(r.saving || "0"), 0);
 
   const SEVERITY_CONFIG: Record<string, { color: string; bg: string; icon: string }> = {
-    critical: { color: "#ef4444", bg: "rgba(239,68,68,0.1)", icon: "🚨" },
-    warning: { color: "#f59e0b", bg: "rgba(245,158,11,0.1)", icon: "⚠️" },
-    info: { color: "#3b82f6", bg: "rgba(59,130,246,0.1)", icon: "💡" },
+    critical: { color: "#ef4444", bg: "rgba(239,68,68,0.1)", icon: "" },
+    warning: { color: "#f59e0b", bg: "rgba(245,158,11,0.1)", icon: "" },
+    info: { color: "#3b82f6", bg: "rgba(59,130,246,0.1)", icon: "" },
   };
 
   // Top spenders
@@ -92,14 +92,14 @@ export default function CostOptimizerPage() {
   return (
     <div className="co-page">
       <div className="lb-header">
-        <h1 className="lb-title">💰 Cost Optimizer</h1>
+        <h1 className="lb-title">Cost Optimizer</h1>
         <p className="lb-subtitle">Budget alerts, spend analysis, and optimization recommendations</p>
       </div>
 
       {/* KPIs */}
       <div className="an-kpi-row" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
         <div className="an-kpi green">
-          <div className="an-kpi-icon">💰</div>
+          <div className="an-kpi-icon"></div>
           <div className="an-kpi-data"><div className="an-kpi-value">${totalCost.toFixed(2)}</div><div className="an-kpi-label">Total Spend</div></div>
         </div>
         <div className="an-kpi blue">
@@ -107,11 +107,11 @@ export default function CostOptimizerPage() {
           <div className="an-kpi-data"><div className="an-kpi-value">{fmt(totalTokens)}</div><div className="an-kpi-label">Tokens Used</div></div>
         </div>
         <div className="an-kpi cyan">
-          <div className="an-kpi-icon">📊</div>
+          <div className="an-kpi-icon"></div>
           <div className="an-kpi-data"><div className="an-kpi-value">{budgetUsage}%</div><div className="an-kpi-label">Budget Usage</div></div>
         </div>
         <div className="an-kpi yellow">
-          <div className="an-kpi-icon">💡</div>
+          <div className="an-kpi-icon"></div>
           <div className="an-kpi-data"><div className="an-kpi-value">${potentialSavings.toFixed(2)}</div><div className="an-kpi-label">Potential Savings</div></div>
         </div>
       </div>
@@ -119,10 +119,10 @@ export default function CostOptimizerPage() {
       <div className="an-bottom-grid">
         {/* Recommendations */}
         <div className="an-chart-card">
-          <div className="an-chart-title">🎯 Recommendations ({recommendations.length})</div>
+          <div className="an-chart-title">Recommendations ({recommendations.length})</div>
           <div className="co-rec-list">
             {recommendations.length === 0 ? (
-              <div className="an-empty">All agents are operating optimally! 🎉</div>
+              <div className="an-empty">All agents are operating optimally! </div>
             ) : (
               recommendations.map((r, i) => {
                 const sc = SEVERITY_CONFIG[r.severity];
@@ -143,7 +143,7 @@ export default function CostOptimizerPage() {
 
         {/* Top Spenders */}
         <div className="an-chart-card">
-          <div className="an-chart-title">🔥 Top Spenders</div>
+          <div className="an-chart-title">Top Spenders</div>
           <div className="an-bar-chart">
             {topSpenders.map(a => (
               <div key={a.agent_id} className="an-bar-row">

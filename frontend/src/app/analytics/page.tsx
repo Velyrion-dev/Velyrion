@@ -112,13 +112,13 @@ export default function AnalyticsPage() {
           <h1 className="an-title">Analytics & Intelligence</h1>
           <p className="an-subtitle">Real-time insights across your agent fleet</p>
         </div>
-        <button className="btn btn-primary" onClick={exportCSV} style={{ gap: 6 }}>📥 Export CSV</button>
+        <button className="btn btn-primary" onClick={exportCSV} style={{ gap: 6 }}>Export CSV</button>
       </div>
 
       {/* KPI Row */}
       <div className="an-kpi-row">
         <div className="an-kpi blue">
-          <div className="an-kpi-icon">⚡</div>
+          <div className="an-kpi-icon"></div>
           <div className="an-kpi-data">
             <div className="an-kpi-value">{fmtCompact(totalActions)}</div>
             <div className="an-kpi-label">Total Actions</div>
@@ -132,28 +132,28 @@ export default function AnalyticsPage() {
           </div>
         </div>
         <div className="an-kpi purple">
-          <div className="an-kpi-icon">💰</div>
+          <div className="an-kpi-icon"></div>
           <div className="an-kpi-data">
             <div className="an-kpi-value">${totalCost.toFixed(2)}</div>
             <div className="an-kpi-label">Total Cost</div>
           </div>
         </div>
         <div className="an-kpi cyan">
-          <div className="an-kpi-icon">🛡️</div>
+          <div className="an-kpi-icon"></div>
           <div className="an-kpi-data">
             <div className="an-kpi-value">{stats?.total_violations || 0}</div>
             <div className="an-kpi-label">Violations</div>
           </div>
         </div>
         <div className="an-kpi yellow">
-          <div className="an-kpi-icon">❤️</div>
+          <div className="an-kpi-icon">️</div>
           <div className="an-kpi-data">
             <div className="an-kpi-value">{avgHealthScore}%</div>
             <div className="an-kpi-label">Avg Health</div>
           </div>
         </div>
         <div className="an-kpi red">
-          <div className="an-kpi-icon">🤖</div>
+          <div className="an-kpi-icon"></div>
           <div className="an-kpi-data">
             <div className="an-kpi-value">{stats?.active_agents || 0}/{stats?.total_agents || 0}</div>
             <div className="an-kpi-label">Active Agents</div>
@@ -223,7 +223,7 @@ export default function AnalyticsPage() {
                 <div className="an-bar-value">{a.total_violations}</div>
               </div>
             ))}
-            {topViolationAgents.filter(a => a.total_violations > 0).length === 0 && <div className="an-empty">No violations 🎉</div>}
+            {topViolationAgents.filter(a => a.total_violations > 0).length === 0 && <div className="an-empty">No violations </div>}
           </div>
         </div>
 

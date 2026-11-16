@@ -108,11 +108,11 @@ export default function ThreatIntelPage() {
     <div className="ti-page">
       <div className="ti-header">
         <div>
-          <h1 className="lb-title">🧬 Threat Intelligence Network</h1>
+          <h1 className="lb-title">Threat Intelligence Network</h1>
           <p className="lb-subtitle">Cross-fleet threat pattern analysis and mitigation</p>
         </div>
         <div className="ti-shield">
-          <div className="ti-shield-icon">🛡️</div>
+          <div className="ti-shield-icon"></div>
           <div className="ti-shield-text">
             <div className="ti-shield-status">{criticalCount === 0 ? "Fleet Protected" : `${criticalCount} Critical Threats`}</div>
             <div className="ti-shield-sub">{fmt(totalThreats)} total threats analyzed</div>
@@ -122,19 +122,19 @@ export default function ThreatIntelPage() {
 
       {/* KPIs */}
       <div className="an-kpi-row" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
-        <div className="an-kpi red"><div className="an-kpi-icon">🚨</div><div className="an-kpi-data"><div className="an-kpi-value">{criticalCount}</div><div className="an-kpi-label">Critical</div></div></div>
-        <div className="an-kpi yellow"><div className="an-kpi-icon">⚠️</div><div className="an-kpi-data"><div className="an-kpi-value">{highCount}</div><div className="an-kpi-label">High Risk</div></div></div>
-        <div className="an-kpi blue"><div className="an-kpi-icon">🔍</div><div className="an-kpi-data"><div className="an-kpi-value">{uniquePatterns}</div><div className="an-kpi-label">Patterns Found</div></div></div>
-        <div className="an-kpi purple"><div className="an-kpi-icon">🤖</div><div className="an-kpi-data"><div className="an-kpi-value">{affectedAgentCount}</div><div className="an-kpi-label">Agents Affected</div></div></div>
+        <div className="an-kpi red"><div className="an-kpi-icon"></div><div className="an-kpi-data"><div className="an-kpi-value">{criticalCount}</div><div className="an-kpi-label">Critical</div></div></div>
+        <div className="an-kpi yellow"><div className="an-kpi-icon"></div><div className="an-kpi-data"><div className="an-kpi-value">{highCount}</div><div className="an-kpi-label">High Risk</div></div></div>
+        <div className="an-kpi blue"><div className="an-kpi-icon"></div><div className="an-kpi-data"><div className="an-kpi-value">{uniquePatterns}</div><div className="an-kpi-label">Patterns Found</div></div></div>
+        <div className="an-kpi purple"><div className="an-kpi-icon"></div><div className="an-kpi-data"><div className="an-kpi-value">{affectedAgentCount}</div><div className="an-kpi-label">Agents Affected</div></div></div>
       </div>
 
       <div className="an-bottom-grid">
         {/* Threat Patterns */}
         <div className="an-chart-card">
-          <div className="an-chart-title">🔍 Detected Patterns ({patterns.length})</div>
+          <div className="an-chart-title">Detected Patterns ({patterns.length})</div>
           <div className="ti-pattern-list">
             {patterns.length === 0 ? (
-              <div className="an-empty">No threat patterns detected — fleet is clean! 🎉</div>
+              <div className="an-empty">No threat patterns detected — fleet is clean! </div>
             ) : (
               patterns.map(p => {
                 const sc = SEVERITY_CONFIG[p.severity];
@@ -171,7 +171,7 @@ export default function ThreatIntelPage() {
                   <div className="fr-state-item"><span className="fr-state-label">Last Seen</span><span className="fr-state-value">{formatTime(selectedPattern.lastSeen)}</span></div>
                 </div>
                 <div className="ti-mitigation">
-                  <div className="ti-mitigation-title">💡 Recommended Mitigation</div>
+                  <div className="ti-mitigation-title">Recommended Mitigation</div>
                   <p className="ti-mitigation-text">{selectedPattern.mitigation}</p>
                 </div>
                 <div className="ti-affected">
@@ -182,7 +182,7 @@ export default function ThreatIntelPage() {
             </>
           ) : (
             <>
-              <div className="an-chart-title">🔴 Live Threat Feed</div>
+              <div className="an-chart-title">Live Threat Feed</div>
               <div className="ti-feed">
                 {feed.length === 0 ? (
                   <div className="an-empty">No recent threats</div>

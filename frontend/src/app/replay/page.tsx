@@ -56,7 +56,7 @@ export default function ReplayPage() {
     <div>
       <div className="page-header">
         <div>
-          <h1>🔍 Agent Replay & Forensics</h1>
+          <h1>Agent Replay & Forensics</h1>
           <p>Step-by-step investigation of any agent&apos;s complete action history</p>
         </div>
       </div>
@@ -73,10 +73,10 @@ export default function ReplayPage() {
           ))}
         </select>
         {replay && !isPlaying && (
-          <button className="btn btn-success btn-sm" onClick={startReplay}>▶ Play Replay</button>
+          <button className="btn btn-success btn-sm" onClick={startReplay}>Play Replay</button>
         )}
         {isPlaying && (
-          <button className="btn btn-ghost btn-sm" onClick={stopReplay}>⏸ Pause</button>
+          <button className="btn btn-ghost btn-sm" onClick={stopReplay}>Pause</button>
         )}
         {replay && (
           <span className="timestamp">{replay.timeline.length} events · {replay.violations.length} violations</span>
@@ -109,7 +109,7 @@ export default function ReplayPage() {
 
           {/* Risk Breakdown */}
           <div className="card" style={{ padding: 16, marginBottom: 24 }}>
-            <h3 style={{ margin: "0 0 12px", fontSize: 15 }}>📊 Risk Distribution</h3>
+            <h3 style={{ margin: "0 0 12px", fontSize: 15 }}>Risk Distribution</h3>
             <div style={{ display: "flex", gap: 16 }}>
               {Object.entries(replay.session.risk_breakdown).map(([level, count]) => (
                 <div key={level} style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -123,7 +123,7 @@ export default function ReplayPage() {
           {/* Forensic Timeline */}
           <div className="card" style={{ padding: 0 }}>
             <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--border-color)" }}>
-              <h3 style={{ margin: 0, fontSize: 15 }}>🕐 Forensic Timeline — {replay.session.agent_name}</h3>
+              <h3 style={{ margin: 0, fontSize: 15 }}>Forensic Timeline — {replay.session.agent_name}</h3>
             </div>
             <div style={{ maxHeight: 600, overflowY: "auto" }}>
               {replay.timeline.map((event, idx) => {
@@ -190,10 +190,10 @@ export default function ReplayPage() {
                           </div>
                         </div>
                         <div style={{ marginTop: 12, display: "flex", gap: 24, fontSize: 12, color: "var(--text-muted)" }}>
-                          <span>🔑 Event ID: {event.event_id}</span>
+                          <span>Event ID: {event.event_id}</span>
                           <span>🪙 Tokens: {event.token_cost.toLocaleString()}</span>
-                          <span>💰 Cost: ${event.compute_cost_usd.toFixed(4)}</span>
-                          <span>🧑 HITL: {event.human_in_loop ? "Yes" : "No"}</span>
+                          <span>Cost: ${event.compute_cost_usd.toFixed(4)}</span>
+                          <span>HITL: {event.human_in_loop ? "Yes" : "No"}</span>
                         </div>
                       </div>
                     )}
@@ -208,7 +208,7 @@ export default function ReplayPage() {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginTop: 20 }}>
               {replay.violations.length > 0 && (
                 <div className="card" style={{ padding: 20 }}>
-                  <h3 style={{ fontSize: 15, marginBottom: 12 }}>🚨 Violations ({replay.violations.length})</h3>
+                  <h3 style={{ fontSize: 15, marginBottom: 12 }}>Violations ({replay.violations.length})</h3>
                   {replay.violations.map((v) => (
                     <div key={v.violation_id} style={{ padding: "8px 0", borderBottom: "1px solid var(--border-color)", fontSize: 13 }}>
                       <div style={{ display: "flex", justifyContent: "space-between" }}>
@@ -222,7 +222,7 @@ export default function ReplayPage() {
               )}
               {replay.anomalies.length > 0 && (
                 <div className="card" style={{ padding: 20 }}>
-                  <h3 style={{ fontSize: 15, marginBottom: 12 }}>⚠️ Anomalies ({replay.anomalies.length})</h3>
+                  <h3 style={{ fontSize: 15, marginBottom: 12 }}>Anomalies ({replay.anomalies.length})</h3>
                   {replay.anomalies.map((a) => (
                     <div key={a.anomaly_id} style={{ padding: "8px 0", borderBottom: "1px solid var(--border-color)", fontSize: 13 }}>
                       <div style={{ display: "flex", justifyContent: "space-between" }}>
@@ -241,7 +241,7 @@ export default function ReplayPage() {
 
       {!replay && !loading && (
         <div style={{ textAlign: "center", padding: 80, color: "var(--text-muted)" }}>
-          <div style={{ fontSize: 48, marginBottom: 16 }}>🔍</div>
+          <div style={{ fontSize: 48, marginBottom: 16 }}></div>
           <h3>Select an agent to begin forensic replay</h3>
           <p>Step through every action, inspect inputs/outputs, and identify incidents.</p>
         </div>

@@ -64,7 +64,7 @@ export default function ConditionalLayout({ children }: { children: React.ReactN
         onClick={() => setSidebarOpen(!sidebarOpen)}
         aria-label="Toggle menu"
       >
-        {sidebarOpen ? "✕" : "☰"}
+        {sidebarOpen ? "" : ""}
       </button>
       <div className={sidebarOpen ? "sidebar-overlay active" : "sidebar-overlay"} onClick={() => setSidebarOpen(false)} />
       <Sidebar className={sidebarOpen ? "open" : ""} />

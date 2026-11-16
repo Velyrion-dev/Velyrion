@@ -51,7 +51,7 @@ export default function ComparePage() {
   return (
     <div className="cmp-page">
       <div className="lb-header">
-        <h1 className="lb-title">⚔️ Agent Comparison</h1>
+        <h1 className="lb-title">Agent Comparison</h1>
         <p className="lb-subtitle">Side-by-side performance analysis</p>
       </div>
 
@@ -109,11 +109,11 @@ export default function ComparePage() {
                       <span className={`cmp-val ${winner === "a" ? "winner" : winner === "b" ? "loser" : ""}`}>
                         {m.type === "status" ? <span className={`mc-agent-status ${m.valA}`}>{m.valA}</span> : formatVal(m.valA)}
                       </span>
-                      {winner === "a" && <span className="cmp-crown">👑</span>}
+                      {winner === "a" && <span className="cmp-crown"></span>}
                     </td>
                     <td style={{ textAlign: "center" }}><span className="cmp-metric-label">{m.label}</span></td>
                     <td style={{ textAlign: "right" }}>
-                      {winner === "b" && <span className="cmp-crown">👑</span>}
+                      {winner === "b" && <span className="cmp-crown"></span>}
                       <span className={`cmp-val ${winner === "b" ? "winner" : winner === "a" ? "loser" : ""}`}>
                         {m.type === "status" ? <span className={`mc-agent-status ${m.valB}`}>{m.valB}</span> : formatVal(m.valB)}
                       </span>

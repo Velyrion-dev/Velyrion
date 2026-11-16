@@ -76,26 +76,26 @@ export default function HeatmapPage() {
   return (
     <div className="hm-page">
       <div className="lb-header">
-        <h1 className="lb-title">📅 Activity Heatmap</h1>
+        <h1 className="lb-title">Activity Heatmap</h1>
         <p className="lb-subtitle">Agent activity patterns over the last year</p>
       </div>
 
       {/* Stats */}
       <div className="an-kpi-row" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
         <div className="an-kpi green">
-          <div className="an-kpi-icon">📊</div>
+          <div className="an-kpi-icon"></div>
           <div className="an-kpi-data"><div className="an-kpi-value">{totalEvents.toLocaleString("en-US")}</div><div className="an-kpi-label">Events Tracked</div></div>
         </div>
         <div className="an-kpi blue">
-          <div className="an-kpi-icon">📅</div>
+          <div className="an-kpi-icon"></div>
           <div className="an-kpi-data"><div className="an-kpi-value">{activeDays}</div><div className="an-kpi-label">Active Days</div></div>
         </div>
         <div className="an-kpi purple">
-          <div className="an-kpi-icon">📈</div>
+          <div className="an-kpi-icon"></div>
           <div className="an-kpi-data"><div className="an-kpi-value">{avgPerDay}</div><div className="an-kpi-label">Avg / Day</div></div>
         </div>
         <div className="an-kpi yellow">
-          <div className="an-kpi-icon">🔥</div>
+          <div className="an-kpi-icon"></div>
           <div className="an-kpi-data"><div className="an-kpi-value">{bestDay ? bestDay[1] : 0}</div><div className="an-kpi-label">Best Day</div></div>
         </div>
       </div>

@@ -1,6 +1,10 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/lib/auth";
+import {
+  Building2, Users, Bot, Crown, Shield, Settings, Eye, Gem,
+  Folder, Mail, Trash2, ArrowRightLeft, FileText, AlertCircle, Check, X, RefreshCw
+} from 'lucide-react';
 import { orgApi, groupApi, OrgMember, OrgInvitation, AgentGroupSummary, AgentGroupDetail, api } from "@/lib/api";
 
 const ORG_ROLES = ["SUPER_ADMIN", "ADMIN", "OPERATOR", "VIEWER"];
@@ -13,10 +17,16 @@ const ROLE_COLORS: Record<string, string> = {
 };
 
 const ROLE_ICONS: Record<string, string> = {
-  SUPER_ADMIN: "👑",
-  ADMIN: "🛡️",
-  OPERATOR: "⚙️",
-  VIEWER: "👁️",
+  SUPER_ADMIN: "Super Admin",
+  ADMIN: "Admin",
+  OPERATOR: "Operator",
+  VIEWER: "Viewer",
+};
+const ROLE_ICON_COMPONENTS: Record<string, any> = {
+  SUPER_ADMIN: Crown,
+  ADMIN: Shield,
+  OPERATOR: Settings,
+  VIEWER: Eye,
 };
 
 const PLAN_BADGES: Record<string, { bg: string; text: string }> = {
@@ -119,7 +129,7 @@ export default function OrgPage() {
     return (
       <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
         <div style={{ textAlign: "center" }}>
-          <div style={{ fontSize: "2rem", marginBottom: "1rem", animation: "pulse 1.5s infinite" }}>🏢</div>
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: "1rem" }}><Building2 style={{ width: 40, height: 40, color: "var(--accent-blue)" }} /></div>
           <div style={{ color: "#9ca3af" }}>Loading organization...</div>
         </div>
       </div>
@@ -129,7 +139,7 @@ export default function OrgPage() {
   if (!org?.org_id) {
     return (
       <div style={{ maxWidth: 600, margin: "4rem auto", textAlign: "center", padding: "2rem" }}>
-        <div style={{ fontSize: "4rem", marginBottom: "1.5rem" }}>🏢</div>
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: "1.5rem" }}><Building2 style={{ width: 64, height: 64, color: "var(--accent-blue)" }} /></div>
         <h2 style={{ fontSize: "1.5rem", marginBottom: "1rem", color: "#e5e7eb" }}>No Organization Yet</h2>
         <p style={{ color: "#9ca3af", marginBottom: "2rem" }}>Create or join an organization to start managing your agents collaboratively.</p>
       </div>
@@ -144,7 +154,7 @@ export default function OrgPage() {
       <div style={{ marginBottom: "2rem" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "0.5rem" }}>
           <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "#f3f4f6", margin: 0 }}>
-            🏢 {org.name}
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><Building2 style={{ width: 22, height: 22 }} /> {org.name}</span>
           </h1>
           <span style={{
             padding: "0.25rem 0.75rem",
@@ -159,7 +169,7 @@ export default function OrgPage() {
           </span>
         </div>
         <p style={{ color: "#9ca3af", fontSize: "0.875rem" }}>
-          /{org.slug} · {org.member_count} members · {org.agent_count} agents · Your role: {ROLE_ICONS[orgRole]} {orgRole}
+          /{org.slug} · {org.member_count} members · {org.agent_count} agents · Your role: {orgRole}
         </p>
       </div>
 
@@ -169,8 +179,8 @@ export default function OrgPage() {
           padding: "0.75rem 1rem", marginBottom: "1rem", borderRadius: 8,
           background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171",
         }}>
-          ❌ {error}
-          <button onClick={() => setError("")} style={{ float: "right", background: "none", border: "none", color: "#f87171", cursor: "pointer" }}>✕</button>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><AlertCircle style={{ width: 14, height: 14 }} /> {error}</span>
+          <button onClick={() => setError("")} style={{ float: "right", background: "none", border: "none", color: "#f87171", cursor: "pointer" }}></button>
         </div>
       )}
       {success && (
@@ -178,18 +188,18 @@ export default function OrgPage() {
           padding: "0.75rem 1rem", marginBottom: "1rem", borderRadius: 8,
           background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.3)", color: "#4ade80",
         }}>
-          ✅ {success}
-          <button onClick={() => setSuccess("")} style={{ float: "right", background: "none", border: "none", color: "#4ade80", cursor: "pointer" }}>✕</button>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Check style={{ width: 14, height: 14 }} /> {success}</span>
+          <button onClick={() => setSuccess("")} style={{ float: "right", background: "none", border: "none", color: "#4ade80", cursor: "pointer" }}></button>
         </div>
       )}
 
       {/* Stats Cards */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem", marginBottom: "2rem" }}>
         {[
-          { label: "Members", value: org.member_count, max: org.max_members, icon: "👥", color: "#8b5cf6" },
-          { label: "Agents", value: org.agent_count, max: org.max_agents, icon: "🤖", color: "#3b82f6" },
-          { label: "Plan", value: org.plan.charAt(0).toUpperCase() + org.plan.slice(1), icon: "💎", color: "#f59e0b" },
-          { label: "Your Role", value: orgRole, icon: ROLE_ICONS[orgRole] || "👤", color: ROLE_COLORS[orgRole] || "#6b7280" },
+          { label: "Members", value: org.member_count, max: org.max_members, icon: Users, color: "#8b5cf6" },
+          { label: "Agents", value: org.agent_count, max: org.max_agents, icon: Bot, color: "#3b82f6" },
+          { label: "Plan", value: org.plan.charAt(0).toUpperCase() + org.plan.slice(1), icon: Gem, color: "#f59e0b" },
+          { label: "Your Role", value: orgRole, icon: ROLE_ICON_COMPONENTS[orgRole] || Shield, color: ROLE_COLORS[orgRole] || "#6b7280" },
         ].map((card) => (
           <div key={card.label} style={{
             background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
@@ -197,7 +207,7 @@ export default function OrgPage() {
           }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
               <span style={{ color: "#9ca3af", fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "0.05em" }}>{card.label}</span>
-              <span style={{ fontSize: "1.25rem" }}>{card.icon}</span>
+              <span style={{ display: "flex", alignItems: "center" }}>{typeof card.icon === "function" ? <card.icon style={{ width: 20, height: 20, color: card.color }} /> : null}</span>
             </div>
             <div style={{ fontSize: "1.5rem", fontWeight: 700, color: card.color }}>{card.value}</div>
             {card.max && <div style={{ fontSize: "0.75rem", color: "#6b7280" }}>of {card.max} max</div>}
@@ -211,7 +221,7 @@ export default function OrgPage() {
         borderRadius: 12, padding: "1.5rem", marginBottom: "2rem",
       }}>
         <h2 style={{ fontSize: "1.125rem", fontWeight: 600, color: "#e5e7eb", marginBottom: "1rem" }}>
-          👥 Team Members ({members.length})
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><Users style={{ width: 18, height: 18 }} /> Team Members ({members.length})</span>
         </h2>
 
         <div style={{ overflowX: "auto" }}>
@@ -307,7 +317,7 @@ export default function OrgPage() {
           borderRadius: 12, padding: "1.5rem", marginBottom: "2rem",
         }}>
           <h2 style={{ fontSize: "1.125rem", fontWeight: 600, color: "#e5e7eb", marginBottom: "1rem" }}>
-            ✉️ Invite Member
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><Mail style={{ width: 18, height: 18 }} /> Invite Member</span>
           </h2>
           <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
             <input
@@ -390,7 +400,7 @@ export default function OrgPage() {
       }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
           <h2 style={{ fontSize: "1.125rem", fontWeight: 600, color: "#e5e7eb", margin: 0 }}>
-            📁 Agent Groups
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><Folder style={{ width: 18, height: 18 }} /> Agent Groups</span>
           </h2>
           <span style={{ color: "#6b7280", fontSize: "0.8rem" }}>
             {isSuperAdmin || isAdmin ? "ADMIN+ sees all agents • OPERATOR/VIEWER see only their groups" : "You see agents from your assigned groups only"}
@@ -413,7 +423,7 @@ export default function OrgPage() {
           borderRadius: 12, padding: "1.5rem", marginBottom: "2rem",
         }}>
           <h2 style={{ fontSize: "1.125rem", fontWeight: 600, color: "#e5e7eb", marginBottom: "1rem" }}>
-            👑 Transfer Ownership
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><Crown style={{ width: 18, height: 18 }} /> Transfer Ownership</span>
           </h2>
           <p style={{ color: "#9ca3af", fontSize: "0.85rem", marginBottom: "1rem" }}>
             Transfer the SUPER_ADMIN role to another member. You will be demoted to ADMIN.
@@ -497,7 +507,7 @@ function OrgSwitcher({ onSwitch, onError }: { onSwitch: () => void; onError: (ms
       borderRadius: 12, padding: "1.5rem", marginBottom: "2rem",
     }}>
       <h2 style={{ fontSize: "1.125rem", fontWeight: 600, color: "#e5e7eb", marginBottom: "1rem" }}>
-        🔀 Switch Organization
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><ArrowRightLeft style={{ width: 18, height: 18 }} /> Switch Organization</span>
       </h2>
       <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem" }}>
         {orgs.map((o) => (
@@ -515,9 +525,9 @@ function OrgSwitcher({ onSwitch, onError }: { onSwitch: () => void; onError: (ms
               transition: "all 0.2s",
             }}
           >
-            🏢 {o.name}
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Building2 style={{ width: 14, height: 14 }} /> {o.name}</span>
             <span style={{ marginLeft: "0.5rem", fontSize: "0.7rem", color: "#9ca3af" }}>
-              {o.role} {o.is_active && "✓"}
+              {o.role} {o.is_active && <Check style={{ width: 12, height: 12, display: "inline" }} />}
             </span>
           </button>
         ))}
@@ -535,9 +545,13 @@ function AuditLogViewer() {
     orgApi.getAuditLog(30).then(setLogs).catch(() => {});
   }, []);
 
-  const ACTION_ICONS: Record<string, string> = {
-    INVITE_SENT: "✉️", ROLE_CHANGE: "🔄", MEMBER_REMOVED: "❌",
-    TRANSFER_OWNERSHIP: "👑", GROUP_CREATED: "📁", GROUP_DELETED: "🗑",
+  const ACTION_ICONS: Record<string, any> = {
+    INVITE_SENT: Mail,
+    ROLE_CHANGE: RefreshCw,
+    MEMBER_REMOVED: AlertCircle,
+    TRANSFER_OWNERSHIP: Crown,
+    GROUP_CREATED: Folder,
+    GROUP_DELETED: Trash2,
   };
 
   if (logs.length === 0) return null;
@@ -552,7 +566,7 @@ function AuditLogViewer() {
         style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}
       >
         <h2 style={{ fontSize: "1.125rem", fontWeight: 600, color: "#e5e7eb", margin: 0 }}>
-          📋 Audit Log ({logs.length})
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><FileText style={{ width: 18, height: 18 }} /> Audit Log ({logs.length})</span>
         </h2>
         <span style={{ color: "#6b7280" }}>{expanded ? "▲" : "▼"}</span>
       </div>
@@ -564,7 +578,12 @@ function AuditLogViewer() {
               display: "flex", gap: "0.75rem", alignItems: "flex-start",
               padding: "0.6rem 0", borderBottom: "1px solid rgba(255,255,255,0.04)",
             }}>
-              <span style={{ fontSize: "1rem", flexShrink: 0 }}>{ACTION_ICONS[l.action] || "📝"}</span>
+              <span style={{ display: "inline-flex", alignItems: "center", flexShrink: 0 }}>
+      {(() => {
+        const Icon = ACTION_ICONS[l.action] || FileText;
+        return <Icon style={{ width: 15, height: 15, color: "var(--text-muted)" }} />;
+      })()}
+    </span>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: "0.85rem", color: "#e5e7eb" }}>
                   <strong>{l.actor_email}</strong> — {l.details || l.action}
@@ -757,15 +776,15 @@ function GroupsManager({ isAdmin, isSuperAdmin, members, onSuccess, onError }: {
               >
                 <div>
                   <div style={{ fontWeight: 600, color: "#e5e7eb", fontSize: "0.95rem" }}>
-                    📁 {g.name}
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Folder style={{ width: 14, height: 14 }} /> {g.name}</span>
                   </div>
                   {g.description && (
                     <div style={{ color: "#6b7280", fontSize: "0.8rem", marginTop: "0.2rem" }}>{g.description}</div>
                   )}
                 </div>
                 <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
-                  <span style={{ fontSize: "0.8rem", color: "#3b82f6" }}>🤖 {g.agent_count}</span>
-                  <span style={{ fontSize: "0.8rem", color: "#8b5cf6" }}>👥 {g.member_count}</span>
+                  <span style={{ fontSize: "0.8rem", color: "#3b82f6", display: "inline-flex", alignItems: "center", gap: 4 }}><Bot style={{ width: 12, height: 12 }} /> {g.agent_count}</span>
+                  <span style={{ fontSize: "0.8rem", color: "#8b5cf6", display: "inline-flex", alignItems: "center", gap: 4 }}><Users style={{ width: 12, height: 12 }} /> {g.member_count}</span>
                   <span style={{ color: "#6b7280", fontSize: "0.8rem" }}>{expandedGroup === g.group_id ? "▲" : "▼"}</span>
                 </div>
               </div>
@@ -779,7 +798,7 @@ function GroupsManager({ isAdmin, isSuperAdmin, members, onSuccess, onError }: {
                 }}>
                   {/* Agents in Group */}
                   <div style={{ marginBottom: "1rem" }}>
-                    <h4 style={{ fontSize: "0.85rem", color: "#3b82f6", marginBottom: "0.5rem" }}>🤖 Agents ({groupDetail.agents.length})</h4>
+                    <h4 style={{ fontSize: "0.85rem", color: "#3b82f6", marginBottom: "0.5rem", display: "flex", alignItems: "center", gap: 6 }}><Bot style={{ width: 14, height: 14 }} /> Agents ({groupDetail.agents.length})</h4>
                     {groupDetail.agents.length === 0 ? (
                       <div style={{ color: "#6b7280", fontSize: "0.8rem" }}>No agents assigned</div>
                     ) : (
@@ -797,7 +816,7 @@ function GroupsManager({ isAdmin, isSuperAdmin, members, onSuccess, onError }: {
                                 onClick={(e) => { e.stopPropagation(); handleRemoveAgent(g.group_id, a.agent_id); }}
                                 style={{ background: "none", border: "none", color: "#f87171", cursor: "pointer", fontSize: "0.85rem", padding: 0 }}
                                 title="Remove agent from group"
-                              >✕</button>
+                              ></button>
                             )}
                           </span>
                         ))}
@@ -840,7 +859,7 @@ function GroupsManager({ isAdmin, isSuperAdmin, members, onSuccess, onError }: {
 
                   {/* Members in Group */}
                   <div style={{ marginBottom: "1rem" }}>
-                    <h4 style={{ fontSize: "0.85rem", color: "#8b5cf6", marginBottom: "0.5rem" }}>👥 Members ({groupDetail.members.length})</h4>
+                    <h4 style={{ fontSize: "0.85rem", color: "#8b5cf6", marginBottom: "0.5rem", display: "flex", alignItems: "center", gap: 6 }}><Users style={{ width: 14, height: 14 }} /> Members ({groupDetail.members.length})</h4>
                     {groupDetail.members.length === 0 ? (
                       <div style={{ color: "#6b7280", fontSize: "0.8rem" }}>No members — only ADMIN+ can see these agents</div>
                     ) : (
@@ -858,7 +877,7 @@ function GroupsManager({ isAdmin, isSuperAdmin, members, onSuccess, onError }: {
                                 onClick={(e) => { e.stopPropagation(); handleRemoveMember(g.group_id, m.user_id); }}
                                 style={{ background: "none", border: "none", color: "#f87171", cursor: "pointer", fontSize: "0.85rem", padding: 0 }}
                                 title="Remove member from group"
-                              >✕</button>
+                              ></button>
                             )}
                           </span>
                         ))}
@@ -902,7 +921,7 @@ function GroupsManager({ isAdmin, isSuperAdmin, members, onSuccess, onError }: {
                         fontSize: "0.8rem", cursor: "pointer",
                       }}
                     >
-                      🗑 Delete Group
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Trash2 style={{ width: 14, height: 14 }} /> Delete Group</span>
                     </button>
                   )}
                 </div>

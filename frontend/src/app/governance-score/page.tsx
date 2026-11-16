@@ -69,12 +69,12 @@ function computeScore(agent: Agent, health: AgentHealth | undefined, violations:
   const activityScore = agent.total_actions >= 10000 ? 100 : agent.total_actions >= 1000 ? 85 : agent.total_actions >= 100 ? 70 : agent.total_actions >= 10 ? 50 : 20;
 
   const dimensions: ScoreDimension[] = [
-    { name: "Compliance", icon: "🛡️", score: Math.round(complianceScore), weight: 0.25, description: "Policy adherence & violation rate", color: "#3b82f6" },
-    { name: "Cost Efficiency", icon: "💰", score: Math.round(costScore), weight: 0.15, description: "Cost per action optimization", color: "#10b981" },
-    { name: "Budget Discipline", icon: "📊", score: Math.round(budgetScore), weight: 0.15, description: "Token budget utilization", color: "#8b5cf6" },
-    { name: "Reliability", icon: "❤️", score: Math.round(reliabilityScore), weight: 0.20, description: "Health score & uptime", color: "#f59e0b" },
-    { name: "Risk Profile", icon: "⚡", score: Math.round(riskScore), weight: 0.15, description: "Severity of past violations", color: "#ef4444" },
-    { name: "Proven Track Record", icon: "📈", score: Math.round(activityScore), weight: 0.10, description: "Volume of governed actions", color: "#06b6d4" },
+    { name: "Compliance", icon: "", score: Math.round(complianceScore), weight: 0.25, description: "Policy adherence & violation rate", color: "#3b82f6" },
+    { name: "Cost Efficiency", icon: "", score: Math.round(costScore), weight: 0.15, description: "Cost per action optimization", color: "#10b981" },
+    { name: "Budget Discipline", icon: "", score: Math.round(budgetScore), weight: 0.15, description: "Token budget utilization", color: "#8b5cf6" },
+    { name: "Reliability", icon: "️", score: Math.round(reliabilityScore), weight: 0.20, description: "Health score & uptime", color: "#f59e0b" },
+    { name: "Risk Profile", icon: "", score: Math.round(riskScore), weight: 0.15, description: "Severity of past violations", color: "#ef4444" },
+    { name: "Proven Track Record", icon: "", score: Math.round(activityScore), weight: 0.10, description: "Volume of governed actions", color: "#06b6d4" },
   ];
 
   const overall = Math.round(dimensions.reduce((s, d) => s + d.score * d.weight, 0));
@@ -118,7 +118,7 @@ export default function GovernanceScorePage() {
     <div className="gs-page">
       <div className="gs-header">
         <div>
-          <h1 className="lb-title">📜 Governance Score™</h1>
+          <h1 className="lb-title">Governance Score™</h1>
           <p className="lb-subtitle">Trust certification for every AI agent in your fleet</p>
         </div>
       </div>
@@ -149,7 +149,7 @@ export default function GovernanceScorePage() {
             </div>
             <div className="gs-fleet-stat">
               <span className="gs-fleet-stat-val" style={{ color: "var(--accent-green)" }}>{certifiedCount}</span>
-              <span className="gs-fleet-stat-label">Certified ✓</span>
+              <span className="gs-fleet-stat-label">Certified </span>
             </div>
             <div className="gs-fleet-stat">
               <span className="gs-fleet-stat-val" style={{ color: "var(--accent-red)" }}>{agents.length - certifiedCount}</span>
@@ -178,7 +178,7 @@ export default function GovernanceScorePage() {
                 <div className="gs-score-pill" style={{ background: `${s.gradeColor}20`, color: s.gradeColor }}>
                   {s.overall} {s.grade}
                 </div>
-                {s.certified && <span className="gs-cert-badge" title="Velyrion Certified">✓</span>}
+                {s.certified && <span className="gs-cert-badge" title="Velyrion Certified"></span>}
               </button>
             ))}
           </div>
@@ -207,7 +207,7 @@ export default function GovernanceScorePage() {
                 <p className="gs-detail-dept">{selected.agent.department} • {selected.agent.status}</p>
                 {selected.certified ? (
                   <div className="gs-cert-full">
-                    <span className="gs-cert-icon">✓</span>
+                    <span className="gs-cert-icon"></span>
                     <div>
                       <div className="gs-cert-title">Velyrion Certified™</div>
                       <div className="gs-cert-sub">This agent meets governance standards</div>
@@ -215,7 +215,7 @@ export default function GovernanceScorePage() {
                   </div>
                 ) : (
                   <div className="gs-cert-full uncertified">
-                    <span className="gs-cert-icon">✗</span>
+                    <span className="gs-cert-icon"></span>
                     <div>
                       <div className="gs-cert-title">Not Certified</div>
                       <div className="gs-cert-sub">Score must be ≥80 for certification</div>

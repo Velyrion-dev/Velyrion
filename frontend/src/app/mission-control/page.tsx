@@ -1,6 +1,20 @@
 "use client";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { api, Agent, DashboardStats } from "@/lib/api";
+import {
+  FileText,
+  ShieldAlert,
+  AlertTriangle,
+  Lock,
+  CheckCircle2,
+  AlertOctagon,
+  Volume2,
+  VolumeX,
+  PowerOff,
+  Pause,
+  Play,
+  X,
+} from "lucide-react";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://velyrion.onrender.com";
 const WS_BASE = API_BASE.replace("https://", "wss://").replace("http://", "ws://") + "/ws/events";
@@ -35,12 +49,12 @@ const RISK_COLORS: Record<string, string> = {
   CRITICAL: "var(--accent-red)",
 };
 
-const EVENT_ICONS: Record<string, string> = {
-  AUDIT_EVENT: "📋",
-  VIOLATION: "🚫",
-  ANOMALY: "⚠️",
-  AGENT_LOCKED: "🔒",
-  CONNECTED: "🟢",
+const EVENT_ICONS: Record<string, React.ComponentType<{ style?: React.CSSProperties }>> = {
+  AUDIT_EVENT: FileText,
+  VIOLATION: ShieldAlert,
+  ANOMALY: AlertTriangle,
+  AGENT_LOCKED: Lock,
+  CONNECTED: CheckCircle2,
 };
 
 const RISK_ORDER = ["LOW", "MEDIUM", "HIGH", "CRITICAL"];
@@ -308,15 +322,21 @@ export default function MissionControlPage() {
       {alertBanner && (
         <div className="mc-alert-banner">
           <div className="mc-alert-banner-content">
-            <span className="mc-alert-banner-icon">🚨</span>
+            <span className="mc-alert-banner-icon" style={{ display: "flex", alignItems: "center" }}>
+              <AlertOctagon style={{ width: 18, height: 18 }} />
+            </span>
             <span className="mc-alert-banner-text">
               <span className="mc-alert-banner-agent">{alertBanner.agentName}</span>
               {" — "}{alertBanner.message}
             </span>
           </div>
           <div className="mc-alert-banner-actions">
-            <button className="mc-alert-banner-btn" onClick={() => handleKill(alertBanner.agentId)}>Kill Agent</button>
-            <button className="mc-alert-banner-btn dismiss" onClick={() => setAlertBanner(null)}>✕</button>
+            <button className="mc-alert-banner-btn" onClick={() => handleKill(alertBanner.agentId)}>
+              Kill Agent
+            </button>
+            <button className="mc-alert-banner-btn dismiss" onClick={() => setAlertBanner(null)}>
+              <X style={{ width: 14, height: 14 }} />
+            </button>
           </div>
         </div>
       )}
@@ -343,8 +363,13 @@ export default function MissionControlPage() {
             className={`mc-sound-btn ${soundEnabled ? "active" : ""}`}
             onClick={() => setSoundEnabled(!soundEnabled)}
             title={soundEnabled ? "Mute alerts" : "Enable alert sounds"}
+            style={{ display: "inline-flex", alignItems: "center", justifyContent: "center" }}
           >
-            {soundEnabled ? "🔊" : "🔇"}
+            {soundEnabled ? (
+              <Volume2 style={{ width: 14, height: 14 }} />
+            ) : (
+              <VolumeX style={{ width: 14, height: 14 }} />
+            )}
           </button>
         </div>
       </header>
@@ -359,7 +384,7 @@ export default function MissionControlPage() {
         <div className="mc-stat-card red">
           <div className="mc-stat-value">{violationsToday}</div>
           <div className="mc-stat-label">Violations</div>
-          {violationsToday > 0 && <div className="mc-stat-delta down">⚠ Active</div>}
+          {violationsToday > 0 && <div className="mc-stat-delta down">Active</div>}
         </div>
         <div className="mc-stat-card green">
           <div className="mc-stat-value">${costToday.toFixed(2)}</div>
@@ -437,13 +462,33 @@ export default function MissionControlPage() {
                   <div className="mc-agent-controls">
                     {agent.status === "ACTIVE" ? (
                       <>
-                        <button className="mc-agent-btn kill" onClick={() => handleKill(agent.agent_id)}>🛑 Kill</button>
-                        <button className="mc-agent-btn pause" onClick={() => handlePause(agent.agent_id)}>⏸ Pause</button>
+                        <button
+                          className="mc-agent-btn kill"
+                          onClick={() => handleKill(agent.agent_id)}
+                          style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
+                        >
+                          <PowerOff style={{ width: 10, height: 10 }} /> Kill
+                        </button>
+                        <button
+                          className="mc-agent-btn pause"
+                          onClick={() => handlePause(agent.agent_id)}
+                          style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
+                        >
+                          <Pause style={{ width: 10, height: 10 }} /> Pause
+                        </button>
                       </>
                     ) : agent.status === "LOCKED" ? (
-                      <button className="mc-agent-btn resume" onClick={() => handleResume(agent.agent_id)}>▶ Resume</button>
+                      <button
+                        className="mc-agent-btn resume"
+                        onClick={() => handleResume(agent.agent_id)}
+                        style={{ display: "inline-flex", alignItems: "center", gap: 4 }}
+                      >
+                        <Play style={{ width: 10, height: 10 }} /> Resume
+                      </button>
                     ) : (
-                      <button className="mc-agent-btn" disabled>Deactivated</button>
+                      <button className="mc-agent-btn" disabled>
+                        Deactivated
+                      </button>
                     )}
                   </div>
                 </div>
@@ -461,16 +506,19 @@ export default function MissionControlPage() {
           <div className="mc-feed-list" ref={feedRef}>
             {events.length === 0 ? (
               <div style={{ padding: 40, textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>
-                Waiting for events...
+                Waiting for telemetry...
                 <br />
-                <span style={{ fontSize: 11 }}>Events will appear here in real-time</span>
+                <span style={{ fontSize: 11 }}>Agent traces will appear here in real-time</span>
               </div>
             ) : (
               events.map((event, i) => {
                 const risk = String(event.data.risk_level || event.data.severity || "LOW");
+                const IconComponent = EVENT_ICONS[event.type] || FileText;
                 return (
                   <div key={`${event.sequence || i}-${event.timestamp}`} className={`mc-feed-item risk-${risk}`}>
-                    <span className="mc-feed-icon">{EVENT_ICONS[event.type] || "📋"}</span>
+                    <span className="mc-feed-icon" style={{ display: "inline-flex", alignItems: "center" }}>
+                      <IconComponent style={{ width: 14, height: 14 }} />
+                    </span>
                     <div className="mc-feed-content">
                       <div className="mc-feed-agent">
                         {String(event.data.agent_name || event.data.agent_id || "System")}

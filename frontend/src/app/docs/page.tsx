@@ -171,7 +171,7 @@ export default function DocsPage() {
     <div className="dc-page">
       <div className="dc-header">
         <div>
-          <h1 className="lb-title">📖 API Documentation</h1>
+          <h1 className="lb-title">API Documentation</h1>
           <p className="lb-subtitle">Interactive reference for the Velyrion Governance API</p>
         </div>
         <div className="dc-base-url">
@@ -253,7 +253,7 @@ export default function DocsPage() {
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <div className="an-chart-title">Try It Live</div>
               <button className="btn btn-primary btn-sm" onClick={tryEndpoint} disabled={tryLoading}>
-                {tryLoading ? "⏳ Loading..." : "▶ Send Request"}
+                {tryLoading ? "Loading..." : "Send Request"}
               </button>
             </div>
             <div className="dc-try-url">

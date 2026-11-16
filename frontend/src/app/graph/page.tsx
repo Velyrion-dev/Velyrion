@@ -95,7 +95,7 @@ export default function GraphPage() {
   if (loading) {
     return (
       <div>
-        <div className="page-header"><h1>🕸️ Agent Behavior Graph</h1><p>Loading graph intelligence...</p></div>
+        <div className="page-header"><h1>Agent Behavior Graph</h1><p>Loading graph intelligence...</p></div>
         <div className="stats-grid">{[...Array(4)].map((_, i) => <div key={i} className="stat-card" style={{ height: 110 }}><div className="loading-shimmer" /></div>)}</div>
       </div>
     );
@@ -104,7 +104,7 @@ export default function GraphPage() {
   return (
     <div>
       <div className="page-header">
-        <h1>🕸️ Agent Behavior Graph</h1>
+        <h1>Agent Behavior Graph</h1>
         <p>Interactive visualization of agent connections, data flows, and blast radius analysis</p>
       </div>
 
@@ -135,7 +135,7 @@ export default function GraphPage() {
       <div className="grid-2">
         {/* Graph Visualization */}
         <div className="card">
-          <h3 className="section-title">🗺️ Network Map — Click an agent to analyze blast radius</h3>
+          <h3 className="section-title">Network Map — Click an agent to analyze blast radius</h3>
           <div style={{ position: "relative", minHeight: 500, background: "var(--bg-primary)", borderRadius: 12, padding: 20, overflow: "hidden" }}>
             {/* Agent Cluster */}
             <div style={{ display: "flex", flexWrap: "wrap", gap: 10, justifyContent: "center" }}>
@@ -167,7 +167,7 @@ export default function GraphPage() {
                     }}
                   >
                     <div style={{ fontSize: 22, marginBottom: 4 }}>
-                      {node.status === "LOCKED" ? "🔒" : "🤖"}
+                      {node.status === "LOCKED" ? "" : ""}
                     </div>
                     <div style={{ fontSize: 10, fontWeight: 700, lineHeight: 1.2, marginBottom: 4 }}>
                       {node.label}
@@ -188,7 +188,7 @@ export default function GraphPage() {
             {/* Tool & Data Source Rows */}
             <div style={{ marginTop: 20, display: "flex", gap: 20, flexWrap: "wrap", justifyContent: "center" }}>
               <div style={{ flex: 1, minWidth: 200 }}>
-                <div style={{ fontSize: 10, fontWeight: 700, color: NODE_COLORS.tool, marginBottom: 6, textTransform: "uppercase" }}>🔧 Tools</div>
+                <div style={{ fontSize: 10, fontWeight: 700, color: NODE_COLORS.tool, marginBottom: 6, textTransform: "uppercase" }}>Tools</div>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                   {toolNodes.map(t => (
                     <span key={t.id} style={{
@@ -206,7 +206,7 @@ export default function GraphPage() {
                 </div>
               </div>
               <div style={{ flex: 1, minWidth: 200 }}>
-                <div style={{ fontSize: 10, fontWeight: 700, color: NODE_COLORS.data_source, marginBottom: 6, textTransform: "uppercase" }}>📊 Data Sources</div>
+                <div style={{ fontSize: 10, fontWeight: 700, color: NODE_COLORS.data_source, marginBottom: 6, textTransform: "uppercase" }}>Data Sources</div>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                   {dataNodes.map(d => (
                     <span key={d.id} style={{
@@ -229,10 +229,10 @@ export default function GraphPage() {
 
         {/* Blast Radius Panel */}
         <div className="card">
-          <h3 className="section-title">💥 Blast Radius Analysis</h3>
+          <h3 className="section-title">Blast Radius Analysis</h3>
           {!selectedAgent ? (
             <div style={{ color: "var(--text-muted)", textAlign: "center", padding: 60 }}>
-              <div style={{ fontSize: 40, marginBottom: 12 }}>🎯</div>
+              <div style={{ fontSize: 40, marginBottom: 12 }}></div>
               <div style={{ fontSize: 14, fontWeight: 600 }}>Select an agent</div>
               <div style={{ fontSize: 12, marginTop: 4 }}>Click any agent to analyze its blast radius — what it can access and who it affects</div>
             </div>
@@ -262,7 +262,7 @@ export default function GraphPage() {
 
               {/* Direct Access */}
               <div style={{ marginBottom: 16 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: "var(--accent-yellow)", marginBottom: 6 }}>🔧 DIRECT TOOL ACCESS</div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: "var(--accent-yellow)", marginBottom: 6 }}>DIRECT TOOL ACCESS</div>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                   {blastRadius.blast_radius.direct_tools.map(t => (
                     <span key={t} style={{ padding: "4px 10px", background: "rgba(255,193,7,0.1)", border: "1px solid rgba(255,193,7,0.3)", borderRadius: 6, fontSize: 11, fontFamily: "monospace" }}>{t}</span>
@@ -270,7 +270,7 @@ export default function GraphPage() {
                 </div>
               </div>
               <div style={{ marginBottom: 16 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: "var(--accent-green)", marginBottom: 6 }}>📊 DIRECT DATA ACCESS</div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: "var(--accent-green)", marginBottom: 6 }}>DIRECT DATA ACCESS</div>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                   {blastRadius.blast_radius.direct_data_sources.map(d => (
                     <span key={d} style={{ padding: "4px 10px", background: "rgba(0,229,160,0.1)", border: "1px solid rgba(0,229,160,0.3)", borderRadius: 6, fontSize: 11, fontFamily: "monospace" }}>{d}</span>
@@ -281,7 +281,7 @@ export default function GraphPage() {
               {/* Connected Agents */}
               <div style={{ marginBottom: 16 }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: "var(--accent-red)", marginBottom: 6 }}>
-                  ⚡ CONNECTED AGENTS ({blastRadius.blast_radius.total_connected_agents})
+                  CONNECTED AGENTS ({blastRadius.blast_radius.total_connected_agents})
                 </div>
                 {blastRadius.blast_radius.connected_agents.map(ca => (
                   <div key={ca.agent_id} style={{ padding: "8px 12px", background: "var(--bg-secondary)", borderRadius: 8, marginBottom: 6, borderLeft: `3px solid ${RISK_COLORS[ca.risk] || "#8b95a5"}` }}>
@@ -302,7 +302,7 @@ export default function GraphPage() {
               {/* Violations */}
               {blastRadius.violations.length > 0 && (
                 <div>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: "var(--accent-red)", marginBottom: 6 }}>🚫 RECENT VIOLATIONS</div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "var(--accent-red)", marginBottom: 6 }}>RECENT VIOLATIONS</div>
                   {blastRadius.violations.slice(0, 5).map((v, i) => (
                     <div key={i} style={{ padding: "6px 10px", background: "rgba(255,59,92,0.05)", borderRadius: 6, marginBottom: 4, fontSize: 11 }}>
                       <span className={`badge badge-${v.severity.toLowerCase()}`} style={{ fontSize: 9, marginRight: 6 }}>{v.severity}</span>

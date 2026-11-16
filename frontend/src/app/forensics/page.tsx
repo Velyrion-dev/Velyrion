@@ -111,12 +111,12 @@ export default function ForensicsPage() {
       {/* Header */}
       <div className="fr-header">
         <div>
-          <h1 className="lb-title">🔍 Incident Forensics</h1>
+          <h1 className="lb-title">Incident Forensics</h1>
           <p className="lb-subtitle">Deep investigation into violations and incidents</p>
         </div>
         {selectedViolation && (
           <button className="btn btn-primary btn-sm" onClick={exportReport} disabled={exportLoading}>
-            {exportLoading ? "⏳ Exporting..." : "📥 Export Report"}
+            {exportLoading ? "Exporting..." : "Export Report"}
           </button>
         )}
       </div>
@@ -129,7 +129,7 @@ export default function ForensicsPage() {
           </div>
           <div className="fr-incident-list">
             {violations.length === 0 ? (
-              <div className="an-empty">No violations to investigate 🎉</div>
+              <div className="an-empty">No violations to investigate </div>
             ) : (
               violations.map(v => (
                 <button
@@ -163,10 +163,10 @@ export default function ForensicsPage() {
                 <h2 className="fr-summary-title">{selectedViolation.violation_type}</h2>
                 <p className="fr-summary-desc">{selectedViolation.description}</p>
                 <div className="fr-summary-meta">
-                  <span>🤖 {selectedViolation.agent_name || selectedViolation.agent_id}</span>
+                  <span>{selectedViolation.agent_name || selectedViolation.agent_id}</span>
                   <span>•</span>
-                  <span>🕐 {formatDate(selectedViolation.created_at)}</span>
-                  {agent && <><span>•</span><span>🏢 {agent.department}</span></>}
+                  <span>{formatDate(selectedViolation.created_at)}</span>
+                  {agent && <><span>•</span><span>{agent.department}</span></>}
                 </div>
               </div>
 
@@ -223,10 +223,10 @@ export default function ForensicsPage() {
                           <div className="fr-tl-task">{event.task_description}</div>
                           <div className="fr-tl-meta">
                             <span className="mc-feed-risk" style={{ fontSize: 9 }}>{event.risk_level}</span>
-                            <span style={{ fontSize: 10, color: "var(--text-muted)" }}>🔧 {event.tool_used}</span>
+                            <span style={{ fontSize: 10, color: "var(--text-muted)" }}>{event.tool_used}</span>
                             {event.token_cost > 0 && <span style={{ fontSize: 10, color: "var(--text-muted)" }}>🪙 {event.token_cost}</span>}
                           </div>
-                          {event.isRoot && <div className="fr-tl-root-badge">⚡ ROOT CAUSE</div>}
+                          {event.isRoot && <div className="fr-tl-root-badge">ROOT CAUSE</div>}
                         </div>
                       </div>
                     ))}
@@ -246,7 +246,7 @@ export default function ForensicsPage() {
                     <div className="fr-detail-item"><span className="fr-detail-label">Duration</span><span className="fr-detail-value">{selectedEvent.duration_ms}ms</span></div>
                     <div className="fr-detail-item"><span className="fr-detail-label">Tokens</span><span className="fr-detail-value">{fmt(selectedEvent.token_cost)}</span></div>
                     <div className="fr-detail-item"><span className="fr-detail-label">Cost</span><span className="fr-detail-value">${selectedEvent.compute_cost_usd.toFixed(4)}</span></div>
-                    <div className="fr-detail-item"><span className="fr-detail-label">Human-in-Loop</span><span className="fr-detail-value">{selectedEvent.human_in_loop ? "✅ Yes" : "❌ No"}</span></div>
+                    <div className="fr-detail-item"><span className="fr-detail-label">Human-in-Loop</span><span className="fr-detail-value">{selectedEvent.human_in_loop ? "Yes" : "No"}</span></div>
                   </div>
                   {selectedEvent.input_data && (
                     <div className="fr-detail-data">

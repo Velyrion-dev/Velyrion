@@ -64,7 +64,7 @@ export default function ReportsPage() {
       <div className="grid-2">
         {/* Violations by Severity */}
         <div className="card">
-          <h3 className="section-title">🛡️ Violations Breakdown</h3>
+          <h3 className="section-title">Violations Breakdown</h3>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {Object.entries(report.policy_violations).map(([level, count]) => (
               <div key={level} style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -87,7 +87,7 @@ export default function ReportsPage() {
 
         {/* Department Risk */}
         <div className="card">
-          <h3 className="section-title">🏢 Department Risk Scores</h3>
+          <h3 className="section-title">Department Risk Scores</h3>
           {report.department_risk_scores.length === 0 ? (
             <p style={{ color: "var(--text-muted)" }}>No department data available</p>
           ) : (
@@ -116,7 +116,7 @@ export default function ReportsPage() {
       <div className="grid-2">
         {/* Top Performing */}
         <div className="card">
-          <h3 className="section-title">🏆 Top Performing Agents</h3>
+          <h3 className="section-title">Top Performing Agents</h3>
           <div className="data-table-wrapper" style={{ border: "none" }}>
             <table className="data-table">
               <thead><tr><th>Agent</th><th>Actions</th><th>Violations</th></tr></thead>
@@ -135,7 +135,7 @@ export default function ReportsPage() {
 
         {/* Cost per Agent */}
         <div className="card">
-          <h3 className="section-title">💰 Cost per Agent</h3>
+          <h3 className="section-title">Cost per Agent</h3>
           <div className="data-table-wrapper" style={{ border: "none" }}>
             <table className="data-table">
               <thead><tr><th>Agent</th><th>Cost (USD)</th></tr></thead>
@@ -155,7 +155,7 @@ export default function ReportsPage() {
       {/* Export */}
       <div className="card" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div>
-          <h3 className="section-title" style={{ margin: 0 }}>📥 Export Report</h3>
+          <h3 className="section-title" style={{ margin: 0 }}>Export Report</h3>
           <p style={{ fontSize: 12, color: "var(--text-muted)", margin: "4px 0 0" }}>Download compliance report as JSON for programmatic access</p>
         </div>
         <button className="btn btn-primary" onClick={() => {

@@ -20,7 +20,7 @@ interface AgentRank {
   riskScore: number;        // 0-100 (lower = better)
 }
 
-const MEDALS = ["🥇", "🥈", "🥉"];
+const MEDALS = ["", "", ""];
 const RISK_CATEGORIES = ["Cost", "Violations", "Budget", "Anomalies"];
 
 export default function LeaderboardPage() {
@@ -138,28 +138,28 @@ export default function LeaderboardPage() {
       {/* KPIs */}
       <div className="an-kpi-row" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
         <div className="an-kpi blue">
-          <div className="an-kpi-icon">🤖</div>
+          <div className="an-kpi-icon"></div>
           <div className="an-kpi-data">
             <div className="an-kpi-value">{activeAgents}/{agents.length}</div>
             <div className="an-kpi-label">Active Agents</div>
           </div>
         </div>
         <div className="an-kpi green">
-          <div className="an-kpi-icon">❤️</div>
+          <div className="an-kpi-icon">️</div>
           <div className="an-kpi-data">
             <div className="an-kpi-value">{avgHealth}%</div>
             <div className="an-kpi-label">Avg Health</div>
           </div>
         </div>
         <div className="an-kpi red">
-          <div className="an-kpi-icon">🛡️</div>
+          <div className="an-kpi-icon"></div>
           <div className="an-kpi-data">
             <div className="an-kpi-value">{totalViolations}</div>
             <div className="an-kpi-label">Total Violations</div>
           </div>
         </div>
         <div className="an-kpi purple">
-          <div className="an-kpi-icon">🏆</div>
+          <div className="an-kpi-icon"></div>
           <div className="an-kpi-data">
             <div className="an-kpi-value" style={{ fontSize: 16 }}>{bestAgent?.agent.agent_name || "—"}</div>
             <div className="an-kpi-label">Top Agent</div>
@@ -169,7 +169,7 @@ export default function LeaderboardPage() {
 
       {/* Podium */}
       <div className="lb-podium-section">
-        <h2 className="lb-section-title">🏆 Efficiency Champions</h2>
+        <h2 className="lb-section-title">Efficiency Champions</h2>
         <div className="lb-podium">
           {podium.map((r, i) => (
             <div key={r.agent.agent_id} className={`lb-podium-card rank-${i + 1}`}>
@@ -179,8 +179,8 @@ export default function LeaderboardPage() {
               <div className="lb-podium-score">{fmtCompact(r.efficiency)}</div>
               <div className="lb-podium-label">actions per violation</div>
               <div className="lb-podium-stats">
-                <span>❤️ {r.health}%</span>
-                <span>💰 ${r.agent.total_cost_usd.toFixed(2)}</span>
+                <span>️ {r.health}%</span>
+                <span>${r.agent.total_cost_usd.toFixed(2)}</span>
               </div>
             </div>
           ))}
@@ -189,7 +189,7 @@ export default function LeaderboardPage() {
 
       {/* Rankings Table */}
       <div className="lb-table-section">
-        <h2 className="lb-section-title">📊 Full Rankings</h2>
+        <h2 className="lb-section-title">Full Rankings</h2>
         <div className="an-table-wrap">
           <table className="an-table lb-table">
             <thead>
@@ -242,7 +242,7 @@ export default function LeaderboardPage() {
       <div className="an-bottom-grid">
         {/* Risk Heatmap */}
         <div className="an-chart-card">
-          <div className="an-chart-title">🔥 Risk Heatmap</div>
+          <div className="an-chart-title">Risk Heatmap</div>
           <div className="an-table-wrap">
             <table className="an-table lb-heat">
               <thead>
@@ -283,7 +283,7 @@ export default function LeaderboardPage() {
 
         {/* Department Comparison */}
         <div className="an-chart-card">
-          <div className="an-chart-title">🏢 Department Rankings</div>
+          <div className="an-chart-title">Department Rankings</div>
           <div className="lb-dept-list">
             {departments.map((d, i) => (
               <div key={d.name} className="lb-dept-card">

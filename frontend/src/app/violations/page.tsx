@@ -47,7 +47,7 @@ export default function ViolationsPage() {
           <p>Policy violations detected across all AI agent activity</p>
         </div>
         <button className={`btn ${autoRefresh ? "btn-success" : "btn-ghost"} btn-sm`} onClick={() => setAutoRefresh(!autoRefresh)}>
-          {autoRefresh ? "⏸ Pause" : "▶ Resume"}
+          {autoRefresh ? "Pause" : "Resume"}
         </button>
       </div>
 
@@ -97,7 +97,7 @@ export default function ViolationsPage() {
               [...Array(5)].map((_, i) => <tr key={i}><td colSpan={7}><div className="loading-shimmer" /></td></tr>)
             ) : filtered.length === 0 ? (
               <tr><td colSpan={7} style={{ textAlign: "center", padding: 40, color: "var(--text-muted)" }}>
-                ✅ {search || severityFilter || statusFilter ? "No violations match your filters" : "No violations — all agents operating within policy"}
+                {search || severityFilter || statusFilter ? "No violations match your filters" : "No violations — all agents operating within policy"}
               </td></tr>
             ) : filtered.map(v => (
               <tr key={v.violation_id}>

@@ -61,7 +61,7 @@ export default function ApprovalsPage() {
 
       {pending.length > 0 && (
         <>
-          <h3 className="section-title" style={{ marginTop: 8 }}>⏳ Pending Approvals</h3>
+          <h3 className="section-title" style={{ marginTop: 8 }}>Pending Approvals</h3>
           {pending.map(a => (
             <div key={a.request_id} className="card" style={{ marginBottom: 12, borderLeft: "3px solid var(--accent-yellow)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
@@ -74,10 +74,10 @@ export default function ApprovalsPage() {
                 </div>
                 <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
                   <button className="btn btn-success btn-sm" onClick={() => handle(a.request_id, "approve")} disabled={processing === a.request_id}>
-                    {processing === a.request_id ? "..." : "✓ Approve"}
+                    {processing === a.request_id ? "..." : "Approve"}
                   </button>
                   <button className="btn btn-danger btn-sm" onClick={() => handle(a.request_id, "reject")} disabled={processing === a.request_id}>
-                    {processing === a.request_id ? "..." : "✕ Reject"}
+                    {processing === a.request_id ? "..." : "Reject"}
                   </button>
                 </div>
               </div>
@@ -88,7 +88,7 @@ export default function ApprovalsPage() {
 
       {pending.length === 0 && !loading && (
         <div className="card" style={{ textAlign: "center", padding: 48 }}>
-          <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
+          <div style={{ fontSize: 48, marginBottom: 16 }}></div>
           <h3 style={{ color: "var(--accent-green)", marginBottom: 8 }}>All Clear</h3>
           <p style={{ color: "var(--text-muted)" }}>No pending approvals. All agent actions reviewed.</p>
         </div>
@@ -96,7 +96,7 @@ export default function ApprovalsPage() {
 
       {resolved.length > 0 && (
         <>
-          <h3 className="section-title" style={{ marginTop: 24 }}>📜 History</h3>
+          <h3 className="section-title" style={{ marginTop: 24 }}>History</h3>
           <div className="data-table-wrapper">
             <table className="data-table">
               <thead><tr><th>Timestamp</th><th>Agent</th><th>Task</th><th>Reason</th><th>Decision</th></tr></thead>
