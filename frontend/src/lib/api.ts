@@ -1,11 +1,19 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://velyrion.onrender.com";
 
 function getToken(): string | null {
   if (typeof window === "undefined") return null;
   return localStorage.getItem("velyrion_access_token");
 }
 
-async function fetchAPI<T>(path: string, options?: RequestInit): Promise<T> {
+let isRefreshing = false;
+let refreshSubscribers: ((token: string) => void)[] = [];
+
+function onRefreshed(token: string) {
+  refreshSubscribers.forEach(cb => cb(token));
+  refreshSubscribers = [];
+}
+
+async function fetchAPI<T>(path: string, options?: RequestInit, isRetry = false): Promise<T> {
   const token = getToken();
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -17,7 +25,41 @@ async function fetchAPI<T>(path: string, options?: RequestInit): Promise<T> {
     ...options,
     headers,
   });
+
   if (!res.ok) {
+    if (res.status === 401 && !isRetry && typeof window !== "undefined") {
+      const refreshToken = localStorage.getItem("velyrion_refresh_token");
+      if (refreshToken) {
+        if (!isRefreshing) {
+          isRefreshing = true;
+          try {
+            const refreshRes = await fetch(`${API_BASE}/api/auth/refresh`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ refresh_token: refreshToken }),
+            });
+            if (refreshRes.ok) {
+              const data = await refreshRes.json();
+              localStorage.setItem("velyrion_access_token", data.access_token);
+              localStorage.setItem("velyrion_refresh_token", data.refresh_token);
+              if (data.user) localStorage.setItem("velyrion_user", JSON.stringify(data.user));
+              isRefreshing = false;
+              onRefreshed(data.access_token);
+              return fetchAPI<T>(path, options, true);
+            }
+          } catch {
+            // refresh failed
+          }
+          isRefreshing = false;
+        } else {
+          return new Promise<T>((resolve, reject) => {
+            refreshSubscribers.push(() => {
+              fetchAPI<T>(path, options, true).then(resolve).catch(reject);
+            });
+          });
+        }
+      }
+    }
     const err = await res.json().catch(() => ({ detail: res.statusText }));
     throw new Error(err.detail || "API Error");
   }

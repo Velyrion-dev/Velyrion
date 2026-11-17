@@ -48,12 +48,24 @@ API_KEY = os.getenv("VELYRION_API_KEY", "")  # Optional — empty means no auth
 _ENV = os.getenv("ENV", os.getenv("RAILWAY_ENVIRONMENT", "development")).lower()
 _IS_PRODUCTION = _ENV in ("production", "prod")
 
-# CORS: never allow * with credentials in production
-_cors_raw = os.getenv("CORS_ORIGINS", "" if _IS_PRODUCTION else "*")
-ALLOWED_ORIGINS = [o.strip() for o in _cors_raw.split(",") if o.strip()]
-if "*" in ALLOWED_ORIGINS and _IS_PRODUCTION:
-    logger.warning("CORS_ORIGINS=* in production is insecure! Set explicit origins.")
-    ALLOWED_ORIGINS = ["https://velyrion.vercel.app", "https://velyrion.com"]
+# CORS configuration with robust production defaults
+DEFAULT_ORIGINS = [
+    "https://velyrion.vercel.app",
+    "https://velyrion.com",
+    "https://www.velyrion.com",
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "http://127.0.0.1:3000",
+]
+_cors_raw = os.getenv("CORS_ORIGINS", "")
+if _cors_raw:
+    custom_origins = [o.strip() for o in _cors_raw.split(",") if o.strip()]
+    if "*" in custom_origins and not _IS_PRODUCTION:
+        ALLOWED_ORIGINS = ["*"]
+    else:
+        ALLOWED_ORIGINS = list(set(DEFAULT_ORIGINS + [o for o in custom_origins if o != "*"]))
+else:
+    ALLOWED_ORIGINS = ["*"] if not _IS_PRODUCTION else DEFAULT_ORIGINS
 
 RATE_LIMIT_RPM = int(os.getenv("RATE_LIMIT_RPM", "300"))
 

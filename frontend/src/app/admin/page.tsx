@@ -53,21 +53,21 @@ export default function PlatformAdminPage() {
     );
   }
 
-  const TABS: { key: Tab; label: string; icon: string }[] = [
-    { key: "overview", label: "Overview", icon: "" },
-    { key: "users", label: "Users", icon: "" },
-    { key: "orgs", label: "Organizations", icon: "" },
-    { key: "audit", label: "Audit Log", icon: "" },
+  const TABS = [
+    { key: "overview" as Tab, label: "Overview", icon: BarChart3 },
+    { key: "users" as Tab, label: "Users", icon: Users },
+    { key: "orgs" as Tab, label: "Organizations", icon: Building2 },
+    { key: "audit" as Tab, label: "Audit Log", icon: FileText },
   ];
 
   const STAT_CARDS = stats ? [
-    { label: "Total Users", value: stats.total_users, icon: "", color: "#3b82f6" },
-    { label: "Organizations", value: stats.total_orgs, icon: "", color: "#8b5cf6" },
-    { label: "Total Agents", value: stats.total_agents, icon: "", color: "#10b981" },
-    { label: "Active Agents", value: stats.active_agents, icon: "", color: "#22c55e" },
-    { label: "Locked Agents", value: stats.locked_agents, icon: "", color: "#ef4444" },
-    { label: "Agent Groups", value: stats.total_groups, icon: "", color: "#f59e0b" },
-    { label: "Pending Invites", value: stats.pending_invitations, icon: "", color: "#06b6d4" },
+    { label: "Total Users", value: stats.total_users, icon: Users, color: "#3b82f6" },
+    { label: "Organizations", value: stats.total_orgs, icon: Building2, color: "#8b5cf6" },
+    { label: "Total Agents", value: stats.total_agents, icon: Bot, color: "#10b981" },
+    { label: "Active Agents", value: stats.active_agents, icon: Check, color: "#22c55e" },
+    { label: "Locked Agents", value: stats.locked_agents, icon: Lock, color: "#ef4444" },
+    { label: "Agent Groups", value: stats.total_groups, icon: Shield, color: "#f59e0b" },
+    { label: "Pending Invites", value: stats.pending_invitations, icon: AlertCircle, color: "#06b6d4" },
   ] : [];
 
   return (
@@ -84,9 +84,9 @@ export default function PlatformAdminPage() {
 
       {/* Alerts */}
       {error && (
-        <div style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8, padding: "0.75rem 1rem", color: "#f87171", marginBottom: "1rem" }}>
-          {error}
-          <button onClick={() => setError("")} style={{ float: "right", background: "none", border: "none", color: "#f87171", cursor: "pointer" }}></button>
+        <div style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8, padding: "0.75rem 1rem", color: "#f87171", marginBottom: "1rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <span>{error}</span>
+          <button onClick={() => setError("")} style={{ background: "none", border: "none", color: "#f87171", cursor: "pointer", fontSize: "1.1rem" }}>&times;</button>
         </div>
       )}
       {success && (
@@ -97,21 +97,26 @@ export default function PlatformAdminPage() {
 
       {/* Tabs */}
       <div style={{ display: "flex", gap: "0.5rem", marginBottom: "2rem", borderBottom: "1px solid rgba(255,255,255,0.08)", paddingBottom: "0.75rem" }}>
-        {TABS.map((t) => (
-          <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
-            style={{
-              padding: "0.5rem 1.25rem", borderRadius: 8, border: "none",
-              background: tab === t.key ? "rgba(59,130,246,0.15)" : "transparent",
-              color: tab === t.key ? "#60a5fa" : "#9ca3af",
-              fontWeight: tab === t.key ? 600 : 400,
-              cursor: "pointer", fontSize: "0.9rem", transition: "all 0.2s",
-            }}
-          >
-            {t.icon} {t.label}
-          </button>
-        ))}
+        {TABS.map((t) => {
+          const Icon = t.icon;
+          return (
+            <button
+              key={t.key}
+              onClick={() => setTab(t.key)}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 8,
+                padding: "0.5rem 1.25rem", borderRadius: 8, border: "none",
+                background: tab === t.key ? "rgba(59,130,246,0.15)" : "transparent",
+                color: tab === t.key ? "#60a5fa" : "#9ca3af",
+                fontWeight: tab === t.key ? 600 : 400,
+                cursor: "pointer", fontSize: "0.9rem", transition: "all 0.2s",
+              }}
+            >
+              <Icon style={{ width: 15, height: 15 }} />
+              <span>{t.label}</span>
+            </button>
+          );
+        })}
       </div>
 
       {loading && <div style={{ textAlign: "center", color: "#6b7280", padding: "2rem" }}>Loading...</div>}
@@ -120,16 +125,21 @@ export default function PlatformAdminPage() {
       {!loading && tab === "overview" && stats && (
         <div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem", marginBottom: "2rem" }}>
-            {STAT_CARDS.map((s) => (
-              <div key={s.label} style={{
-                background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
-                borderRadius: 12, padding: "1.25rem", textAlign: "center",
-              }}>
-                <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>{s.icon}</div>
-                <div style={{ fontSize: "2rem", fontWeight: 700, color: s.color }}>{s.value}</div>
-                <div style={{ fontSize: "0.8rem", color: "#9ca3af", marginTop: "0.25rem" }}>{s.label}</div>
-              </div>
-            ))}
+            {STAT_CARDS.map((s) => {
+              const Icon = s.icon;
+              return (
+                <div key={s.label} style={{
+                  background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
+                  borderRadius: 12, padding: "1.25rem", textAlign: "center",
+                }}>
+                  <div style={{ display: "flex", justifyContent: "center", marginBottom: "0.5rem" }}>
+                    <Icon style={{ width: 24, height: 24, color: s.color }} />
+                  </div>
+                  <div style={{ fontSize: "2rem", fontWeight: 700, color: s.color }}>{s.value}</div>
+                  <div style={{ fontSize: "0.8rem", color: "#9ca3af", marginTop: "0.25rem" }}>{s.label}</div>
+                </div>
+              );
+            })}
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
