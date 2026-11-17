@@ -175,42 +175,75 @@ export default function RegulatoryAutopilotPage() {
         </div>
       </div>
 
-      {/* Overall Compliance */}
-      <div className="ra-overview">
-        <div className="ra-overview-score">
-          <svg width="100" height="100" viewBox="0 0 100 100">
-            <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="8" />
-            <circle
-              cx="50"
-              cy="50"
-              r="42"
-              fill="none"
-              stroke={overallCompliance >= 80 ? "#10b981" : "#f59e0b"}
-              strokeWidth="8"
-              strokeDasharray={`${(overallCompliance / 100) * 264} 264`}
-              strokeLinecap="round"
-              transform="rotate(-90 50 50)"
+      {/* Overall Compliance - Enterprise Audit Posture */}
+      <div className="ra-overview" style={{ display: "grid", gridTemplateColumns: "300px 1fr", gap: 24, padding: "20px 24px", background: "var(--bg-card)", border: "1px solid var(--border-subtle)", borderRadius: 12 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, borderRight: "1px solid var(--border-subtle)", paddingRight: 20 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+              Regulatory Posture
+            </span>
+            <span
+              style={{
+                fontSize: 10,
+                fontWeight: 700,
+                padding: "2px 8px",
+                borderRadius: 4,
+                background: overallCompliance >= 80 ? "rgba(16,185,129,0.12)" : "rgba(245,158,11,0.12)",
+                color: overallCompliance >= 80 ? "var(--accent-green)" : "var(--accent-yellow)",
+                border: `1px solid ${overallCompliance >= 80 ? "rgba(16,185,129,0.25)" : "rgba(245,158,11,0.25)"}`,
+              }}
+            >
+              {overallCompliance >= 80 ? "Audit Ready" : "Remediation Needed"}
+            </span>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+            <span style={{ fontSize: 40, fontWeight: 900, color: "var(--text-primary)", letterSpacing: "-0.03em", lineHeight: 1 }}>
+              {overallCompliance}%
+            </span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-muted)" }}>Fleetwide Alignment</span>
+          </div>
+
+          <div style={{ width: "100%", height: 6, background: "rgba(255,255,255,0.06)", borderRadius: 3, overflow: "hidden", marginTop: 4 }}>
+            <div
+              style={{
+                width: `${overallCompliance}%`,
+                height: "100%",
+                background: overallCompliance >= 80 ? "var(--accent-green)" : "var(--accent-yellow)",
+                borderRadius: 3,
+                transition: "width 0.6s ease",
+              }}
             />
-          </svg>
-          <div className="ra-overview-inner">
-            <div className="ra-overview-num">{overallCompliance}%</div>
-            <div className="ra-overview-label">Overall Rate</div>
+          </div>
+          <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>
+            Covers EU AI Act Art. 14/15, SOC2 Type II, HIPAA &amp; GDPR.
           </div>
         </div>
 
-        <div className="ra-reg-pills">
+        <div className="ra-reg-pills" style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center" }}>
           {assessments.map(r => (
             <button
               key={r.regulation_id}
               className={`ra-reg-pill ${selectedReg === r.regulation_id ? "active" : ""}`}
               onClick={() => setSelectedReg(r.regulation_id)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                padding: "10px 14px",
+                borderRadius: 8,
+                border: selectedReg === r.regulation_id ? "1px solid var(--accent-blue)" : "1px solid var(--border-subtle)",
+                background: selectedReg === r.regulation_id ? "rgba(59,130,246,0.08)" : "var(--bg-secondary)",
+                cursor: "pointer",
+                transition: "all 0.15s ease",
+              }}
             >
-              <Scale style={{ width: 14, height: 14, color: "var(--accent-cyan)" }} />
-              <div className="ra-pill-info">
-                <span className="ra-pill-name">{r.regulation_name}</span>
-                <span className="ra-pill-rate" style={{ color: r.compliance_rate >= 80 ? "#10b981" : "#f59e0b" }}>
+              <Scale style={{ width: 15, height: 15, color: selectedReg === r.regulation_id ? "var(--accent-blue)" : "var(--text-muted)" }} />
+              <div className="ra-pill-info" style={{ textAlign: "left" }}>
+                <div className="ra-pill-name" style={{ fontSize: 12, fontWeight: 700, color: "var(--text-primary)" }}>{r.regulation_name}</div>
+                <div className="ra-pill-rate" style={{ fontSize: 11, fontWeight: 600, color: r.compliance_rate >= 80 ? "var(--accent-green)" : "var(--accent-yellow)" }}>
                   {r.compliance_rate}% compliant
-                </span>
+                </div>
               </div>
             </button>
           ))}

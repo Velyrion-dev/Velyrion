@@ -180,44 +180,94 @@ export default function GovernanceScorePage() {
         </div>
       </div>
 
-      {/* Fleet Overview */}
-      <div className="gs-fleet-banner">
-        <div className="gs-fleet-score-ring">
-          <svg width="120" height="120" viewBox="0 0 120 120">
-            <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="8" />
-            <circle
-              cx="60"
-              cy="60"
-              r="52"
-              fill="none"
-              stroke={fleetColor}
-              strokeWidth="8"
-              strokeDasharray={`${(fleetAvg / 100) * 327} 327`}
-              strokeLinecap="round"
-              transform="rotate(-90 60 60)"
-              style={{ transition: "stroke-dasharray 1s ease" }}
-            />
-          </svg>
-          <div className="gs-fleet-score-inner">
-            <div className="gs-fleet-score-num" style={{ color: fleetColor }}>{fleetAvg}</div>
-            <div className="gs-fleet-score-label">Fleet Average</div>
+      {/* Fleet Overview - Enterprise Trust Scorecard */}
+      <div className="gs-fleet-banner" style={{ display: "grid", gridTemplateColumns: "320px 1fr", gap: 28, padding: "24px 28px", background: "var(--bg-card)", border: "1px solid var(--border-subtle)", borderRadius: 12 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, borderRight: "1px solid var(--border-subtle)", paddingRight: 24 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)", letterSpacing: "0.06em", textTransform: "uppercase" }}>
+              Fleet Trust Index
+            </span>
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                padding: "2px 8px",
+                borderRadius: 4,
+                background: fleetAvg >= 80 ? "rgba(16,185,129,0.12)" : fleetAvg >= 60 ? "rgba(245,158,11,0.12)" : "rgba(239,68,68,0.12)",
+                color: fleetColor,
+                border: `1px solid ${fleetColor}30`,
+              }}
+            >
+              {fleetAvg >= 80 ? "Certified Fleet" : fleetAvg >= 60 ? "Monitored Fleet" : "At-Risk Fleet"}
+            </span>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+            <span style={{ fontSize: 44, fontWeight: 900, color: "var(--text-primary)", letterSpacing: "-0.03em", lineHeight: 1 }}>
+              {fleetAvg}
+            </span>
+            <span style={{ fontSize: 16, fontWeight: 600, color: "var(--text-muted)" }}>/ 100</span>
+          </div>
+
+          {/* Linear Threshold Track */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            <div style={{ width: "100%", height: 8, background: "rgba(255,255,255,0.06)", borderRadius: 4, overflow: "hidden", position: "relative" }}>
+              <div
+                style={{
+                  width: `${fleetAvg}%`,
+                  height: "100%",
+                  background: fleetColor,
+                  borderRadius: 4,
+                  transition: "width 0.6s cubic-bezier(0.16, 1, 0.3, 1)",
+                }}
+              />
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "var(--text-muted)", fontWeight: 600 }}>
+              <span>0 (Critical)</span>
+              <span>60 (Warning)</span>
+              <span>80 (Certified)</span>
+              <span>100</span>
+            </div>
           </div>
         </div>
 
-        <div className="gs-fleet-stats">
-          <div className="gs-fleet-stat">
-            <span className="gs-stat-val" style={{ color: "var(--accent-green)" }}>{certifiedCount}</span>
-            <span className="gs-stat-lbl">Certified Agents (Score &ge; 80)</span>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, alignItems: "center" }}>
+          <div style={{ padding: "14px 16px", background: "var(--bg-secondary)", borderRadius: 8, border: "1px solid var(--border-subtle)" }}>
+            <div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.04em", marginBottom: 6 }}>
+              Certified Agents
+            </div>
+            <div style={{ fontSize: 24, fontWeight: 800, color: "var(--accent-green)", display: "flex", alignItems: "baseline", gap: 6 }}>
+              {certifiedCount}
+              <span style={{ fontSize: 12, fontWeight: 500, color: "var(--text-muted)" }}>/ {scores.length} agents</span>
+            </div>
+            <div style={{ fontSize: 11, color: "var(--text-secondary)", marginTop: 4 }}>
+              Score &ge; 80 points
+            </div>
           </div>
-          <div className="gs-fleet-stat">
-            <span className="gs-stat-val">{scores.length}</span>
-            <span className="gs-stat-lbl">Evaluated Agents</span>
-          </div>
-          <div className="gs-fleet-stat">
-            <span className="gs-stat-val" style={{ color: "var(--accent-cyan)" }}>
+
+          <div style={{ padding: "14px 16px", background: "var(--bg-secondary)", borderRadius: 8, border: "1px solid var(--border-subtle)" }}>
+            <div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.04em", marginBottom: 6 }}>
+              Certification Rate
+            </div>
+            <div style={{ fontSize: 24, fontWeight: 800, color: "var(--accent-cyan)", display: "flex", alignItems: "baseline", gap: 6 }}>
               {scores.length > 0 ? `${Math.round((certifiedCount / scores.length) * 100)}%` : "0%"}
-            </span>
-            <span className="gs-stat-lbl">Fleet Certification Rate</span>
+            </div>
+            <div style={{ fontSize: 11, color: "var(--text-secondary)", marginTop: 4 }}>
+              Zero-Trust Qualified
+            </div>
+          </div>
+
+          <div style={{ padding: "14px 16px", background: "var(--bg-secondary)", borderRadius: 8, border: "1px solid var(--border-subtle)" }}>
+            <div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700, letterSpacing: "0.04em", marginBottom: 6 }}>
+              Evaluation Engine
+            </div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)", display: "flex", alignItems: "center", gap: 6 }}>
+              <ShieldCheck style={{ width: 15, height: 15, color: "var(--accent-green)" }} />
+              Active Telemetry
+            </div>
+            <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 6 }}>
+              Real-time audit telemetry
+            </div>
           </div>
         </div>
       </div>

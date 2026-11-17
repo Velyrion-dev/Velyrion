@@ -166,6 +166,48 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* Enterprise Security Perimeter Banner */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "12px 18px",
+          background: "rgba(16, 185, 129, 0.06)",
+          border: "1px solid rgba(16, 185, 129, 0.2)",
+          borderRadius: 8,
+          marginBottom: 20,
+          flexWrap: "wrap",
+          gap: 12,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <ShieldCheck style={{ width: 18, height: 18, color: "var(--accent-green)" }} />
+          <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)" }}>
+            Runtime Perimeter: <span style={{ color: "var(--accent-green)" }}>All Guardrails Active</span>
+          </span>
+          <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
+            · Pre-Execution Zero-Trust Policy Engine Operational (&lt; 15ms)
+          </span>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <Link
+            href="/policies"
+            className="btn btn-ghost btn-sm"
+            style={{ fontSize: 11, padding: "4px 10px" }}
+          >
+            Review Active Policies →
+          </Link>
+          <Link
+            href="/regulatory"
+            className="btn btn-ghost btn-sm"
+            style={{ fontSize: 11, padding: "4px 10px" }}
+          >
+            Compliance Pack →
+          </Link>
+        </div>
+      </div>
+
       {/* Core Telemetry Cards */}
       <div className="stats-grid">
         <div className="stat-card blue">

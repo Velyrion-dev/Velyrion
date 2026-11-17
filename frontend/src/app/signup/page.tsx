@@ -86,21 +86,19 @@ export default function SignupPage() {
 
   return (
     <div className="auth-page">
-      <div className="auth-bg">
-        <div className="auth-orb auth-orb-1" />
-        <div className="auth-orb auth-orb-2" />
-        <div className="auth-orb auth-orb-3" />
-      </div>
-
       <div className="auth-container">
         <div className="auth-card">
           <div className="auth-logo">
-            <div className="auth-logo-text">VELYRION</div>
-            <div className="auth-logo-sub">Agent Governance Platform</div>
+            <div className="auth-logo-text" style={{ fontSize: 22, fontWeight: 900, letterSpacing: "0.15em", color: "var(--text-primary)" }}>
+              VELYRION
+            </div>
+            <div className="auth-logo-sub" style={{ fontSize: 11, fontWeight: 600, color: "var(--text-muted)", letterSpacing: "0.06em", textTransform: "uppercase", marginTop: 4 }}>
+              Enterprise Safety &amp; Control Plane
+            </div>
           </div>
 
           <h2 className="auth-title">Create your account</h2>
-          <p className="auth-subtitle">Start governing your AI agents in minutes</p>
+          <p className="auth-subtitle">Deploy runtime guardrails and compliance for your AI fleet</p>
 
           {error && <div className="auth-error">{error}</div>}
 

@@ -198,25 +198,66 @@ export default function LeaderboardPage() {
         </div>
       </div>
 
-      {/* Podium */}
+      {/* Top Fleet Benchmarks */}
       {podium.length > 0 && (
-        <div className="lb-podium-section">
-          <h2 className="lb-section-title">Efficiency Champions</h2>
-          <div className="lb-podium">
+        <div className="lb-podium-section" style={{ background: "var(--bg-card)", border: "1px solid var(--border-subtle)", borderRadius: 12, padding: "20px 24px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+            <h2 className="lb-section-title" style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              Fleet Operational Benchmarks (Top Performers)
+            </h2>
+            <span style={{ fontSize: 11, color: "var(--text-muted)" }}>Ranked by Actions per Policy Violation</span>
+          </div>
+
+          <div className="lb-podium" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
             {podium.map((r, i) => (
-              <div key={r.agent.agent_id} className={`lb-podium-card rank-${i + 1}`}>
-                <div className="lb-medal">
-                  <span style={{ fontSize: 13, fontWeight: 900, color: i === 0 ? "#f59e0b" : i === 1 ? "#94a3b8" : "#d97706" }}>
-                    #{i + 1}
+              <div
+                key={r.agent.agent_id}
+                style={{
+                  background: "var(--bg-secondary)",
+                  border: i === 0 ? "1px solid rgba(16,185,129,0.3)" : "1px solid var(--border-subtle)",
+                  borderRadius: 10,
+                  padding: "16px 20px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 10,
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 800,
+                      letterSpacing: "0.06em",
+                      padding: "2px 8px",
+                      borderRadius: 4,
+                      background: i === 0 ? "rgba(16,185,129,0.15)" : "rgba(255,255,255,0.05)",
+                      color: i === 0 ? "var(--accent-green)" : "var(--text-muted)",
+                      border: i === 0 ? "1px solid rgba(16,185,129,0.25)" : "1px solid var(--border-subtle)",
+                    }}
+                  >
+                    RANK #{i + 1}
+                  </span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: r.health >= 80 ? "var(--accent-green)" : "var(--accent-yellow)" }}>
+                    {r.health}% Health
                   </span>
                 </div>
-                <div className="lb-podium-name">{r.agent.agent_name}</div>
-                <div className="lb-podium-dept">{r.agent.department}</div>
-                <div className="lb-podium-score">{fmtCompact(r.efficiency)}</div>
-                <div className="lb-podium-label">actions per violation</div>
-                <div className="lb-podium-stats">
-                  <span>Health: {r.health}%</span>
-                  <span>Spend: ${r.agent.total_cost_usd.toFixed(2)}</span>
+
+                <div>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: "var(--text-primary)" }}>{r.agent.agent_name}</div>
+                  <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>{r.agent.department || "Autonomous Agent"}</div>
+                </div>
+
+                <div style={{ padding: "8px 12px", background: "rgba(0,0,0,0.2)", borderRadius: 6, display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                  <span style={{ fontSize: 11, color: "var(--text-muted)" }}>Efficiency Ratio</span>
+                  <div style={{ textAlign: "right" }}>
+                    <span style={{ fontSize: 18, fontWeight: 900, color: "var(--accent-cyan)", letterSpacing: "-0.02em" }}>{fmtCompact(r.efficiency)}</span>
+                    <span style={{ fontSize: 10, color: "var(--text-muted)", marginLeft: 4 }}>acts/violation</span>
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "var(--text-secondary)", borderTop: "1px solid var(--border-subtle)", paddingTop: 8 }}>
+                  <span>Total Spend: <strong style={{ color: "var(--text-primary)" }}>${r.agent.total_cost_usd.toFixed(2)}</strong></span>
+                  <span>Violations: <strong style={{ color: r.agent.total_violations === 0 ? "var(--accent-green)" : "var(--accent-red)" }}>{r.agent.total_violations}</strong></span>
                 </div>
               </div>
             ))}
