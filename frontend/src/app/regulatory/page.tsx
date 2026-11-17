@@ -177,17 +177,24 @@ export default function RegulatoryAutopilotPage() {
 
       {/* Overall Compliance */}
       <div className="ra-overview">
-        <div style={{ display: "flex", flexDirection: "column", minWidth: 160, paddingRight: 24, borderRight: "1px solid var(--border-subtle)" }}>
-          <div style={{ fontSize: 11, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 4 }}>
-            Fleet Compliance
-          </div>
-          <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-            <span style={{ fontSize: 36, fontWeight: 800, color: overallCompliance >= 80 ? "#10b981" : "#f59e0b", fontVariantNumeric: "tabular-nums" }}>
-              {overallCompliance}%
-            </span>
-          </div>
-          <div style={{ width: "100%", height: 6, background: "rgba(255,255,255,0.06)", borderRadius: 3, marginTop: 8, overflow: "hidden" }}>
-            <div style={{ width: `${Math.min(overallCompliance, 100)}%`, height: "100%", background: overallCompliance >= 80 ? "#10b981" : "#f59e0b", borderRadius: 3 }} />
+        <div className="ra-overview-score">
+          <svg width="100" height="100" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="8" />
+            <circle
+              cx="50"
+              cy="50"
+              r="42"
+              fill="none"
+              stroke={overallCompliance >= 80 ? "#10b981" : "#f59e0b"}
+              strokeWidth="8"
+              strokeDasharray={`${(overallCompliance / 100) * 264} 264`}
+              strokeLinecap="round"
+              transform="rotate(-90 50 50)"
+            />
+          </svg>
+          <div className="ra-overview-inner">
+            <div className="ra-overview-num">{overallCompliance}%</div>
+            <div className="ra-overview-label">Overall Rate</div>
           </div>
         </div>
 
