@@ -1,19 +1,38 @@
 "use client";
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
+import { usePermissions } from "@/lib/auth";
+import {
+  FileCode,
+  Play,
+  CheckCircle2,
+  AlertTriangle,
+  Lock,
+  Shield,
+  Layers
+} from "lucide-react";
 
 interface PolicySummary {
-  filename: string; name: string; version: string; agents: string[]; rules_count: number;
+  filename: string;
+  name: string;
+  version: string;
+  agents: string[];
+  rules_count: number;
 }
 
 interface PolicyDetail {
   policy: {
-    name: string; version: string; agents: string[];
+    name: string;
+    version: string;
+    agents: string[];
     rules: { name: string; condition: string; action: string; severity: string; message: string }[];
   };
 }
 
 export default function PoliciesPage() {
+  const { isAdmin, isOperator, canConfigurePolicies } = usePermissions();
+  const canTest = canConfigurePolicies || isAdmin || isOperator;
+
   const [policies, setPolicies] = useState<PolicySummary[]>([]);
   const [selectedPolicy, setSelectedPolicy] = useState<PolicyDetail | null>(null);
   const [selectedFile, setSelectedFile] = useState("");
@@ -21,26 +40,47 @@ export default function PoliciesPage() {
   const [evalResult, setEvalResult] = useState<{ rule_name: string; action: string; severity: string; message: string; policy_file: string }[] | null>(null);
   const [evalAgent, setEvalAgent] = useState("");
   const [evalTool, setEvalTool] = useState("");
+  const [evaluating, setEvaluating] = useState(false);
 
   useEffect(() => {
-    api.getPolicies().then(p => { setPolicies(p); setLoading(false); });
+    api.getPolicies().then(p => {
+      setPolicies(p);
+      if (p.length > 0) {
+        loadPolicy(p[0].filename);
+      }
+      setLoading(false);
+    }).catch(() => setLoading(false));
   }, []);
 
   const loadPolicy = async (filename: string) => {
     setSelectedFile(filename);
-    const data = await api.getPolicy(filename);
-    setSelectedPolicy(data as PolicyDetail);
+    try {
+      const data = await api.getPolicy(filename);
+      setSelectedPolicy(data as PolicyDetail);
+    } catch {
+      // ignore
+    }
   };
 
   const runEval = async () => {
-    if (!evalAgent) return;
-    const result = await api.evaluatePolicy({ agent_id: evalAgent, tool_used: evalTool, confidence_score: 0.5 });
-    setEvalResult(result);
+    if (!evalAgent || !canTest || evaluating) return;
+    setEvaluating(true);
+    try {
+      const result = await api.evaluatePolicy({ agent_id: evalAgent, tool_used: evalTool, confidence_score: 0.5 });
+      setEvalResult(result);
+    } catch {
+      // ignore
+    } finally {
+      setEvaluating(false);
+    }
   };
 
   const actionColor: Record<string, string> = {
-    BLOCK: "var(--accent-red)", KILL: "#ff1744", WARN: "var(--accent-yellow)",
-    REQUIRE_APPROVAL: "var(--accent-purple)", THROTTLE: "var(--accent-cyan)",
+    BLOCK: "var(--accent-red)",
+    KILL: "#ff1744",
+    WARN: "var(--accent-yellow)",
+    REQUIRE_APPROVAL: "var(--accent-purple)",
+    THROTTLE: "var(--accent-cyan)",
   };
 
   return (
@@ -48,33 +88,47 @@ export default function PoliciesPage() {
       <div className="page-header">
         <div>
           <h1>Policy-as-Code Engine</h1>
-          <p>Define, version, and enforce governance policies in YAML — no code changes required</p>
+          <p>Declarative, version-controlled YAML governance rules evaluated deterministically at runtime</p>
         </div>
         <span className="timestamp">{policies.length} policies loaded</span>
       </div>
+
+      {!canTest && (
+        <div style={{ padding: "8px 14px", background: "rgba(100,116,139,0.1)", border: "1px solid rgba(100,116,139,0.2)", borderRadius: 6, marginBottom: 16, display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "var(--text-muted)" }}>
+          <Lock style={{ width: 14, height: 14 }} />
+          <span>Viewer mode: Read-only access to policy configurations. Policy evaluation testing requires Operator or Admin privileges.</span>
+        </div>
+      )}
 
       {/* Policy List */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 20 }}>
         <div>
           <div className="card" style={{ padding: 0 }}>
-            <div style={{ padding: "14px 20px", borderBottom: "1px solid var(--border-color)" }}>
+            <div style={{ padding: "14px 20px", borderBottom: "1px solid var(--border-color)", display: "flex", alignItems: "center", gap: 8 }}>
+              <Layers style={{ width: 16, height: 16, color: "var(--accent-cyan)" }} />
               <h3 style={{ margin: 0, fontSize: 14 }}>Active Policies</h3>
             </div>
             {loading ? (
               <div style={{ padding: 20 }}><div className="loading-shimmer" /></div>
             ) : policies.length === 0 ? (
-              <div style={{ padding: 30, textAlign: "center", color: "var(--text-muted)" }}>No policies found</div>
+              <div style={{ padding: 30, textAlign: "center", color: "var(--text-muted)" }}>No policies found in repository</div>
             ) : (
               policies.map(p => (
-                <div key={p.filename} onClick={() => loadPolicy(p.filename)} style={{
-                  padding: "12px 20px", borderBottom: "1px solid var(--border-color)",
-                  cursor: "pointer", transition: "all 0.2s",
-                  background: selectedFile === p.filename ? "rgba(99,102,241,0.1)" : "transparent",
-                  borderLeft: selectedFile === p.filename ? "3px solid var(--accent-purple)" : "3px solid transparent",
-                }}>
+                <div
+                  key={p.filename}
+                  onClick={() => loadPolicy(p.filename)}
+                  style={{
+                    padding: "12px 20px",
+                    borderBottom: "1px solid var(--border-color)",
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                    background: selectedFile === p.filename ? "rgba(99,102,241,0.1)" : "transparent",
+                    borderLeft: selectedFile === p.filename ? "3px solid var(--accent-purple)" : "3px solid transparent",
+                  }}
+                >
                   <div style={{ fontWeight: 600, fontSize: 14 }}>{p.name}</div>
                   <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4 }}>
-                    v{p.version} · {p.rules_count} rules · Agents: {p.agents.join(", ")}
+                    v{p.version} · {p.rules_count} rules · Scope: {p.agents.join(", ")}
                   </div>
                 </div>
               ))
@@ -83,22 +137,45 @@ export default function PoliciesPage() {
 
           {/* Policy Evaluator */}
           <div className="card" style={{ padding: 20, marginTop: 20 }}>
-            <h3 style={{ fontSize: 14, marginBottom: 12 }}>Policy Tester</h3>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+              <Play style={{ width: 15, height: 15, color: "var(--accent-green)" }} />
+              <h3 style={{ fontSize: 14, margin: 0 }}>Policy Evaluator Sandbox</h3>
+            </div>
             <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 12 }}>
-              Test how policies would evaluate an action
+              Simulate how declarative rules enforce against agent actions
             </p>
-            <input className="search-input" placeholder="Agent ID (e.g. agent-008)" value={evalAgent}
-              onChange={e => setEvalAgent(e.target.value)} style={{ marginBottom: 8 }} />
-            <input className="search-input" placeholder="Tool name (e.g. admin_console)" value={evalTool}
-              onChange={e => setEvalTool(e.target.value)} style={{ marginBottom: 12 }} />
-            <button className="btn btn-success btn-sm" onClick={runEval} style={{ width: "100%" }}>
-              Run Evaluation
+            <input
+              className="search-input"
+              placeholder="Agent ID (e.g. agent-008)"
+              value={evalAgent}
+              disabled={!canTest}
+              onChange={e => setEvalAgent(e.target.value)}
+              style={{ marginBottom: 8 }}
+            />
+            <input
+              className="search-input"
+              placeholder="Tool name (e.g. admin_console)"
+              value={evalTool}
+              disabled={!canTest}
+              onChange={e => setEvalTool(e.target.value)}
+              style={{ marginBottom: 12 }}
+            />
+            <button
+              className="btn btn-success btn-sm"
+              onClick={runEval}
+              disabled={!canTest || !evalAgent || evaluating}
+              style={{ width: "100%", display: "inline-flex", justifyContent: "center", alignItems: "center", gap: 6 }}
+            >
+              <Play style={{ width: 13, height: 13 }} />
+              <span>{evaluating ? "Evaluating..." : "Run Policy Evaluation"}</span>
             </button>
+
             {evalResult && (
               <div style={{ marginTop: 12 }}>
                 {evalResult.length === 0 ? (
-                  <div style={{ padding: 12, textAlign: "center", color: "var(--accent-green)", fontSize: 13 }}>
-                    No violations — action allowed
+                  <div style={{ padding: 12, textAlign: "center", color: "var(--accent-green)", fontSize: 13, background: "rgba(16,185,129,0.08)", borderRadius: 6 }}>
+                    <CheckCircle2 style={{ width: 16, height: 16, margin: "0 auto 4px", display: "block" }} />
+                    No violations — action fully compliant
                   </div>
                 ) : (
                   evalResult.map((v, i) => (
@@ -158,9 +235,9 @@ export default function PoliciesPage() {
             </div>
           ) : (
             <div className="card" style={{ padding: 60, textAlign: "center", color: "var(--text-muted)" }}>
-              <div style={{ fontSize: 48, marginBottom: 16 }}></div>
+              <FileCode style={{ width: 44, height: 44, margin: "0 auto 16px", color: "var(--text-muted)" }} />
               <h3>Select a policy to view its rules</h3>
-              <p>Policies are defined in YAML files in the <code>policies/</code> directory</p>
+              <p>Policies are declarative governance contracts defined in YAML.</p>
             </div>
           )}
         </div>

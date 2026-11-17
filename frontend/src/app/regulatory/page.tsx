@@ -1,142 +1,178 @@
 "use client";
-import { useEffect, useState } from "react";
-import { api, Agent, DashboardStats } from "@/lib/api";
+import { useEffect, useState, useCallback } from "react";
+import { api } from "@/lib/api";
+import { usePermissions } from "@/lib/auth";
+import {
+  FileCheck,
+  ShieldCheck,
+  AlertTriangle,
+  Download,
+  RefreshCw,
+  Lock,
+  Scale,
+  CheckCircle2,
+  Clock
+} from "lucide-react";
 
-const fmt = (n: number) => n.toLocaleString("en-US");
-
-interface Regulation {
-  id: string;
+interface Requirement {
   name: string;
-  icon: string;
-  description: string;
-  requirements: { name: string; status: "compliant" | "partial" | "non_compliant"; detail: string }[];
+  status: "compliant" | "partial" | "non_compliant" | string;
+  detail: string;
 }
 
+interface RegulatoryAssessment {
+  assessment_id: string;
+  regulation_id: string;
+  regulation_name: string;
+  compliance_rate: number;
+  requirements: Requirement[];
+  assessed_at: string;
+}
+
+const STATUS_MAP: Record<string, { color: string; bg: string; label: string }> = {
+  compliant: { color: "#10b981", bg: "rgba(16,185,129,0.1)", label: "Compliant" },
+  partial: { color: "#f59e0b", bg: "rgba(245,158,11,0.1)", label: "Partial" },
+  non_compliant: { color: "#ef4444", bg: "rgba(239,68,68,0.1)", label: "Non-Compliant" },
+};
+
 export default function RegulatoryAutopilotPage() {
-  const [agents, setAgents] = useState<Agent[]>([]);
-  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const { isAdmin, isOperator, canConfigurePolicies } = usePermissions();
+  const canReassess = canConfigurePolicies || isAdmin || isOperator;
+
+  const [assessments, setAssessments] = useState<RegulatoryAssessment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedReg, setSelectedReg] = useState("eu_ai_act");
+  const [reassessing, setReassessing] = useState(false);
+  const [selectedReg, setSelectedReg] = useState<string>("eu_ai_act");
   const [exporting, setExporting] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState("");
+
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    try {
+      let data = await api.getRegulatoryAssessments().catch(() => []);
+      if (!data || data.length === 0) {
+        try {
+          await api.reassessRegulatory();
+          data = await api.getRegulatoryAssessments().catch(() => []);
+        } catch {
+          // ignore
+        }
+      }
+      setAssessments(data);
+      if (data.length > 0 && !selectedReg) {
+        setSelectedReg(data[0].regulation_id);
+      }
+    } catch (e) {
+      console.error("Regulatory fetch failed:", e);
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedReg]);
 
   useEffect(() => {
-    Promise.all([api.getAgents(), api.getStats()])
-      .then(([a, s]) => { setAgents(a); setStats(s); setLoading(false); })
-      .catch(() => setLoading(false));
-  }, []);
+    loadData();
+  }, [loadData]);
 
-  if (loading) return <div className="ra-page"><div className="lb-header"><h1 className="lb-title">Regulatory Autopilot</h1><p className="lb-subtitle">Loading compliance data...</p></div></div>;
-
-  const totalAgents = agents.length;
-  const hasAuditTrail = true;
-  const hasAnomalyDetection = true;
-  const hasKillSwitch = true;
-  const hasHumanInLoop = true;
-
-  const regulations: Regulation[] = [
-    {
-      id: "eu_ai_act", name: "EU AI Act 2025", icon: "",
-      description: "European Union regulation on artificial intelligence systems — risk classification, transparency, and documentation requirements.",
-      requirements: [
-        { name: "Risk Classification System", status: "compliant", detail: "All agents classified by risk level (LOW/MEDIUM/HIGH/CRITICAL) with automatic categorization." },
-        { name: "Human Oversight Mechanism", status: hasHumanInLoop ? "compliant" : "non_compliant", detail: "Human-in-the-loop approval system active for sensitive operations." },
-        { name: "Transparency & Audit Trail", status: hasAuditTrail ? "compliant" : "non_compliant", detail: `${fmt(stats?.total_events || 0)} events logged with immutable, append-only audit trail.` },
-        { name: "Technical Documentation", status: "compliant", detail: "Complete agent documentation including capabilities, limitations, and risk assessments." },
-        { name: "Anomaly Monitoring", status: hasAnomalyDetection ? "compliant" : "non_compliant", detail: "5 anomaly detection algorithms monitoring all agent behavior in real-time." },
-        { name: "Incident Response Plan", status: hasKillSwitch ? "compliant" : "partial", detail: "Automated 5-step incident response: kill → snapshot → lock → alert → log." },
-      ],
-    },
-    {
-      id: "soc2", name: "SOC 2 Type II", icon: "",
-      description: "Service Organization Control 2 — security, availability, processing integrity, confidentiality, and privacy.",
-      requirements: [
-        { name: "Access Controls", status: "compliant", detail: "Permission engine validates every agent action against defined access policies." },
-        { name: "Change Management", status: "compliant", detail: "All agent configuration changes logged with timestamps and operator identity." },
-        { name: "Incident Management", status: "compliant", detail: "Automated incident creation, escalation, and resolution tracking." },
-        { name: "Monitoring & Alerting", status: "compliant", detail: "Real-time monitoring via Mission Control with webhook and Slack alerts." },
-        { name: "Data Retention", status: "partial", detail: "Audit logs retained. Configurable retention policies recommended." },
-        { name: "Vendor Management", status: "partial", detail: "Agent registry tracks all AI vendors. SLA monitoring in progress." },
-      ],
-    },
-    {
-      id: "hipaa", name: "HIPAA", icon: "",
-      description: "Health Insurance Portability and Accountability Act — protecting sensitive patient health information.",
-      requirements: [
-        { name: "Access Audit Trail", status: "compliant", detail: "Every data access by AI agents logged with full context." },
-        { name: "Minimum Necessary Rule", status: "compliant", detail: "Data access level controls (PUBLIC/INTERNAL/CONFIDENTIAL/RESTRICTED)." },
-        { name: "Breach Notification", status: hasKillSwitch ? "compliant" : "non_compliant", detail: "Automated alerts for unauthorized data access with kill switch." },
-        { name: "Risk Assessment", status: "compliant", detail: "Governance Score™ provides continuous risk assessment per agent." },
-        { name: "Encryption", status: "partial", detail: "API communications encrypted. At-rest encryption configuration available." },
-      ],
-    },
-    {
-      id: "gdpr", name: "GDPR", icon: "",
-      description: "General Data Protection Regulation — data protection and privacy for EU citizens.",
-      requirements: [
-        { name: "Data Processing Records", status: "compliant", detail: "Complete records of all AI agent data processing activities." },
-        { name: "Right to Explanation", status: "compliant", detail: "Full audit trail provides explainability for every AI decision." },
-        { name: "Data Minimization", status: "compliant", detail: "Agents restricted to minimum required data access levels." },
-        { name: "Breach Detection", status: "compliant", detail: "Anomaly engine detects unauthorized data processing within seconds." },
-        { name: "DPO Support", status: "partial", detail: "Compliance reports available for Data Protection Officer review." },
-      ],
-    },
-    {
-      id: "sec_ai", name: "SEC AI Oversight", icon: "",
-      description: "Securities and Exchange Commission guidelines for AI in financial services.",
-      requirements: [
-        { name: "Algorithmic Accountability", status: "compliant", detail: "Every AI action audited with confidence scores and cost tracking." },
-        { name: "Risk Controls", status: "compliant", detail: "Budget limits, token caps, and kill switches for all agents." },
-        { name: "Market Manipulation Safeguards", status: "compliant", detail: "Anomaly detection monitors for unusual trading patterns." },
-        { name: "Regulatory Reporting", status: "compliant", detail: "On-demand compliance reports with export functionality." },
-        { name: "Model Governance", status: "partial", detail: "Agent registry tracks model versions. Full model lineage tracking planned." },
-      ],
-    },
-  ];
-
-  const selected = regulations.find(r => r.id === selectedReg) || regulations[0];
-  const complianceRate = Math.round((selected.requirements.filter(r => r.status === "compliant").length / selected.requirements.length) * 100);
-
-  const STATUS_MAP = {
-    compliant: { color: "#10b981", bg: "rgba(16,185,129,0.1)", label: "Compliant", icon: "" },
-    partial: { color: "#f59e0b", bg: "rgba(245,158,11,0.1)", label: "◐ Partial", icon: "" },
-    non_compliant: { color: "#ef4444", bg: "rgba(239,68,68,0.1)", label: "Non-Compliant", icon: "" },
+  const handleReassess = async () => {
+    if (!canReassess || reassessing) return;
+    setReassessing(true);
+    try {
+      const res = await api.reassessRegulatory();
+      setFeedback(`Reassessed ${res.assessed} compliance frameworks`);
+      setTimeout(() => setFeedback(""), 4000);
+      await loadData();
+    } catch (err: unknown) {
+      setFeedback(err instanceof Error ? err.message : "Reassessment failed");
+    } finally {
+      setReassessing(false);
+    }
   };
 
-  const exportReport = (regId: string) => {
+  const handleExport = async (regId: string) => {
     setExporting(regId);
-    const reg = regulations.find(r => r.id === regId)!;
-    const report = {
-      report_type: "Compliance Assessment",
-      regulation: reg.name,
-      generated_at: new Date().toISOString(),
-      organization: "Velyrion Platform",
-      total_agents: totalAgents,
-      compliance_rate: `${complianceRate}%`,
-      requirements: reg.requirements,
-      summary: `${reg.requirements.filter(r => r.status === "compliant").length} of ${reg.requirements.length} requirements fully met.`,
-    };
-    const blob = new Blob([JSON.stringify(report, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `velyrion-${regId}-compliance-${new Date().toISOString().split("T")[0]}.json`;
-    link.click();
-    URL.revokeObjectURL(url);
-    setTimeout(() => setExporting(null), 1000);
+    try {
+      const report = await api.exportRegulatoryReport(regId);
+      const blob = new Blob([JSON.stringify(report, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `velyrion-${regId}-compliance-${new Date().toISOString().split("T")[0]}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      // Fallback export from local assessment
+      const current = assessments.find(a => a.regulation_id === regId);
+      if (current) {
+        const blob = new Blob([JSON.stringify(current, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `velyrion-${regId}-compliance-${new Date().toISOString().split("T")[0]}.json`;
+        link.click();
+        URL.revokeObjectURL(url);
+      }
+    } finally {
+      setTimeout(() => setExporting(null), 1000);
+    }
   };
 
-  const overallCompliance = Math.round(regulations.reduce((s, r) => s + (r.requirements.filter(req => req.status === "compliant").length / r.requirements.length) * 100, 0) / regulations.length);
+  if (loading) {
+    return (
+      <div className="ra-page">
+        <div className="lb-header">
+          <h1 className="lb-title">Regulatory Autopilot</h1>
+          <p className="lb-subtitle">Auditing platform telemetry against regulatory frameworks...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const selected = assessments.find(a => a.regulation_id === selectedReg) || assessments[0];
+  const overallCompliance = assessments.length > 0
+    ? Math.round(assessments.reduce((s, a) => s + a.compliance_rate, 0) / assessments.length)
+    : 0;
 
   return (
     <div className="ra-page">
       <div className="ra-header">
         <div>
-          <h1 className="lb-title">️ Regulatory Autopilot</h1>
-          <p className="lb-subtitle">One-click compliance documentation for every major AI regulation</p>
+          <h1 className="lb-title">Regulatory Autopilot</h1>
+          <p className="lb-subtitle">Continuous automated compliance documentation for major international AI regulations</p>
         </div>
-        <button className="btn btn-primary" onClick={() => exportReport(selectedReg)} disabled={exporting !== null}>
-          {exporting ? "Exporting..." : "Export Report"}
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          {feedback && (
+            <span style={{ fontSize: 12, color: "var(--accent-cyan)", background: "rgba(6,182,212,0.1)", padding: "4px 10px", borderRadius: 4 }}>
+              {feedback}
+            </span>
+          )}
+          {canReassess ? (
+            <button
+              className="btn btn-secondary btn-sm"
+              onClick={handleReassess}
+              disabled={reassessing}
+              style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+            >
+              <RefreshCw style={{ width: 13, height: 13, animation: reassessing ? "spin 1s linear infinite" : "none" }} />
+              <span>{reassessing ? "Reassessing..." : "Reassess Compliance"}</span>
+            </button>
+          ) : (
+            <span style={{ fontSize: 11, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 4 }}>
+              <Lock style={{ width: 12, height: 12 }} />
+              Viewer Mode
+            </span>
+          )}
+          {selected && (
+            <button
+              className="btn btn-primary"
+              onClick={() => handleExport(selected.regulation_id)}
+              disabled={exporting !== null}
+              style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+            >
+              <Download style={{ width: 14, height: 14 }} />
+              <span>{exporting ? "Exporting..." : "Export Assessment"}</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Overall Compliance */}
@@ -144,61 +180,108 @@ export default function RegulatoryAutopilotPage() {
         <div className="ra-overview-score">
           <svg width="100" height="100" viewBox="0 0 100 100">
             <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="8" />
-            <circle cx="50" cy="50" r="42" fill="none" stroke={overallCompliance >= 80 ? "#10b981" : "#f59e0b"} strokeWidth="8"
-              strokeDasharray={`${(overallCompliance / 100) * 264} 264`} strokeLinecap="round" transform="rotate(-90 50 50)" />
+            <circle
+              cx="50"
+              cy="50"
+              r="42"
+              fill="none"
+              stroke={overallCompliance >= 80 ? "#10b981" : "#f59e0b"}
+              strokeWidth="8"
+              strokeDasharray={`${(overallCompliance / 100) * 264} 264`}
+              strokeLinecap="round"
+              transform="rotate(-90 50 50)"
+            />
           </svg>
           <div className="ra-overview-inner">
             <div className="ra-overview-num">{overallCompliance}%</div>
-            <div className="ra-overview-label">Overall</div>
+            <div className="ra-overview-label">Overall Rate</div>
           </div>
         </div>
+
         <div className="ra-reg-pills">
-          {regulations.map(r => {
-            const rate = Math.round((r.requirements.filter(req => req.status === "compliant").length / r.requirements.length) * 100);
-            return (
-              <button key={r.id} className={`ra-reg-pill ${selectedReg === r.id ? "active" : ""}`} onClick={() => setSelectedReg(r.id)}>
-                <span>{r.icon}</span>
-                <span className="ra-reg-pill-name">{r.name}</span>
-                <span className="ra-reg-pill-rate" style={{ color: rate >= 80 ? "#10b981" : rate >= 60 ? "#f59e0b" : "#ef4444" }}>{rate}%</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Selected Regulation Detail */}
-      <div className="ra-detail">
-        <div className="ra-detail-header">
-          <span style={{ fontSize: 32 }}>{selected.icon}</span>
-          <div>
-            <h2 className="ra-detail-name">{selected.name}</h2>
-            <p className="ra-detail-desc">{selected.description}</p>
-          </div>
-          <div className="ra-compliance-badge" style={{
-            background: complianceRate >= 80 ? "rgba(16,185,129,0.1)" : "rgba(245,158,11,0.1)",
-            color: complianceRate >= 80 ? "#10b981" : "#f59e0b",
-            borderColor: complianceRate >= 80 ? "rgba(16,185,129,0.3)" : "rgba(245,158,11,0.3)"
-          }}>
-            {complianceRate}% Compliant
-          </div>
-        </div>
-
-        <div className="ra-req-list">
-          {selected.requirements.map((req, i) => {
-            const sc = STATUS_MAP[req.status];
-            return (
-              <div key={i} className="ra-req-card">
-                <div className="ra-req-status" style={{ background: sc.bg, color: sc.color }}>{sc.icon}</div>
-                <div className="ra-req-info">
-                  <div className="ra-req-name">{req.name}</div>
-                  <div className="ra-req-detail">{req.detail}</div>
-                </div>
-                <span className="ra-req-badge" style={{ background: sc.bg, color: sc.color }}>{sc.label}</span>
+          {assessments.map(r => (
+            <button
+              key={r.regulation_id}
+              className={`ra-reg-pill ${selectedReg === r.regulation_id ? "active" : ""}`}
+              onClick={() => setSelectedReg(r.regulation_id)}
+            >
+              <Scale style={{ width: 14, height: 14, color: "var(--accent-cyan)" }} />
+              <div className="ra-pill-info">
+                <span className="ra-pill-name">{r.regulation_name}</span>
+                <span className="ra-pill-rate" style={{ color: r.compliance_rate >= 80 ? "#10b981" : "#f59e0b" }}>
+                  {r.compliance_rate}% compliant
+                </span>
               </div>
-            );
-          })}
+            </button>
+          ))}
         </div>
       </div>
+
+      {selected ? (
+        <div className="ra-detail" style={{ marginTop: 24 }}>
+          <div className="card" style={{ padding: 24 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
+              <div>
+                <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800 }}>{selected.regulation_name}</h2>
+                <p style={{ margin: "4px 0 0", fontSize: 12, color: "var(--text-muted)" }}>
+                  Last Assessed: {new Date(selected.assessed_at).toLocaleDateString()} • {selected.requirements.length} Evaluated Clauses
+                </p>
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <div style={{ fontSize: 24, fontWeight: 900, color: selected.compliance_rate >= 80 ? "#10b981" : "#f59e0b" }}>
+                  {selected.compliance_rate}%
+                </div>
+                <div style={{ fontSize: 11, color: "var(--text-muted)" }}>Compliance Rating</div>
+              </div>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {selected.requirements.map((req, idx) => {
+                const sc = STATUS_MAP[req.status] || STATUS_MAP.partial;
+                return (
+                  <div
+                    key={idx}
+                    style={{
+                      padding: "12px 16px",
+                      background: "var(--bg-secondary)",
+                      borderRadius: 6,
+                      border: "1px solid var(--border-color)",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center"
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: 13, color: "var(--text-primary)" }}>{req.name}</div>
+                      <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>{req.detail}</div>
+                    </div>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 700,
+                        padding: "3px 10px",
+                        borderRadius: 6,
+                        background: sc.bg,
+                        color: sc.color,
+                        flexShrink: 0,
+                        marginLeft: 16
+                      }}
+                    >
+                      {sc.label}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="card" style={{ padding: 48, textAlign: "center", color: "var(--text-muted)", marginTop: 20 }}>
+          <CheckCircle2 style={{ width: 40, height: 40, color: "var(--accent-green)", margin: "0 auto 12px" }} />
+          <h3 style={{ margin: "0 0 6px", color: "var(--text-primary)" }}>No Compliance Assessments Found</h3>
+          <p style={{ margin: 0, fontSize: 13 }}>Click &quot;Reassess Compliance&quot; to audit platform controls.</p>
+        </div>
+      )}
     </div>
   );
 }

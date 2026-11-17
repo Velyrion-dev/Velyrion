@@ -1,106 +1,215 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { api, Agent } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
+import {
+  Network,
+  ArrowRight,
+  ShieldCheck,
+  AlertOctagon,
+  Clock,
+  RefreshCw,
+  Cpu,
+  ShieldAlert,
+  CheckCircle2
+} from "lucide-react";
 
-interface AgentNode {
-  agent: Agent;
-  x: number;
-  y: number;
-}
-
-interface MessageFlow {
-  from: string;
-  to: string;
+interface FlowRecord {
+  flow_id: string;
+  from_agent_id: string;
+  from_agent_name: string;
+  to_agent_id: string;
+  to_agent_name: string;
   action: string;
-  status: "governed" | "blocked" | "pending";
+  status: string;
   timestamp: string;
 }
 
-const FLOW_STATUS = {
-  governed: { color: "#10b981", bg: "rgba(16,185,129,0.1)", label: "Governed", icon: "" },
-  blocked: { color: "#ef4444", bg: "rgba(239,68,68,0.1)", label: "Blocked", icon: "" },
-  pending: { color: "#f59e0b", bg: "rgba(245,158,11,0.1)", label: "Pending", icon: "" },
+interface InterPolicy {
+  policy_id: string;
+  name: string;
+  rule: string;
+  enforcement: string;
+}
+
+const FLOW_STATUS: Record<string, { color: string; bg: string; label: string }> = {
+  governed: { color: "#10b981", bg: "rgba(16,185,129,0.1)", label: "Governed" },
+  blocked: { color: "#ef4444", bg: "rgba(239,68,68,0.1)", label: "Blocked" },
+  pending: { color: "#f59e0b", bg: "rgba(245,158,11,0.1)", label: "Pending" },
 };
 
-export default function MultiAgentProtocolPage() {
-  const [agents, setAgents] = useState<Agent[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedFlow, setSelectedFlow] = useState<MessageFlow | null>(null);
+const DEFAULT_POLICIES: InterPolicy[] = [
+  { policy_id: "pol-1", name: "Cross-Boundary Tool Lock", rule: "Agents may NOT invoke tools outside their assigned security perimeter", enforcement: "enforced" },
+  { policy_id: "pol-2", name: "Data Sensitivity Relay", rule: "Data relayed between agents must match the lower data classification level", enforcement: "enforced" },
+  { policy_id: "pol-3", name: "Autonomous Budget Transfer", rule: "Inter-agent token budget delegation requires human approval", enforcement: "enforced" },
+  { policy_id: "pol-4", name: "Scope-Bounded Delegation", rule: "Agents may delegate tasks only to agents within the same organizational scope", enforcement: "enforced" },
+  { policy_id: "pol-5", name: "Consensus Verification", rule: "Aggregated multi-agent outputs require deterministic schema validation", enforcement: "monitoring" },
+];
 
-  useEffect(() => {
-    api.getAgents().then(a => { setAgents(a); setLoading(false); }).catch(() => setLoading(false));
+export default function MultiAgentProtocolPage() {
+  const { user } = useAuth();
+  const [agents, setAgents] = useState<Agent[]>([]);
+  const [flows, setFlows] = useState<FlowRecord[]>([]);
+  const [stats, setStats] = useState<{ total: number; governed: number; blocked: number; pending: number }>({
+    total: 0,
+    governed: 0,
+    blocked: 0,
+    pending: 0,
+  });
+  const [policies, setPolicies] = useState<InterPolicy[]>(DEFAULT_POLICIES);
+  const [loading, setLoading] = useState(true);
+  const [selectedFlow, setSelectedFlow] = useState<FlowRecord | null>(null);
+
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [fetchedAgents, fetchedFlows, fetchedStats, fetchedPolicies] = await Promise.all([
+        api.getAgents().catch(() => []),
+        api.getAgentFlows(50).catch(() => []),
+        api.getFlowStats().catch(() => ({ total: 0, governed: 0, blocked: 0, pending: 0 })),
+        api.getInterAgentPolicies().catch(() => []),
+      ]);
+
+      setAgents(fetchedAgents);
+      setFlows(fetchedFlows);
+      setStats(fetchedStats);
+      if (fetchedPolicies && fetchedPolicies.length > 0) {
+        setPolicies(fetchedPolicies);
+      }
+    } catch (e) {
+      console.error("Multi-agent fetch failed:", e);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  if (loading) return <div className="ma-page"><div className="lb-header"><h1 className="lb-title">Multi-Agent Protocol</h1><p className="lb-subtitle">Loading topology...</p></div></div>;
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
-  // Generate inter-agent flows
-  const flows: MessageFlow[] = agents.length >= 2 ? [
-    { from: agents[0]?.agent_name, to: agents[1]?.agent_name, action: "Data request", status: "governed", timestamp: new Date(Date.now() - 60000).toISOString() },
-    { from: agents[1]?.agent_name, to: agents[2]?.agent_name || agents[0]?.agent_name, action: "Task delegation", status: "governed", timestamp: new Date(Date.now() - 120000).toISOString() },
-    { from: agents[2]?.agent_name || agents[0]?.agent_name, to: agents[3]?.agent_name || agents[1]?.agent_name, action: "Result aggregation", status: "governed", timestamp: new Date(Date.now() - 180000).toISOString() },
-    { from: agents[0]?.agent_name, to: agents[3]?.agent_name || agents[1]?.agent_name, action: "Unauthorized tool share", status: "blocked", timestamp: new Date(Date.now() - 300000).toISOString() },
-    { from: agents[1]?.agent_name, to: agents[0]?.agent_name, action: "Budget transfer request", status: "pending", timestamp: new Date(Date.now() - 600000).toISOString() },
-    { from: agents[3]?.agent_name || agents[0]?.agent_name, to: agents[0]?.agent_name, action: "Status report", status: "governed", timestamp: new Date(Date.now() - 900000).toISOString() },
-  ] : [];
+  if (loading) {
+    return (
+      <div className="ma-page">
+        <div className="lb-header">
+          <h1 className="lb-title">Multi-Agent Protocol</h1>
+          <p className="lb-subtitle">Querying inter-agent communication flows and topology from database...</p>
+        </div>
+      </div>
+    );
+  }
 
-  const governedCount = flows.filter(f => f.status === "governed").length;
-  const blockedCount = flows.filter(f => f.status === "blocked").length;
-  const pendingCount = flows.filter(f => f.status === "pending").length;
-
-  const policies = [
-    { name: "Tool Sharing", rule: "Agents may NOT share tools across permission boundaries", status: "enforced" },
-    { name: "Data Relay", rule: "Data passed between agents must match both agents' access levels", status: "enforced" },
-    { name: "Budget Transfer", rule: "Token budget transfers require human approval", status: "enforced" },
-    { name: "Task Delegation", rule: "Agents may delegate within same department only", status: "enforced" },
-    { name: "Result Aggregation", rule: "Multi-agent results must be validated before output", status: "monitoring" },
-  ];
+  const governedCount = stats.governed || flows.filter(f => f.status === "governed").length;
+  const blockedCount = stats.blocked || flows.filter(f => f.status === "blocked").length;
+  const pendingCount = stats.pending || flows.filter(f => f.status === "pending").length;
 
   return (
     <div className="ma-page">
-      <div className="lb-header">
-        <h1 className="lb-title">Multi-Agent Governance Protocol</h1>
-        <p className="lb-subtitle">Runtime governance layer for inter-agent communication</p>
+      <div className="lb-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+        <div>
+          <h1 className="lb-title">Multi-Agent Governance Protocol</h1>
+          <p className="lb-subtitle">Runtime security boundaries and policy enforcement for collaborative multi-agent workflows</p>
+        </div>
+        <button className="btn btn-secondary btn-sm" onClick={() => loadData()} title="Refresh Topology">
+          <RefreshCw style={{ width: 14, height: 14 }} />
+        </button>
       </div>
 
       <div className="an-kpi-row" style={{ gridTemplateColumns: "repeat(4, 1fr)" }}>
-        <div className="an-kpi blue"><div className="an-kpi-icon"></div><div className="an-kpi-data"><div className="an-kpi-value">{agents.length}</div><div className="an-kpi-label">Agents in Mesh</div></div></div>
-        <div className="an-kpi green"><div className="an-kpi-icon"></div><div className="an-kpi-data"><div className="an-kpi-value">{governedCount}</div><div className="an-kpi-label">Governed Flows</div></div></div>
-        <div className="an-kpi red"><div className="an-kpi-icon"></div><div className="an-kpi-data"><div className="an-kpi-value">{blockedCount}</div><div className="an-kpi-label">Blocked</div></div></div>
-        <div className="an-kpi yellow"><div className="an-kpi-icon"></div><div className="an-kpi-data"><div className="an-kpi-value">{pendingCount}</div><div className="an-kpi-label">Pending Review</div></div></div>
+        <div className="an-kpi blue">
+          <div className="an-kpi-icon">
+            <Cpu style={{ width: 18, height: 18 }} />
+          </div>
+          <div className="an-kpi-data">
+            <div className="an-kpi-value">{agents.length}</div>
+            <div className="an-kpi-label">Active Agents</div>
+          </div>
+        </div>
+        <div className="an-kpi green">
+          <div className="an-kpi-icon">
+            <ShieldCheck style={{ width: 18, height: 18 }} />
+          </div>
+          <div className="an-kpi-data">
+            <div className="an-kpi-value">{governedCount}</div>
+            <div className="an-kpi-label">Governed Flows</div>
+          </div>
+        </div>
+        <div className="an-kpi red">
+          <div className="an-kpi-icon">
+            <AlertOctagon style={{ width: 18, height: 18 }} />
+          </div>
+          <div className="an-kpi-data">
+            <div className="an-kpi-value">{blockedCount}</div>
+            <div className="an-kpi-label">Blocked Attempts</div>
+          </div>
+        </div>
+        <div className="an-kpi yellow">
+          <div className="an-kpi-icon">
+            <Clock style={{ width: 18, height: 18 }} />
+          </div>
+          <div className="an-kpi-data">
+            <div className="an-kpi-value">{pendingCount}</div>
+            <div className="an-kpi-label">Pending Verification</div>
+          </div>
+        </div>
       </div>
 
       <div className="an-bottom-grid">
         {/* Message Flows */}
         <div className="an-chart-card">
-          <div className="an-chart-title">Inter-Agent Message Flows</div>
-          <div className="ma-flow-list">
-            {flows.map((f, i) => {
-              const sc = FLOW_STATUS[f.status];
-              return (
-                <div key={i} className={`ma-flow-card ${selectedFlow === f ? "active" : ""}`} onClick={() => setSelectedFlow(f)}>
-                  <span style={{ fontSize: 14 }}>{sc.icon}</span>
-                  <div className="ma-flow-info">
-                    <div className="ma-flow-route">
-                      <span className="ma-flow-agent">{f.from}</span>
-                      <span className="tm-ag-arrow">→</span>
-                      <span className="ma-flow-agent">{f.to}</span>
+          <div className="an-chart-title">Inter-Agent Flow Log ({flows.length})</div>
+          {flows.length === 0 ? (
+            <div className="an-empty">
+              No inter-agent communication flows recorded yet. Dispatched agent interactions will stream here.
+            </div>
+          ) : (
+            <div className="ma-flow-list">
+              {flows.map(f => {
+                const sc = FLOW_STATUS[f.status] || FLOW_STATUS.governed;
+                return (
+                  <div
+                    key={f.flow_id}
+                    className={`ma-flow-card ${selectedFlow?.flow_id === f.flow_id ? "active" : ""}`}
+                    onClick={() => setSelectedFlow(f)}
+                  >
+                    <div className="ma-flow-info">
+                      <div className="ma-flow-route" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <span className="ma-flow-agent">{f.from_agent_name}</span>
+                        <ArrowRight style={{ width: 12, height: 12, color: "var(--text-muted)" }} />
+                        <span className="ma-flow-agent">{f.to_agent_name}</span>
+                      </div>
+                      <div className="ma-flow-action">{f.action}</div>
                     </div>
-                    <div className="ma-flow-action">{f.action}</div>
+                    <span className="ra-req-badge" style={{ background: sc.bg, color: sc.color }}>
+                      {sc.label}
+                    </span>
                   </div>
-                  <span className="ra-req-badge" style={{ background: sc.bg, color: sc.color }}>{sc.label}</span>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
 
           {selectedFlow && (
             <div className="ma-flow-detail" style={{ marginTop: 16 }}>
-              <div className="an-chart-title">Flow Detail</div>
+              <div className="an-chart-title">Flow Diagnostic Details</div>
               <div className="fr-state-grid" style={{ gridTemplateColumns: "repeat(2, 1fr)" }}>
-                <div className="fr-state-item"><span className="fr-state-label">From</span><span className="fr-state-value">{selectedFlow.from}</span></div>
-                <div className="fr-state-item"><span className="fr-state-label">To</span><span className="fr-state-value">{selectedFlow.to}</span></div>
-                <div className="fr-state-item"><span className="fr-state-label">Action</span><span className="fr-state-value">{selectedFlow.action}</span></div>
-                <div className="fr-state-item"><span className="fr-state-label">Status</span><span className="fr-state-value" style={{ color: FLOW_STATUS[selectedFlow.status].color, textTransform: "capitalize" }}>{selectedFlow.status}</span></div>
+                <div className="fr-state-item">
+                  <span className="fr-state-label">Source Agent</span>
+                  <span className="fr-state-value">{selectedFlow.from_agent_name}</span>
+                </div>
+                <div className="fr-state-item">
+                  <span className="fr-state-label">Destination Agent</span>
+                  <span className="fr-state-value">{selectedFlow.to_agent_name}</span>
+                </div>
+                <div className="fr-state-item">
+                  <span className="fr-state-label">Action Signature</span>
+                  <span className="fr-state-value">{selectedFlow.action}</span>
+                </div>
+                <div className="fr-state-item">
+                  <span className="fr-state-label">Governance State</span>
+                  <span className="fr-state-value" style={{ color: FLOW_STATUS[selectedFlow.status]?.color || "#10b981", textTransform: "capitalize" }}>
+                    {selectedFlow.status}
+                  </span>
+                </div>
               </div>
             </div>
           )}
@@ -108,13 +217,22 @@ export default function MultiAgentProtocolPage() {
 
         {/* Governance Policies */}
         <div className="an-chart-card">
-          <div className="an-chart-title">Inter-Agent Policies</div>
+          <div className="an-chart-title">Inter-Agent Security Rules ({policies.length})</div>
           <div className="ma-policy-list">
-            {policies.map((p, i) => (
-              <div key={i} className="ma-policy-card">
+            {policies.map(p => (
+              <div key={p.policy_id} className="ma-policy-card">
                 <div className="ma-policy-top">
                   <span className="ma-policy-name">{p.name}</span>
-                  <span className="ra-req-badge" style={{ background: p.status === "enforced" ? "rgba(16,185,129,0.1)" : "rgba(59,130,246,0.1)", color: p.status === "enforced" ? "#10b981" : "#3b82f6" }}>{p.status === "enforced" ? "Enforced" : "Monitoring"}</span>
+                  <span
+                    className="ra-req-badge"
+                    style={{
+                      background: p.enforcement === "enforced" ? "rgba(16,185,129,0.1)" : "rgba(59,130,246,0.1)",
+                      color: p.enforcement === "enforced" ? "#10b981" : "#3b82f6",
+                      textTransform: "capitalize"
+                    }}
+                  >
+                    {p.enforcement}
+                  </span>
                 </div>
                 <p className="ma-policy-rule">{p.rule}</p>
               </div>

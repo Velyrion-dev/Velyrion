@@ -1,125 +1,182 @@
 "use client";
-import { useEffect, useState } from "react";
-import { api, Agent, AgentHealth, Violation, AuditEvent } from "@/lib/api";
+import { useEffect, useState, useCallback } from "react";
+import { api, Agent } from "@/lib/api";
+import { usePermissions } from "@/lib/auth";
+import {
+  ShieldCheck,
+  Award,
+  Activity,
+  TrendingUp,
+  RefreshCw,
+  Lock,
+  CheckCircle2,
+  AlertTriangle,
+  Zap,
+  DollarSign,
+  Cpu
+} from "lucide-react";
 
-const fmt = (n: number) => n.toLocaleString("en-US");
-
-// ── Scoring Algorithm ──
 interface ScoreDimension {
   name: string;
-  icon: string;
-  score: number;       // 0-100
-  weight: number;      // 0-1
+  icon?: string;
+  score: number;
+  weight: number;
   description: string;
   color: string;
 }
 
-interface AgentScore {
-  agent: Agent;
-  overall: number;
+interface GovernanceScoreRecord {
+  score_id: string;
+  agent_id: string;
+  overall_score: number;
   grade: string;
-  gradeColor: string;
   certified: boolean;
   dimensions: ScoreDimension[];
+  computed_at: string;
 }
 
-const GRADE_MAP: { min: number; grade: string; color: string; label: string }[] = [
-  { min: 95, grade: "A+", color: "#10b981", label: "Exceptional" },
-  { min: 90, grade: "A", color: "#34d399", label: "Excellent" },
-  { min: 85, grade: "A-", color: "#6ee7b7", label: "Very Good" },
-  { min: 80, grade: "B+", color: "#3b82f6", label: "Good" },
-  { min: 75, grade: "B", color: "#60a5fa", label: "Above Average" },
-  { min: 70, grade: "B-", color: "#93c5fd", label: "Average" },
-  { min: 60, grade: "C", color: "#f59e0b", label: "Below Average" },
-  { min: 50, grade: "D", color: "#f97316", label: "Poor" },
-  { min: 0, grade: "F", color: "#ef4444", label: "Critical" },
-];
-
-function getGrade(score: number) {
-  return GRADE_MAP.find(g => score >= g.min) || GRADE_MAP[GRADE_MAP.length - 1];
-}
-
-function computeScore(agent: Agent, health: AgentHealth | undefined, violations: Violation[], events: AuditEvent[]): AgentScore {
-  const agentViolations = violations.filter(v => v.agent_id === agent.agent_id);
-  const agentEvents = events.filter(e => e.agent_id === agent.agent_id);
-  const healthScore = health?.health_score ?? 70;
-
-  // Dimension 1: Compliance (violations per 100 actions)
-  const violationRate = agent.total_actions > 0 ? (agent.total_violations / agent.total_actions) * 100 : 0;
-  const complianceScore = Math.max(0, Math.min(100, 100 - violationRate * 50));
-
-  // Dimension 2: Cost Efficiency
-  const costPerAction = agent.total_actions > 0 ? agent.total_cost_usd / agent.total_actions : 0;
-  const costScore = costPerAction <= 0.001 ? 100 : costPerAction <= 0.01 ? 85 : costPerAction <= 0.05 ? 70 : costPerAction <= 0.1 ? 50 : 30;
-
-  // Dimension 3: Budget Discipline
-  const budgetPct = agent.max_token_budget > 0 ? (agent.tokens_used / agent.max_token_budget) * 100 : 50;
-  const budgetScore = budgetPct <= 50 ? 100 : budgetPct <= 70 ? 85 : budgetPct <= 85 ? 70 : budgetPct <= 95 ? 50 : 20;
-
-  // Dimension 4: Health & Reliability
-  const reliabilityScore = healthScore;
-
-  // Dimension 5: Risk Profile
-  const criticalViolations = agentViolations.filter(v => v.severity === "CRITICAL").length;
-  const highViolations = agentViolations.filter(v => v.severity === "HIGH").length;
-  const riskPenalty = criticalViolations * 20 + highViolations * 10;
-  const riskScore = Math.max(0, 100 - riskPenalty);
-
-  // Dimension 6: Activity Volume (more actions = more proven)
-  const activityScore = agent.total_actions >= 10000 ? 100 : agent.total_actions >= 1000 ? 85 : agent.total_actions >= 100 ? 70 : agent.total_actions >= 10 ? 50 : 20;
-
-  const dimensions: ScoreDimension[] = [
-    { name: "Compliance", icon: "", score: Math.round(complianceScore), weight: 0.25, description: "Policy adherence & violation rate", color: "#3b82f6" },
-    { name: "Cost Efficiency", icon: "", score: Math.round(costScore), weight: 0.15, description: "Cost per action optimization", color: "#10b981" },
-    { name: "Budget Discipline", icon: "", score: Math.round(budgetScore), weight: 0.15, description: "Token budget utilization", color: "#8b5cf6" },
-    { name: "Reliability", icon: "️", score: Math.round(reliabilityScore), weight: 0.20, description: "Health score & uptime", color: "#f59e0b" },
-    { name: "Risk Profile", icon: "", score: Math.round(riskScore), weight: 0.15, description: "Severity of past violations", color: "#ef4444" },
-    { name: "Proven Track Record", icon: "", score: Math.round(activityScore), weight: 0.10, description: "Volume of governed actions", color: "#06b6d4" },
-  ];
-
-  const overall = Math.round(dimensions.reduce((s, d) => s + d.score * d.weight, 0));
-  const grade = getGrade(overall);
-
-  return {
-    agent,
-    overall,
-    grade: grade.grade,
-    gradeColor: grade.color,
-    certified: overall >= 80,
-    dimensions,
-  };
-}
+const GRADE_COLORS: Record<string, string> = {
+  "A+": "#10b981",
+  "A": "#34d399",
+  "A-": "#6ee7b7",
+  "B+": "#3b82f6",
+  "B": "#60a5fa",
+  "B-": "#93c5fd",
+  "C": "#f59e0b",
+  "D": "#f97316",
+  "F": "#ef4444",
+};
 
 export default function GovernanceScorePage() {
+  const { isAdmin, isOperator, canConfigurePolicies } = usePermissions();
+  const canRecompute = canConfigurePolicies || isAdmin || isOperator;
+
+  const [scores, setScores] = useState<GovernanceScoreRecord[]>([]);
   const [agents, setAgents] = useState<Agent[]>([]);
-  const [healthData, setHealthData] = useState<AgentHealth[]>([]);
-  const [violations, setViolations] = useState<Violation[]>([]);
-  const [events, setEvents] = useState<AuditEvent[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
+  const [recomputing, setRecomputing] = useState(false);
+  const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState("");
+
+  const loadScores = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [fetchedScores, fetchedAgents] = await Promise.all([
+        api.getGovernanceScores().catch(() => []),
+        api.getAgents().catch(() => []),
+      ]);
+
+      setAgents(fetchedAgents);
+
+      if (fetchedScores.length === 0 && fetchedAgents.length > 0) {
+        // First-time compute
+        try {
+          await api.recomputeGovernanceScores();
+          const fresh = await api.getGovernanceScores();
+          setScores(fresh);
+          if (fresh.length > 0) setSelectedAgentId(fresh[0].agent_id);
+          setLoading(false);
+          return;
+        } catch {
+          // ignore
+        }
+      }
+
+      setScores(fetchedScores);
+      if (fetchedScores.length > 0 && !selectedAgentId) {
+        setSelectedAgentId(fetchedScores[0].agent_id);
+      }
+    } catch (e) {
+      console.error("Failed to load governance scores:", e);
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedAgentId]);
 
   useEffect(() => {
-    Promise.all([api.getAgents(), api.getHealth(), api.getViolations(200), api.getEvents(500)])
-      .then(([a, h, v, e]) => { setAgents(a); setHealthData(h); setViolations(v); setEvents(e); if (a.length > 0) setSelectedAgent(a[0].agent_id); setLoading(false); })
-      .catch(() => setLoading(false));
-  }, []);
+    loadScores();
+  }, [loadScores]);
 
-  if (loading) return <div className="gs-page"><div className="lb-header"><h1 className="lb-title">Governance Score</h1><p className="lb-subtitle">Computing scores...</p></div></div>;
+  const handleRecompute = async () => {
+    if (!canRecompute || recomputing) return;
+    setRecomputing(true);
+    try {
+      const res = await api.recomputeGovernanceScores();
+      setFeedback(`Successfully recomputed ${res.recomputed} agent scores`);
+      setTimeout(() => setFeedback(""), 4000);
+      await loadScores();
+    } catch (err: unknown) {
+      setFeedback(err instanceof Error ? err.message : "Failed to recompute scores");
+    } finally {
+      setRecomputing(false);
+    }
+  };
 
-  const scores = agents.map(a => computeScore(a, healthData.find(h => h.agent_id === a.agent_id), violations, events));
-  scores.sort((a, b) => b.overall - a.overall);
+  const getDimensionIcon = (name: string) => {
+    switch (name.toLowerCase()) {
+      case "compliance":
+        return <ShieldCheck style={{ width: 14, height: 14, color: "#3b82f6" }} />;
+      case "cost efficiency":
+        return <DollarSign style={{ width: 14, height: 14, color: "#10b981" }} />;
+      case "budget discipline":
+        return <Zap style={{ width: 14, height: 14, color: "#8b5cf6" }} />;
+      case "reliability":
+        return <Activity style={{ width: 14, height: 14, color: "#f59e0b" }} />;
+      case "risk profile":
+        return <AlertTriangle style={{ width: 14, height: 14, color: "#ef4444" }} />;
+      default:
+        return <TrendingUp style={{ width: 14, height: 14, color: "#06b6d4" }} />;
+    }
+  };
 
-  const fleetAvg = scores.length > 0 ? Math.round(scores.reduce((s, sc) => s + sc.overall, 0) / scores.length) : 0;
+  if (loading) {
+    return (
+      <div className="gs-page">
+        <div className="lb-header">
+          <h1 className="lb-title">Governance Score™</h1>
+          <p className="lb-subtitle">Loading persistent agent trust scores from backend database...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const fleetAvg = scores.length > 0
+    ? Math.round(scores.reduce((s, sc) => s + sc.overall_score, 0) / scores.length)
+    : 0;
   const certifiedCount = scores.filter(s => s.certified).length;
-  const fleetGrade = getGrade(fleetAvg);
-  const selected = scores.find(s => s.agent.agent_id === selectedAgent);
+  const fleetColor = fleetAvg >= 80 ? "#10b981" : fleetAvg >= 60 ? "#f59e0b" : "#ef4444";
+  const selected = scores.find(s => s.agent_id === selectedAgentId);
+  const selectedAgent = agents.find(a => a.agent_id === selectedAgentId);
 
   return (
     <div className="gs-page">
       <div className="gs-header">
         <div>
           <h1 className="lb-title">Governance Score™</h1>
-          <p className="lb-subtitle">Trust certification for every AI agent in your fleet</p>
+          <p className="lb-subtitle">Standardized trust certification and dimensional risk auditing for autonomous agents</p>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          {feedback && (
+            <span style={{ fontSize: 12, color: "var(--accent-cyan)", background: "rgba(6,182,212,0.1)", padding: "4px 10px", borderRadius: 4 }}>
+              {feedback}
+            </span>
+          )}
+          {canRecompute ? (
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={handleRecompute}
+              disabled={recomputing}
+              style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+            >
+              <RefreshCw style={{ width: 13, height: 13, animation: recomputing ? "spin 1s linear infinite" : "none" }} />
+              <span>{recomputing ? "Recomputing..." : "Recompute Scores"}</span>
+            </button>
+          ) : (
+            <span style={{ fontSize: 11, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 4 }}>
+              <Lock style={{ width: 12, height: 12 }} />
+              Viewer Mode
+            </span>
+          )}
         </div>
       </div>
 
@@ -128,136 +185,144 @@ export default function GovernanceScorePage() {
         <div className="gs-fleet-score-ring">
           <svg width="120" height="120" viewBox="0 0 120 120">
             <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="8" />
-            <circle cx="60" cy="60" r="52" fill="none" stroke={fleetGrade.color} strokeWidth="8"
+            <circle
+              cx="60"
+              cy="60"
+              r="52"
+              fill="none"
+              stroke={fleetColor}
+              strokeWidth="8"
               strokeDasharray={`${(fleetAvg / 100) * 327} 327`}
-              strokeLinecap="round" transform="rotate(-90 60 60)"
-              style={{ transition: "stroke-dasharray 1s ease" }} />
+              strokeLinecap="round"
+              transform="rotate(-90 60 60)"
+              style={{ transition: "stroke-dasharray 1s ease" }}
+            />
           </svg>
           <div className="gs-fleet-score-inner">
-            <div className="gs-fleet-score-num" style={{ color: fleetGrade.color }}>{fleetAvg}</div>
-            <div className="gs-fleet-score-label">Fleet Score</div>
+            <div className="gs-fleet-score-num" style={{ color: fleetColor }}>{fleetAvg}</div>
+            <div className="gs-fleet-score-label">Fleet Average</div>
           </div>
         </div>
-        <div className="gs-fleet-info">
-          <div className="gs-fleet-grade" style={{ color: fleetGrade.color }}>
-            Grade: {fleetGrade.grade} — {fleetGrade.label}
+
+        <div className="gs-fleet-stats">
+          <div className="gs-fleet-stat">
+            <span className="gs-stat-val" style={{ color: "var(--accent-green)" }}>{certifiedCount}</span>
+            <span className="gs-stat-lbl">Certified Agents (Score &ge; 80)</span>
           </div>
-          <div className="gs-fleet-stats">
-            <div className="gs-fleet-stat">
-              <span className="gs-fleet-stat-val">{agents.length}</span>
-              <span className="gs-fleet-stat-label">Total Agents</span>
-            </div>
-            <div className="gs-fleet-stat">
-              <span className="gs-fleet-stat-val" style={{ color: "var(--accent-green)" }}>{certifiedCount}</span>
-              <span className="gs-fleet-stat-label">Certified </span>
-            </div>
-            <div className="gs-fleet-stat">
-              <span className="gs-fleet-stat-val" style={{ color: "var(--accent-red)" }}>{agents.length - certifiedCount}</span>
-              <span className="gs-fleet-stat-label">Uncertified</span>
-            </div>
+          <div className="gs-fleet-stat">
+            <span className="gs-stat-val">{scores.length}</span>
+            <span className="gs-stat-lbl">Evaluated Agents</span>
+          </div>
+          <div className="gs-fleet-stat">
+            <span className="gs-stat-val" style={{ color: "var(--accent-cyan)" }}>
+              {scores.length > 0 ? `${Math.round((certifiedCount / scores.length) * 100)}%` : "0%"}
+            </span>
+            <span className="gs-stat-lbl">Fleet Certification Rate</span>
           </div>
         </div>
       </div>
 
-      <div className="gs-main">
-        {/* Agent Scores List */}
-        <div className="gs-scores-list">
-          <div className="fr-sidebar-header"><span className="an-chart-title" style={{ margin: 0 }}>Agent Scores</span></div>
-          <div className="gs-agent-list">
-            {scores.map((s, i) => (
-              <button
-                key={s.agent.agent_id}
-                className={`gs-agent-card ${selectedAgent === s.agent.agent_id ? "active" : ""}`}
-                onClick={() => setSelectedAgent(s.agent.agent_id)}
-              >
-                <span className="gs-rank">#{i + 1}</span>
-                <div className="gs-agent-info">
-                  <span className="gs-agent-name">{s.agent.agent_name}</span>
-                  <span className="gs-agent-dept">{s.agent.department}</span>
-                </div>
-                <div className="gs-score-pill" style={{ background: `${s.gradeColor}20`, color: s.gradeColor }}>
-                  {s.overall} {s.grade}
-                </div>
-                {s.certified && <span className="gs-cert-badge" title="Velyrion Certified"></span>}
-              </button>
-            ))}
-          </div>
+      {scores.length === 0 ? (
+        <div className="card" style={{ padding: 48, textAlign: "center", color: "var(--text-muted)", marginTop: 20 }}>
+          <CheckCircle2 style={{ width: 40, height: 40, color: "var(--accent-green)", margin: "0 auto 12px" }} />
+          <h3 style={{ margin: "0 0 6px", color: "var(--text-primary)" }}>No Scores Generated Yet</h3>
+          <p style={{ margin: 0, fontSize: 13 }}>Click &quot;Recompute Scores&quot; to evaluate your registered agents against the governance criteria.</p>
         </div>
-
-        {/* Score Detail */}
-        {selected && (
-          <div className="gs-detail">
-            {/* Score Header */}
-            <div className="gs-detail-header">
-              <div className="gs-detail-ring">
-                <svg width="140" height="140" viewBox="0 0 140 140">
-                  <circle cx="70" cy="70" r="60" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="10" />
-                  <circle cx="70" cy="70" r="60" fill="none" stroke={selected.gradeColor} strokeWidth="10"
-                    strokeDasharray={`${(selected.overall / 100) * 377} 377`}
-                    strokeLinecap="round" transform="rotate(-90 70 70)"
-                    style={{ transition: "stroke-dasharray 1s ease" }} />
-                </svg>
-                <div className="gs-detail-ring-inner">
-                  <div className="gs-detail-score" style={{ color: selected.gradeColor }}>{selected.overall}</div>
-                  <div className="gs-detail-grade" style={{ color: selected.gradeColor }}>{selected.grade}</div>
-                </div>
-              </div>
-              <div className="gs-detail-info">
-                <h2 className="gs-detail-name">{selected.agent.agent_name}</h2>
-                <p className="gs-detail-dept">{selected.agent.department} • {selected.agent.status}</p>
-                {selected.certified ? (
-                  <div className="gs-cert-full">
-                    <span className="gs-cert-icon"></span>
-                    <div>
-                      <div className="gs-cert-title">Velyrion Certified™</div>
-                      <div className="gs-cert-sub">This agent meets governance standards</div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="gs-cert-full uncertified">
-                    <span className="gs-cert-icon"></span>
-                    <div>
-                      <div className="gs-cert-title">Not Certified</div>
-                      <div className="gs-cert-sub">Score must be ≥80 for certification</div>
-                    </div>
-                  </div>
-                )}
-              </div>
+      ) : (
+        <div className="gs-main" style={{ marginTop: 24 }}>
+          {/* Agent Score List */}
+          <div className="gs-scores-list">
+            <div className="fr-sidebar-header">
+              <span className="an-chart-title" style={{ margin: 0 }}>Agent Trust Rankings</span>
             </div>
-
-            {/* Dimension Breakdown */}
-            <div className="gs-dimensions">
-              <div className="an-chart-title">Score Breakdown</div>
-              {selected.dimensions.map(d => (
-                <div key={d.name} className="gs-dim-row">
-                  <div className="gs-dim-left">
-                    <span className="gs-dim-icon">{d.icon}</span>
-                    <div>
-                      <div className="gs-dim-name">{d.name}</div>
-                      <div className="gs-dim-desc">{d.description}</div>
+            <div className="gs-agent-list">
+              {scores.map(s => {
+                const ag = agents.find(a => a.agent_id === s.agent_id);
+                const gColor = GRADE_COLORS[s.grade] || "#3b82f6";
+                return (
+                  <button
+                    key={s.agent_id}
+                    className={`gs-agent-card ${selectedAgentId === s.agent_id ? "active" : ""}`}
+                    onClick={() => setSelectedAgentId(s.agent_id)}
+                  >
+                    <div className="gs-agent-info">
+                      <span className="gs-agent-name">{ag?.agent_name || s.agent_id}</span>
+                      <span className="gs-agent-dept">{ag?.department || "Autonomous Agent"}</span>
                     </div>
-                  </div>
-                  <div className="gs-dim-right">
-                    <div className="gs-dim-bar">
-                      <div className="gs-dim-fill" style={{ width: `${d.score}%`, background: d.color }} />
+                    <div style={{ textAlign: "right", display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: gColor }}>{s.overall_score}</span>
+                      <span className="gs-score-pill" style={{ background: `${gColor}20`, color: gColor }}>
+                        {s.grade}
+                      </span>
                     </div>
-                    <span className="gs-dim-score" style={{ color: d.color }}>{d.score}</span>
-                    <span className="gs-dim-weight">{(d.weight * 100).toFixed(0)}%</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Quick Stats */}
-            <div className="gs-quick-stats">
-              <div className="gs-qs-item"><span className="gs-qs-val">{fmt(selected.agent.total_actions)}</span><span className="gs-qs-label">Actions</span></div>
-              <div className="gs-qs-item"><span className="gs-qs-val">{selected.agent.total_violations}</span><span className="gs-qs-label">Violations</span></div>
-              <div className="gs-qs-item"><span className="gs-qs-val">${selected.agent.total_cost_usd.toFixed(2)}</span><span className="gs-qs-label">Total Cost</span></div>
-              <div className="gs-qs-item"><span className="gs-qs-val">{fmt(selected.agent.tokens_used)}</span><span className="gs-qs-label">Tokens</span></div>
+                  </button>
+                );
+              })}
             </div>
           </div>
-        )}
-      </div>
+
+          {/* Selected Agent Score Breakdown */}
+          {selected && (
+            <div className="gs-detail">
+              <div className="dna-header-card">
+                <div>
+                  <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800 }}>
+                    {selectedAgent?.agent_name || selected.agent_id}
+                  </h2>
+                  <p style={{ margin: "4px 0 0", fontSize: 12, color: "var(--text-muted)" }}>
+                    Department: {selectedAgent?.department || "Unassigned"} • Computed: {new Date(selected.computed_at).toLocaleDateString()}
+                  </p>
+                </div>
+                <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 12 }}>
+                  {selected.certified ? (
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: "var(--accent-green)", background: "rgba(16,185,129,0.1)", padding: "4px 10px", borderRadius: 6, border: "1px solid rgba(16,185,129,0.2)" }}>
+                      <Award style={{ width: 14, height: 14 }} />
+                      Velyrion Certified
+                    </span>
+                  ) : (
+                    <span style={{ fontSize: 12, color: "var(--text-muted)", background: "rgba(255,255,255,0.05)", padding: "4px 10px", borderRadius: 6 }}>
+                      Uncertified (&lt; 80)
+                    </span>
+                  )}
+                  <div style={{ textAlign: "right" }}>
+                    <div style={{ fontSize: 28, fontWeight: 900, color: GRADE_COLORS[selected.grade] || "#3b82f6" }}>
+                      {selected.overall_score}
+                    </div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)" }}>
+                      Grade {selected.grade}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Dimensions Breakdown */}
+              <div className="an-chart-card">
+                <div className="an-chart-title">Dimensional Trust Breakdown</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 12 }}>
+                  {(selected.dimensions || []).map((dim, idx) => (
+                    <div key={idx} style={{ padding: "10px 14px", background: "var(--bg-secondary)", borderRadius: 6, border: "1px solid var(--border-color)" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          {getDimensionIcon(dim.name)}
+                          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{dim.name}</span>
+                          <span style={{ fontSize: 11, color: "var(--text-muted)" }}>({Math.round(dim.weight * 100)}% weight)</span>
+                        </div>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: dim.color || "var(--text-primary)" }}>
+                          {dim.score}/100
+                        </span>
+                      </div>
+                      <div className="an-budget-bar" style={{ height: 6 }}>
+                        <div className="an-budget-fill" style={{ width: `${dim.score}%`, background: dim.color || "var(--accent-cyan)" }} />
+                      </div>
+                      <p style={{ margin: "6px 0 0", fontSize: 11, color: "var(--text-muted)" }}>{dim.description}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

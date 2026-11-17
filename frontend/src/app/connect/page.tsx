@@ -1,16 +1,38 @@
 "use client";
 import { useState } from "react";
-import { Terminal, Cpu, Bot, Zap, Code, ShieldCheck, Check, Copy } from "lucide-react";
+import {
+  Terminal,
+  Cpu,
+  Bot,
+  Zap,
+  Code,
+  ShieldCheck,
+  Check,
+  Copy,
+  Globe,
+  Webhook as WebhookIcon,
+  Layers,
+  Sparkles
+} from "lucide-react";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://velyrion.onrender.com";
 
-const PLATFORMS = [
+interface Platform {
+  name: string;
+  icon: React.ComponentType<{ style?: React.CSSProperties }>;
+  level: "Code" | "No-Code" | "Any";
+  color: string;
+  description: string;
+  code: string;
+}
+
+const PLATFORMS: Platform[] = [
   {
     name: "Python SDK",
-    icon: "",
+    icon: Code,
     level: "Code",
-    color: "#3776ab",
-    description: "Full governance with kill switch, policy engine, and async support.",
+    color: "#38bdf8",
+    description: "Native runtime governance with deterministic kill switch, policy engine, and async streaming.",
     code: `pip install velyrion
 
 from velyrion import Velyrion
@@ -18,14 +40,14 @@ from velyrion import Velyrion
 v = Velyrion(api_url="${API_BASE}")
 v.wrap(agent, agent_id="my-agent")
 
-# That's it — every action is now governed`,
+# Every agent tool execution and completion is now strictly governed`,
   },
   {
     name: "OpenAI",
-    icon: "",
+    icon: Sparkles,
     level: "Code",
-    color: "#10a37f",
-    description: "Wrap any OpenAI client to monitor completions, tokens, and costs.",
+    color: "#10b981",
+    description: "Wrap standard OpenAI client to monitor completions, token budgets, and cost ceilings.",
     code: `from openai import OpenAI
 from velyrion import Velyrion
 
@@ -33,18 +55,18 @@ client = OpenAI()
 v = Velyrion(api_url="${API_BASE}")
 v.wrap(client, agent_id="openai-agent")
 
-# Every chat completion is now governed
+# Every chat completion is now audited against policies
 response = client.chat.completions.create(
-    model="gpt-4",
-    messages=[{"role": "user", "content": "Hello"}]
+    model="gpt-4o",
+    messages=[{"role": "user", "content": "Analyze telemetry"}]
 )`,
   },
   {
     name: "Anthropic",
-    icon: "",
+    icon: Bot,
     level: "Code",
-    color: "#d4a574",
-    description: "Monitor Claude API calls with token tracking and cost analysis.",
+    color: "#f59e0b",
+    description: "Intercept Claude Messages API with real-time prompt firewall and boundary checks.",
     code: `from anthropic import Anthropic
 from velyrion import Velyrion
 
@@ -53,16 +75,17 @@ v = Velyrion(api_url="${API_BASE}")
 v.wrap(client, agent_id="claude-agent")
 
 response = client.messages.create(
-    model="claude-3-sonnet-20240229",
-    messages=[{"role": "user", "content": "Summarize"}]
+    model="claude-3-5-sonnet-20241022",
+    max_tokens=1024,
+    messages=[{"role": "user", "content": "Summarize financial risk"}]
 )`,
   },
   {
     name: "LangChain",
-    icon: "",
+    icon: Layers,
     level: "Code",
-    color: "#1c3c3c",
-    description: "Governance for LangChain agents, chains, and tools.",
+    color: "#a78bfa",
+    description: "Full governance hook for LangChain agent executors, custom tools, and vector chains.",
     code: `from langchain.agents import AgentExecutor
 from velyrion import Velyrion
 
@@ -70,15 +93,15 @@ agent = AgentExecutor(agent=my_agent, tools=tools)
 v = Velyrion(api_url="${API_BASE}")
 v.wrap(agent, agent_id="langchain-agent")
 
-result = agent.invoke({"input": "Analyze data"})`,
+result = agent.invoke({"input": "Perform database audit"})`,
   },
   {
-    name: "n8n",
-    icon: "",
+    name: "n8n Workflow",
+    icon: Zap,
     level: "No-Code",
     color: "#ea4b71",
-    description: "Add an HTTP Request node to any n8n workflow for governance.",
-    code: `// Add an HTTP Request node after your AI node:
+    description: "Insert an HTTP Request node into any n8n workflow for automated compliance logging.",
+    code: `// Add an HTTP Request node after your AI agent node:
 //
 // Method: POST
 // URL: ${API_BASE}/api/agent/event
@@ -94,10 +117,10 @@ result = agent.invoke({"input": "Analyze data"})`,
   },
   {
     name: "Make.com",
-    icon: "",
+    icon: Cpu,
     level: "No-Code",
-    color: "#6d28d9",
-    description: "Add an HTTP module in your Make scenario to report events.",
+    color: "#8b5cf6",
+    description: "Add an HTTP module in your Make scenario to stream governed execution events.",
     code: `// Add an HTTP "Make a request" module:
 //
 // URL: ${API_BASE}/api/agent/event
@@ -113,42 +136,39 @@ result = agent.invoke({"input": "Analyze data"})`,
   },
   {
     name: "REST API",
-    icon: "",
+    icon: Globe,
     level: "Any",
     color: "#3b82f6",
-    description: "Universal HTTP endpoint — works with any language or platform.",
+    description: "Universal REST endpoint — compatible with any language, framework, or orchestrator.",
     code: `curl -X POST ${API_BASE}/api/agent/event \\
   -H "Content-Type: application/json" \\
   -d '{
     "agent_id": "my-agent-001",
-    "task_description": "Process customer order",
-    "tool_used": "order_processor",
+    "task_description": "Process customer payment verification",
+    "tool_used": "payment_gateway",
     "token_cost": 250,
-    "confidence_score": 0.95,
+    "confidence_score": 0.98,
     "compute_cost_usd": 0.003
   }'`,
   },
   {
-    name: "Webhook",
-    icon: "",
+    name: "Outbound Webhook",
+    icon: WebhookIcon,
     level: "Any",
-    color: "#f59e0b",
-    description: "Fire-and-forget POST from any system — Zapier, IFTTT, custom apps.",
-    code: `// From any HTTP client, POST to:
+    color: "#f97316",
+    description: "Fire-and-forget JSON POST from Zapier, webhook relays, or edge serverless workers.",
+    code: `// From any HTTP client or webhook trigger, POST to:
 // ${API_BASE}/api/agent/event
 //
 // Required fields:
-//   agent_id (string) — your agent identifier
-//   task_description (string) — what the agent did
-//   tool_used (string) — which tool was used
+//   agent_id (string) — registered agent identifier
+//   task_description (string) — operation performed
+//   tool_used (string) — tool or service invoked
 //
 // Optional fields:
 //   token_cost (int) — tokens consumed
 //   compute_cost_usd (float) — cost in USD
-//   confidence_score (float) — 0.0 to 1.0
-//   duration_ms (int) — execution time
-//   input_data (string) — what was sent
-//   output_data (string) — what was returned`,
+//   confidence_score (float) — 0.0 to 1.0`,
   },
 ];
 
@@ -165,20 +185,29 @@ export default function ConnectPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const SelectedIcon = PLATFORMS[selected].icon;
+
   return (
     <div className="cn-page">
       <div className="cn-header">
         <div>
           <h1 className="cn-title">Universal Agent Connector</h1>
-          <p className="cn-subtitle">Connect any AI agent — from simple n8n workflows to enterprise production systems</p>
+          <p className="cn-subtitle">Integrate any AI agent runtime — from visual automation workflows to Python SDK and REST APIs</p>
         </div>
       </div>
 
       {/* Filter */}
       <div className="cn-filters">
         {["All", "Code", "No-Code", "Any"].map(f => (
-          <button key={f} className={`cn-filter-btn ${filter === f ? "active" : ""}`} onClick={() => { setFilter(f); setSelected(0); }}>
-            {f === "All" ? "All" : f === "Code" ? "Code" : f === "No-Code" ? "No-Code" : "Universal"}
+          <button
+            key={f}
+            className={`cn-filter-btn ${filter === f ? "active" : ""}`}
+            onClick={() => {
+              setFilter(f);
+              setSelected(0);
+            }}
+          >
+            {f === "All" ? "All Integrations" : f === "Code" ? "Code SDKs" : f === "No-Code" ? "No-Code Platforms" : "Universal APIs"}
           </button>
         ))}
       </div>
@@ -187,39 +216,50 @@ export default function ConnectPage() {
       <div className="cn-main">
         {/* Platform List */}
         <div className="cn-platform-list">
-          {filteredPlatforms.map((p, i) => (
-            <button
-              key={p.name}
-              className={`cn-platform-card ${selected === PLATFORMS.indexOf(p) ? "active" : ""}`}
-              onClick={() => setSelected(PLATFORMS.indexOf(p))}
-            >
-              <span className="cn-platform-icon">{p.icon}</span>
-              <div className="cn-platform-info">
-                <span className="cn-platform-name">{p.name}</span>
-                <span className="cn-platform-level" style={{ color: p.color }}>{p.level}</span>
-              </div>
-            </button>
-          ))}
+          {filteredPlatforms.map((p, i) => {
+            const Icon = p.icon;
+            const isSel = selected === PLATFORMS.indexOf(p);
+            return (
+              <button
+                key={p.name}
+                className={`cn-platform-card ${isSel ? "active" : ""}`}
+                onClick={() => setSelected(PLATFORMS.indexOf(p))}
+              >
+                <div style={{ width: 32, height: 32, borderRadius: 6, background: "var(--bg-secondary)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <Icon style={{ width: 16, height: 16, color: p.color }} />
+                </div>
+                <div className="cn-platform-info">
+                  <span className="cn-platform-name">{p.name}</span>
+                  <span className="cn-platform-level" style={{ color: p.color }}>{p.level}</span>
+                </div>
+              </button>
+            );
+          })}
         </div>
 
         {/* Code Viewer */}
         <div className="cn-code-panel">
           <div className="cn-code-top">
             <div>
-              <div className="cn-code-platform-name">
-                <span style={{ fontSize: 24 }}>{PLATFORMS[selected].icon}</span>
-                {PLATFORMS[selected].name}
+              <div className="cn-code-platform-name" style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <SelectedIcon style={{ width: 22, height: 22, color: PLATFORMS[selected].color }} />
+                <span>{PLATFORMS[selected].name}</span>
               </div>
               <p className="cn-code-desc">{PLATFORMS[selected].description}</p>
             </div>
-            <button className="btn btn-primary btn-sm" onClick={copyCode} style={{ gap: 4, flexShrink: 0 }}>
-              {copied ? "Copied!" : "Copy"}
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={copyCode}
+              style={{ display: "inline-flex", alignItems: "center", gap: 6, flexShrink: 0 }}
+            >
+              {copied ? <Check style={{ width: 14, height: 14 }} /> : <Copy style={{ width: 14, height: 14 }} />}
+              <span>{copied ? "Copied!" : "Copy Snippet"}</span>
             </button>
           </div>
-          <div className="lp-code-block" style={{ borderRadius: 14 }}>
+          <div className="lp-code-block" style={{ borderRadius: 12 }}>
             <div className="lp-code-header">
               <span className="lp-code-dots"><span /><span /><span /></span>
-              <span className="lp-code-filename">{PLATFORMS[selected].name}</span>
+              <span className="lp-code-filename">{PLATFORMS[selected].name} Setup</span>
             </div>
             <pre className="lp-code-content"><code>{PLATFORMS[selected].code}</code></pre>
           </div>
@@ -228,35 +268,59 @@ export default function ConnectPage() {
 
       {/* API Reference */}
       <div className="cn-api-ref">
-        <h2 className="cn-section-title">API Reference</h2>
+        <h2 className="cn-section-title">Telemetry Ingestion Endpoint</h2>
         <div className="cn-endpoint-card">
           <div className="cn-endpoint-method">POST</div>
           <code className="cn-endpoint-url">{API_BASE}/api/agent/event</code>
         </div>
         <div className="cn-fields-grid">
           <div className="cn-field">
-            <div className="cn-field-header"><span className="cn-field-name">agent_id</span><span className="cn-field-type">string</span><span className="cn-field-req">required</span></div>
-            <p className="cn-field-desc">Unique identifier for your agent</p>
+            <div className="cn-field-header">
+              <span className="cn-field-name">agent_id</span>
+              <span className="cn-field-type">string</span>
+              <span className="cn-field-req">required</span>
+            </div>
+            <p className="cn-field-desc">Unique identifier for your registered agent</p>
           </div>
           <div className="cn-field">
-            <div className="cn-field-header"><span className="cn-field-name">task_description</span><span className="cn-field-type">string</span><span className="cn-field-req">required</span></div>
-            <p className="cn-field-desc">What the agent did in this action</p>
+            <div className="cn-field-header">
+              <span className="cn-field-name">task_description</span>
+              <span className="cn-field-type">string</span>
+              <span className="cn-field-req">required</span>
+            </div>
+            <p className="cn-field-desc">Semantic description of the autonomous action</p>
           </div>
           <div className="cn-field">
-            <div className="cn-field-header"><span className="cn-field-name">tool_used</span><span className="cn-field-type">string</span><span className="cn-field-req">required</span></div>
-            <p className="cn-field-desc">Which tool or API was called</p>
+            <div className="cn-field-header">
+              <span className="cn-field-name">tool_used</span>
+              <span className="cn-field-type">string</span>
+              <span className="cn-field-req">required</span>
+            </div>
+            <p className="cn-field-desc">API or tool invoked during execution</p>
           </div>
           <div className="cn-field">
-            <div className="cn-field-header"><span className="cn-field-name">token_cost</span><span className="cn-field-type">integer</span><span className="cn-field-opt">optional</span></div>
-            <p className="cn-field-desc">Number of tokens consumed</p>
+            <div className="cn-field-header">
+              <span className="cn-field-name">token_cost</span>
+              <span className="cn-field-type">integer</span>
+              <span className="cn-field-opt">optional</span>
+            </div>
+            <p className="cn-field-desc">Total prompt and completion tokens consumed</p>
           </div>
           <div className="cn-field">
-            <div className="cn-field-header"><span className="cn-field-name">compute_cost_usd</span><span className="cn-field-type">float</span><span className="cn-field-opt">optional</span></div>
-            <p className="cn-field-desc">Cost in USD for this action</p>
+            <div className="cn-field-header">
+              <span className="cn-field-name">compute_cost_usd</span>
+              <span className="cn-field-type">float</span>
+              <span className="cn-field-opt">optional</span>
+            </div>
+            <p className="cn-field-desc">Incurred inference cost in USD</p>
           </div>
           <div className="cn-field">
-            <div className="cn-field-header"><span className="cn-field-name">confidence_score</span><span className="cn-field-type">float</span><span className="cn-field-opt">optional</span></div>
-            <p className="cn-field-desc">Agent confidence (0.0 - 1.0)</p>
+            <div className="cn-field-header">
+              <span className="cn-field-name">confidence_score</span>
+              <span className="cn-field-type">float</span>
+              <span className="cn-field-opt">optional</span>
+            </div>
+            <p className="cn-field-desc">Agent self-reported confidence metric (0.0 to 1.0)</p>
           </div>
         </div>
       </div>
