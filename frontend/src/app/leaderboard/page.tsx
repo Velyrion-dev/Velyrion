@@ -205,10 +205,20 @@ export default function LeaderboardPage() {
           <div className="lb-podium">
             {podium.map((r, i) => (
               <div key={r.agent.agent_id} className={`lb-podium-card rank-${i + 1}`}>
-                <div className="lb-medal">
-                  <span style={{ fontSize: 13, fontWeight: 900, color: i === 0 ? "#f59e0b" : i === 1 ? "#94a3b8" : "#d97706" }}>
-                    #{i + 1}
+                <div className="lb-medal" style={{ display: "flex", justifyContent: "space-between", width: "100%", alignItems: "center", marginBottom: 12 }}>
+                  <span style={{
+                    fontSize: 11,
+                    fontWeight: 700,
+                    letterSpacing: "0.5px",
+                    padding: "2px 8px",
+                    borderRadius: 4,
+                    background: i === 0 ? "rgba(245,158,11,0.12)" : "rgba(255,255,255,0.05)",
+                    color: i === 0 ? "#f59e0b" : "var(--text-secondary)",
+                    border: i === 0 ? "1px solid rgba(245,158,11,0.25)" : "1px solid var(--border-subtle)"
+                  }}>
+                    RANK #{i + 1}
                   </span>
+                  <span style={{ fontSize: 11, color: "var(--text-muted)" }}>{r.agent.status}</span>
                 </div>
                 <div className="lb-podium-name">{r.agent.agent_name}</div>
                 <div className="lb-podium-dept">{r.agent.department}</div>

@@ -25,32 +25,26 @@ const FEATURES = [
   {
     icon: FileText, title: "Immutable Audit Trail",
     desc: "Every agent action is logged with full context — timestamp, tool, input, output, cost, and confidence. Append-only. Zero data loss.",
-    gradient: "linear-gradient(135deg, #3b82f6, #8b5cf6)",
   },
   {
     icon: Shield, title: "Permission Engine",
     desc: "Real-time validation against each agent's permission profile. Unauthorized tools, data sources, or budget overruns? Blocked instantly.",
-    gradient: "linear-gradient(135deg, #06b6d4, #3b82f6)",
   },
   {
     icon: Activity, title: "Anomaly Detection",
     desc: "Five detection algorithms monitor duration spikes, API failures, data boundary violations, confidence drops, and cost anomalies.",
-    gradient: "linear-gradient(135deg, #f59e0b, #f97316)",
   },
   {
     icon: CheckCircle2, title: "Human-in-the-Loop",
     desc: "Sensitive actions pause automatically for human approval. Deletions, financial transactions, publishing — you stay in control.",
-    gradient: "linear-gradient(135deg, #8b5cf6, #ec4899)",
   },
   {
     icon: AlertOctagon, title: "Incident Response",
     desc: "CRITICAL violations trigger an automated 5-step response: kill process → snapshot state → lock agent → alert security → log immutably.",
-    gradient: "linear-gradient(135deg, #ef4444, #f97316)",
   },
   {
     icon: Crosshair, title: "Mission Control",
-    desc: "Real-time NASA-style dashboard with live WebSocket feeds, agent heartbeat monitoring, one-click kill switches, and activity timelines.",
-    gradient: "linear-gradient(135deg, #10b981, #06b6d4)",
+    desc: "Real-time fleet operations center with live WebSocket feeds, agent heartbeat monitoring, one-click kill switches, and activity timelines.",
   },
 ];
 
@@ -160,7 +154,6 @@ export default function LandingPage() {
 
       {/* ── Hero ── */}
       <section className="landing-hero">
-        <div className="hero-glow" />
         <div className="hero-grid-bg" />
         <div className="hero-content">
           <div className="hero-badge" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Shield style={{ width: 14, height: 14 }} /> AI Agent Governance Platform</div>
@@ -227,7 +220,9 @@ export default function LandingPage() {
               <div
                 className="feature-icon-wrap"
                 style={{
-                  background: f.gradient,
+                  background: "rgba(37, 99, 235, 0.08)",
+                  border: "1px solid rgba(37, 99, 235, 0.2)",
+                  borderRadius: 6,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -235,7 +230,7 @@ export default function LandingPage() {
               >
                 {(() => {
                   const Icon = f.icon;
-                  return <Icon style={{ width: 20, height: 20, color: "#ffffff" }} />;
+                  return <Icon style={{ width: 18, height: 18, color: "#60a5fa" }} />;
                 })()}
               </div>
               <h3>{f.title}</h3>

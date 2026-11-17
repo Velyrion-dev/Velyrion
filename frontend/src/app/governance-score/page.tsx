@@ -182,25 +182,16 @@ export default function GovernanceScorePage() {
 
       {/* Fleet Overview */}
       <div className="gs-fleet-banner">
-        <div className="gs-fleet-score-ring">
-          <svg width="120" height="120" viewBox="0 0 120 120">
-            <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="8" />
-            <circle
-              cx="60"
-              cy="60"
-              r="52"
-              fill="none"
-              stroke={fleetColor}
-              strokeWidth="8"
-              strokeDasharray={`${(fleetAvg / 100) * 327} 327`}
-              strokeLinecap="round"
-              transform="rotate(-90 60 60)"
-              style={{ transition: "stroke-dasharray 1s ease" }}
-            />
-          </svg>
-          <div className="gs-fleet-score-inner">
-            <div className="gs-fleet-score-num" style={{ color: fleetColor }}>{fleetAvg}</div>
-            <div className="gs-fleet-score-label">Fleet Average</div>
+        <div style={{ display: "flex", flexDirection: "column", minWidth: 160, paddingRight: 24, borderRight: "1px solid var(--border-subtle)" }}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 4 }}>
+            Fleet Benchmark
+          </div>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+            <span style={{ fontSize: 36, fontWeight: 800, color: fleetColor, fontVariantNumeric: "tabular-nums" }}>{fleetAvg}</span>
+            <span style={{ fontSize: 14, color: "var(--text-muted)", fontWeight: 600 }}>/ 100</span>
+          </div>
+          <div style={{ width: "100%", height: 6, background: "rgba(255,255,255,0.06)", borderRadius: 3, marginTop: 8, overflow: "hidden" }}>
+            <div style={{ width: `${Math.min(fleetAvg, 100)}%`, height: "100%", background: fleetColor, borderRadius: 3 }} />
           </div>
         </div>
 

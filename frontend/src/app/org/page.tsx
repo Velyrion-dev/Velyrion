@@ -349,10 +349,10 @@ export default function OrgPage() {
               onClick={handleInvite}
               disabled={inviting || !inviteEmail.trim()}
               style={{
-                padding: "0.625rem 1.5rem", borderRadius: 8, border: "none",
-                background: inviting ? "#4b5563" : "linear-gradient(135deg, #8b5cf6, #6366f1)",
+                padding: "0.625rem 1.5rem", borderRadius: 6, border: "1px solid #1d4ed8",
+                background: inviting ? "#27272a" : "#2563eb",
                 color: "#fff", fontWeight: 600, cursor: inviting ? "default" : "pointer",
-                fontSize: "0.875rem", transition: "all 0.2s",
+                fontSize: "0.875rem", transition: "all 0.15s",
               }}
             >
               {inviting ? "Sending..." : "Send Invite"}
@@ -458,8 +458,8 @@ export default function OrgPage() {
                 } catch (e: any) { setError(e.message); }
               }}
               style={{
-                padding: "0.5rem 1.25rem", borderRadius: 8, border: "none",
-                background: "linear-gradient(135deg, #f59e0b, #d97706)",
+                padding: "0.5rem 1.25rem", borderRadius: 6, border: "1px solid #b45309",
+                background: "#d97706",
                 color: "#fff", fontWeight: 600, cursor: "pointer", fontSize: "0.85rem",
               }}
             >
@@ -743,8 +743,8 @@ function GroupsManager({ isAdmin, isSuperAdmin, members, onSuccess, onError }: {
             onClick={handleCreate}
             disabled={creating || !newGroupName.trim()}
             style={{
-              padding: "0.5rem 1.25rem", borderRadius: 8, border: "none",
-              background: creating ? "#4b5563" : "linear-gradient(135deg, #3b82f6, #6366f1)",
+              padding: "0.5rem 1.25rem", borderRadius: 6, border: "1px solid #1d4ed8",
+              background: creating ? "#27272a" : "#2563eb",
               color: "#fff", fontWeight: 600, cursor: creating ? "default" : "pointer",
               fontSize: "0.85rem",
             }}

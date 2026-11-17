@@ -40,9 +40,8 @@ export default function ConditionalLayout({ children }: { children: React.ReactN
       }}>
         <div style={{ textAlign: "center" }}>
           <div style={{
-            fontSize: 36, fontWeight: 800, letterSpacing: 3,
-            background: "linear-gradient(135deg, var(--accent-cyan), var(--accent-purple))",
-            WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+            fontSize: 28, fontWeight: 800, letterSpacing: 3,
+            color: "var(--text-primary)",
             marginBottom: 16,
           }}>VELYRION</div>
           <div className="loading-shimmer" style={{ width: 200, height: 4, borderRadius: 4 }} />
